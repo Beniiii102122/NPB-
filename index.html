@@ -9,15 +9,12 @@
         h1 { text-align: center; margin-top: 30px; letter-spacing: 2px; }
 
         .controls { text-align: center; margin: 20px 0; display: flex; flex-direction: column; gap: 10px; align-items: center; }
-        .btn-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
         
-        .sort-btn, .filter-select {
-            background-color: transparent; color: #b6a269; border: 1px solid #b6a269;
+        .filter-select {
+            background-color: #000033; color: #fff; border: 1px solid #b6a269;
             padding: 8px 16px; cursor: pointer; border-radius: 20px; transition: all 0.3s;
-            font-size: 14px;
+            font-size: 14px; outline: none;
         }
-        .sort-btn.active { background-color: #b6a269; color: #000; font-weight: bold; }
-        .filter-select { background-color: #000033; color: #fff; outline: none; }
 
         .player-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; justify-content: center; }
         .player-card { 
@@ -60,11 +57,6 @@
             <option value="内野手">内野手</option>
             <option value="外野手">外野手</option>
         </select>
-
-        <div class="btn-group">
-            <button class="sort-btn active" id="btn-num" onclick="setSort('number')">背番号順</button>
-            <button class="sort-btn" id="btn-main" onclick="setSort('main')">成績順</button>
-        </div>
     </div>
     
     <div id="container" class="player-container">
@@ -84,13 +76,11 @@
         const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_NAME}`;
 
         let allPlayers = [];
-        let currentSort = 'number';
 
         async function loadStats() {
             try {
                 const response = await fetch(url);
                 const csvData = await response.text();
-                // 1行目はヘッダーなので飛ばす
                 const rows = csvData.split(/\r?\n/).slice(1).filter(row => row.trim() !== "");
                 
                 allPlayers = rows.map(row => {
@@ -100,41 +90,25 @@
 
                 applyFilterAndSort();
             } catch (e) {
-                document.getElementById('loading').innerText = '読み込み失敗。スプレッドシートの公開設定を確認してください。';
+                document.getElementById('loading').innerText = '読み込み失敗。';
             }
-        }
-
-        function setSort(type) {
-            currentSort = type;
-            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-' + type).classList.add('active');
-            applyFilterAndSort();
         }
 
         function applyFilterAndSort() {
             const filterVal = document.getElementById('pos-filter').value;
             
-            // フィルタリング（J列 または K列 で判定）
+            // フィルタリング
             let filtered = allPlayers.filter(p => {
                 if (filterVal === 'all') return true;
                 return p[9] === filterVal || p[10] === filterVal;
             });
 
-            // ソート（背番号順のロジックを強化）
-            if (currentSort === 'number') {
-                filtered.sort((a, b) => {
-                    const valA = a[0] === "00" ? -1 : (a[0] === "0" ? 0 : parseInt(a[0]) || 999);
-                    const valB = b[0] === "00" ? -1 : (b[0] === "0" ? 0 : parseInt(b[0]) || 999);
-                    return valA - valB;
-                });
-            } else if (currentSort === 'main') {
-                // 打率または防御率（昇順）
-                filtered.sort((a, b) => {
-                    const statA = parseFloat(a[3]) || 999;
-                    const statB = parseFloat(b[3]) || 999;
-                    return statA - statB;
-                });
-            }
+            // 常に背番号順でソート
+            filtered.sort((a, b) => {
+                const valA = a[0] === "00" ? -1 : (a[0] === "0" ? 0 : parseInt(a[0]) || 999);
+                const valB = b[0] === "00" ? -1 : (b[0] === "0" ? 0 : parseInt(b[0]) || 999);
+                return valA - valB;
+            });
 
             renderCards(filtered);
         }
@@ -169,7 +143,6 @@
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
 
-            // F列(5)が敗戦/打点、G列(6)が奪三振/安打
             const labels = (role === '投手') ? 
                 ['登板', '防御率', '勝利', '敗戦', '奪三振', 'WHIP'] : 
                 ['試合', '打率', '本塁打', '打点', '安打', 'OPS'];
