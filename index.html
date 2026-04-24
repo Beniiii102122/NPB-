@@ -23,8 +23,15 @@
         .name { font-size: 20px; margin: 5px 0; font-weight: bold; color: #fff; }
         hr { border: 0; border-top: 1px solid rgba(182, 162, 105, 0.3); margin: 10px 0; }
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background-color: #000044; border: 2px solid #b6a269; padding: 30px; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; }
+        .modal-content { background-color: #000044; border: 2px solid #b6a269; padding: 30px; border-radius: 20px; width: 85%; max-width: 420px; text-align: center; }
         .close-btn { margin-top: 25px; background-color: #b6a269; color: #000; border: none; padding: 10px 30px; border-radius: 25px; cursor: pointer; font-weight: bold; }
+        
+        /* 詳細画面のスコアボード風レイアウト */
+        .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
+        .detail-item { background: rgba(255,255,255,0.03); padding: 10px 5px; border-radius: 8px; }
+        .detail-label { font-size: 12px; color: #b6a269; display: block; margin-bottom: 5px; }
+        .detail-value { font-size: 20px; color: #fff; font-weight: bold; }
+        .full-width { grid-column: span 3; }
     </style>
 </head>
 <body>
@@ -76,10 +83,8 @@
                 allPlayers = rows.map(row => {
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     let data = cols.map(c => c.replace(/^"|"$/g, '').trim());
-                    
                     if (data[1] === "エスピノーザ") data[0] = "00";
                     if (data[1] === "渡部遼人") data[0] = "0";
-
                     return data;
                 }).filter(p => p[1]);
 
@@ -92,40 +97,31 @@
         function applyFilterAndSort() {
             const rankVal = document.getElementById('rank-filter').value;
             const posVal = document.getElementById('pos-filter').value;
-            
             let filtered = allPlayers.filter(p => {
                 const matchRank = (rankVal === 'all' || p[11] === rankVal);
                 const matchPos = (posVal === 'all' || p[9] === posVal || p[10] === posVal);
                 return matchRank && matchPos;
             });
-
             filtered.sort((a, b) => {
                 const numA = a[0] === "00" ? -2 : (a[0] === "0" ? -1 : parseInt(a[0]) || 999);
                 const numB = b[0] === "00" ? -2 : (b[0] === "0" ? -1 : parseInt(b[0]) || 999);
                 return numA - numB;
             });
-
             renderCards(filtered);
         }
 
         function renderCards(data) {
             const container = document.getElementById('container');
             container.innerHTML = data.length ? '' : '<p>該当する選手がいません</p>';
-
             data.forEach(p => {
                 const role = p[9];
-                const rank = p[11];
-                
                 const card = document.createElement('div');
                 card.className = `player-card card-${role}`;
                 card.onclick = () => showDetail(p);
-                
                 const label1 = (role === '投手') ? '防御率' : '打率';
                 const label2 = (role === '投手') ? '勝利' : '本塁打';
-                const rankClass = (rank === '一軍') ? 'rank-1' : 'rank-2';
-
                 card.innerHTML = `
-                    ${rank ? `<div class="rank-badge ${rankClass}">${rank}</div>` : ''}
+                    ${p[11] ? `<div class="rank-badge ${p[11]==='一軍'?'rank-1':'rank-2'}">${p[11]}</div>` : ''}
                     <p style="margin:0; font-size:11px; color:#b6a269;">${p[10] || role} NO.${p[0]}</p>
                     <p class="name">${p[1]}</p>
                     <hr>
@@ -142,24 +138,27 @@
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
             
-            // M列(インデックス12)のデータをラベルに応じて使い分け
+            // 指標の定義（M列=12, G列=6, D列=3）
             const labels = (role === '投手') ? 
-                ['登板', '防御率', '勝利', '敗戦', '奪三振', 'WHIP', '投球回'] : 
-                ['試合', '打率', '本塁打', '打点', '安打', 'OPS', '打数'];
+                ['防御率', '投球回', '奪三振', '登板', '勝利', '敗戦', 'WHIP'] : 
+                ['打率', '打数', '安打', '試合', '本塁打', '打点', 'OPS'];
 
             detail.innerHTML = `
                 <p style="color:#b6a269; margin-bottom: 5px;">[${p[11] || '-'}] ${p[10] || role} 背番号 ${p[0]}</p>
                 <h2 style="color:#fff; font-size:32px; margin: 0;">${p[1]}</h2>
-                <p style="color:#ccc; font-size:14px; margin: 10px 0;">生年月日：${p[8] || '----/--/--'}</p>
+                <p style="color:#ccc; font-size:14px; margin: 5px 0;">生年月日：${p[8] || '----/--/--'}</p>
                 <hr>
-                <div style="text-align:left; color:#fff; font-size:16px; line-height:1.7; width:fit-content; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 30px;">
-                    <div>${labels[0]}：${p[2]}</div>
-                    <div>${labels[1]}：${p[3]}</div>
-                    <div>${labels[2]}：${p[4]}</div>
-                    <div>${labels[3]}：${p[5]}</div>
-                    <div>${labels[4]}：${p[6]}</div>
-                    <div>${labels[5]}：${p[7]}</div>
-                    <div style="grid-column: span 2; border-top: 1px solid rgba(182, 162, 105, 0.2); padding-top: 5px;">${labels[6]}：${p[12] || '0'}</div>
+                
+                <div class="detail-grid">
+                    <div class="detail-item"><span class="detail-label">${labels[0]}</span><span class="detail-value">${p[3]}</span></div>
+                    <div class="detail-item"><span class="detail-label">${labels[1]}</span><span class="detail-value">${p[12]}</span></div>
+                    <div class="detail-item"><span class="detail-label">${labels[2]}</span><span class="detail-value">${p[6]}</span></div>
+                    
+                    <div class="detail-item"><span class="detail-label">${labels[3]}</span><span class="detail-value">${p[2]}</span></div>
+                    <div class="detail-item"><span class="detail-label">${labels[4]}</span><span class="detail-value">${p[4]}</span></div>
+                    <div class="detail-item"><span class="detail-label">${labels[5]}</span><span class="detail-value">${p[5]}</span></div>
+                    
+                    <div class="detail-item full-width"><span class="detail-label">${labels[6]}</span><span class="detail-value">${p[7]}</span></div>
                 </div>`;
             modal.style.display = 'flex';
         }
