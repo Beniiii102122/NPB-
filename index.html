@@ -1,178 +1,97 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORIX PLAYER STATS Pro</title>
-    <style>
-        body { background-color: #000033; font-family: 'Helvetica Neue', Arial, sans-serif; color: #b6a269; margin: 0; padding-bottom: 50px; }
-        h1 { text-align: center; margin-top: 30px; letter-spacing: 2px; }
-        .controls { text-align: center; margin: 20px 0; display: flex; flex-direction: row; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .filter-select { background-color: #000033; color: #fff; border: 1px solid #b6a269; padding: 8px 16px; cursor: pointer; border-radius: 20px; font-size: 14px; outline: none; }
-        .player-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; justify-content: center; }
-        .player-card { background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(182, 162, 105, 0.3); padding: 15px; width: 180px; border-radius: 12px; text-align: center; cursor: pointer; transition: transform 0.2s; position: relative; }
-        .player-card:hover { transform: translateY(-5px); border-color: #b6a269; box-shadow: 0 5px 15px rgba(182, 162, 105, 0.3); }
-        .rank-badge { position: absolute; top: 8px; right: 8px; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
-        .rank-1 { background-color: #b6a269; color: #000; }
-        .rank-2 { background-color: #444; color: #fff; border: 1px solid #666; }
-        .card-投手 { border-top: 4px solid #fff; }
-        .card-野手 { border-top: 4px solid #b6a269; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
-        .label { font-size: 11px; color: #b6a269; opacity: 0.8; }
-        .stats { font-size: 18px; color: #fff; font-weight: bold; }
-        .name { font-size: 20px; margin: 5px 0; font-weight: bold; color: #fff; }
-        hr { border: 0; border-top: 1px solid rgba(182, 162, 105, 0.3); margin: 10px 0; }
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background-color: #000044; border: 2px solid #b6a269; padding: 30px; border-radius: 20px; width: 85%; max-width: 420px; text-align: center; }
-        .close-btn { margin-top: 25px; background-color: #b6a269; color: #000; border: none; padding: 10px 30px; border-radius: 25px; cursor: pointer; font-weight: bold; }
-        
-        .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
-        .detail-item { background: rgba(255,255,255,0.03); padding: 10px 5px; border-radius: 8px; border: 1px solid rgba(182, 162, 105, 0.1); }
-        .highlight-row { background: rgba(182, 162, 105, 0.15); border: 1px solid #b6a269; }
-        .detail-label { font-size: 11px; color: #b6a269; display: block; margin-bottom: 4px; font-weight: bold; }
-        .detail-value { font-size: 19px; color: #fff; font-weight: bold; }
-        .full-width { grid-column: span 3; }
-    </style>
-</head>
-<body>
+/**
+ * Baseball Stats Automator
+ * GitHub: [Your Repository Name]
+ * * 概要: Google Formからの回答を集計し、投手・野手別に統計(打率/防御率等)を算出します。
+ */
 
-    <h1>ORIX PLAYER STATS</h1>
+// --- 設定エリア ---
+const CONFIG = {
+  MAIN_SHEET_NAME: "シート1",           // 選手名鑑のメインシート
+  RESPONSE_SHEET_NAME: "フォームの回答 3", // フォームの回答が蓄積されるシート
+  START_ROW: 2,                        // データの開始行
+  COLS: {
+    NAME: "B",         // 選手名
+    GAMES: "C",        // 試合数/登板数
+    RATIO: "D",        // 打率/防御率
+    HR_W: "E",         // 本塁打/勝利
+    RBI_L: "F",        // 打点/敗戦
+    HITS_K: "G",       // 安打/奪三振
+    EXTRA_ER: "H",     // 長打/自責点
+    OPS_WHIP: "I",     // OPS/WHIP
+    AB_OUTS: "J",      // 打数/アウト数
+    SB_H: "K",         // 盗塁/ホールド
+    BB_S: "L",         // 四死球/セーブ
+    ROLE: "M"          // 投手/野手の判定
+  }
+};
 
-    <div class="controls">
-        <select id="rank-filter" class="filter-select" onchange="applyFilterAndSort()">
-            <option value="all">すべての軍</option>
-            <option value="一軍">一軍</option>
-            <option value="二軍">二軍</option>
-        </select>
-        <select id="pos-filter" class="filter-select" onchange="applyFilterAndSort()">
-            <option value="all">すべてのポジション</option>
-            <option value="投手">投手（すべて）</option>
-            <option value="野手">野手（すべて）</option>
-            <option value="先発">先発</option>
-            <option value="中継ぎ">中継ぎ</option>
-            <option value="抑え">抑え</option>
-            <option value="捕手">捕手</option>
-            <option value="内野手">内野手</option>
-            <option value="外野手">外野手</option>
-        </select>
-    </div>
-    
-    <div id="container" class="player-container">
-        <p id="loading">データを読み込み中...</p>
-    </div>
+/**
+ * フォーム送信時に実行されるメイン処理
+ */
+function onFormSubmitTrigger() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(CONFIG.MAIN_SHEET_NAME);
+  const lastRow = sheet.getLastRow();
+  
+  if (lastRow < CONFIG.START_ROW) return;
 
-    <div id="modal" onclick="closeModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div id="modal-detail"></div>
-            <button class="close-btn" onclick="closeModal()">閉じる</button>
-        </div>
-    </div>
+  const targetRange = sheet.getRange(CONFIG.START_ROW, 3, lastRow - CONFIG.START_ROW + 1, 10);
+  const formulas = [];
 
-    <script>
-        const SPREADSHEET_ID ='1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw';
-        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&headers=1`;
+  for (let i = CONFIG.START_ROW; i <= lastRow; i++) {
+    formulas.push(generateRowFormulas(i));
+  }
 
-        let allPlayers = [];
+  targetRange.setFormulas(formulas);
+  
+  // 書式設定（小数点3桁）
+  sheet.getRange(`${CONFIG.COLS.RATIO}${CONFIG.START_ROW}:${CONFIG.COLS.RATIO}${lastRow}`).setNumberFormat("0.000");
+  sheet.getRange(`${CONFIG.COLS.OPS_WHIP}${CONFIG.START_ROW}:${CONFIG.COLS.OPS_WHIP}${lastRow}`).setNumberFormat("0.000");
+}
 
-        async function loadStats() {
-            try {
-                const response = await fetch(url);
-                const csvData = await response.text();
-                const rows = csvData.split(/\r?\n/).slice(1);
-                
-                allPlayers = rows.map(row => {
-                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    let data = cols.map(c => c.replace(/^"|"$/g, '').trim());
-                    // 特殊背番号対応
-                    if (data[1] === "エスピノーザ") data[0] = "00";
-                    if (data[1] === "渡部遼人") data[0] = "0";
-                    return data;
-                }).filter(p => p[1]);
+/**
+ * 各行の数式を生成するサブ関数
+ */
+function generateRowFormulas(row) {
+  const resp = CONFIG.RESPONSE_SHEET_NAME;
+  const c = CONFIG.COLS;
 
-                applyFilterAndSort();
-            } catch (e) {
-                document.getElementById('loading').innerText = '失敗。';
-            }
-        }
+  return [
+    // 試合数 (回答E列)
+    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$E:$E), 0)`,
+    // 打率/防御率
+    `=IF($${c.ROLE}${row}="投手", IFERROR($${c.EXTRA_ER}${row}*9/($${c.AB_OUTS}${row}/3), 0), IFERROR($${c.HITS_K}${row}/$${c.AB_OUTS}${row}, 0))`,
+    // 本塁打/勝利 (回答F列)
+    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$F:$F), 0)`,
+    // 打点/敗戦 (回答G列)
+    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$G:$G), 0)`,
+    // 安打/奪三振 (回答D列)
+    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$D:$D), 0)`,
+    // 長打/自責点 (回答J列)
+    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$J:$J), 0)`,
+    // OPS/WHIP
+    `=IF($${c.ROLE}${row}="投手", IFERROR(($${c.HITS_K}${row}+$${c.BB_S}${row})/($${c.AB_OUTS}${row}/3), 0), IFERROR(($${c.HITS_K}${row}+$${c.BB_S}${row}+$${c.EXTRA_ER}${row}*2)/$${c.AB_OUTS}${row}, 0))`,
+    // 打数/アウト数 (回答C列)
+    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$C:$C), 0)`,
+    // 盗塁/ホールド (回答H列)
+    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$H:$H), 0)`,
+    // 四死球/セーブ (回答I列)
+    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$I:$I), 0)`
+  ];
+}
 
-        function applyFilterAndSort() {
-            const rankVal = document.getElementById('rank-filter').value;
-            const posVal = document.getElementById('pos-filter').value;
-            let filtered = allPlayers.filter(p => {
-                const role = p[11]; // L列
-                const pos = p[12];  // M列
-                const rank = p[13]; // N列
-                const matchRank = (rankVal === 'all' || rank === rankVal);
-                const matchPos = (posVal === 'all' || role === posVal || pos === posVal);
-                return matchRank && matchPos;
-            });
-            filtered.sort((a, b) => {
-                const numA = a[0] === "00" ? -2 : (a[0] === "0" ? -1 : parseInt(a[0]) || 999);
-                const numB = b[0] === "00" ? -2 : (b[0] === "0" ? -1 : parseInt(b[0]) || 999);
-                return numA - numB;
-            });
-            renderCards(filtered);
-        }
-
-        function renderCards(data) {
-            const container = document.getElementById('container');
-            container.innerHTML = data.length ? '' : '<p>該当なし</p>';
-            data.forEach(p => {
-                const role = p[11]; // 役割
-                const rank = p[13]; // 軍構成
-                const card = document.createElement('div');
-                card.className = `player-card card-${role}`;
-                card.onclick = () => showDetail(p);
-                const label1 = (role === '投手') ? '防御率' : '打率';
-                const label2 = (role === '投手') ? '勝利' : '本塁打';
-                card.innerHTML = `
-                    ${rank ? `<div class="rank-badge ${rank==='一軍'?'rank-1':'rank-2'}">${rank}</div>` : ''}
-                    <p style="margin:0; font-size:11px; color:#b6a269;">${p[12] || role} NO.${p[0]}</p>
-                    <p class="name">${p[1]}</p>
-                    <hr>
-                    <div class="stats-grid">
-                        <div><span class="label">${label1}</span><br><span class="stats">${p[3]}</span></div>
-                        <div><span class="label">${label2}</span><br><span class="stats">${p[4]}</span></div>
-                    </div>`;
-                container.appendChild(card);
-            });
-        }
-
-        function showDetail(p) {
-            const role = p[11];
-            const modal = document.getElementById('modal');
-            const detail = document.getElementById('modal-detail');
-            
-            // 最新の列順に対応したデータ取得
-            // h=一行目(ハイライト), b=その他
-            const s = (role === '投手') ? 
-                { h1:'防御率', h2:'投球回', h3:'奪三振', b1:'登板', b2:'勝利', b3:'敗戦', b4:'ホールド', b5:'セーブ', b6:'WHIP' } : 
-                { h1:'打率', h2:'打数', h3:'安打', b1:'試合', b2:'本塁打', b3:'打点', b4:'盗塁', b5:'四球', b6:'OPS' };
-
-            detail.innerHTML = `
-                <p style="color:#b6a269; margin-bottom: 5px;">[${p[13] || '-'}] ${p[12] || role} 背番号 ${p[0]}</p>
-                <h2 style="color:#fff; font-size:32px; margin: 0;">${p[1]}</h2>
-                <p style="color:#ccc; font-size:14px; margin: 5px 0;">生年月日：${p[14] || '----/--/--'}</p>
-                <hr>
-                
-                <div class="detail-grid">
-                    <div class="detail-item highlight-row"><span class="detail-label">${s.h1}</span><span class="detail-value">${p[3]}</span></div>
-                    <div class="detail-item highlight-row"><span class="detail-label">${s.h2}</span><span class="detail-value">${p[8]}</span></div>
-                    <div class="detail-item highlight-row"><span class="detail-label">${s.h3}</span><span class="detail-value">${p[6]}</span></div>
-                    
-                    <div class="detail-item"><span class="detail-label">${s.b1}</span><span class="detail-value">${p[2]}</span></div>
-                    <div class="detail-item"><span class="detail-label">${s.b2}</span><span class="detail-value">${p[4]}</span></div>
-                    <div class="detail-item"><span class="detail-label">${s.b3}</span><span class="detail-value">${p[5]}</span></div>
-
-                    <div class="detail-item"><span class="detail-label">${s.b4}</span><span class="detail-value">${p[9] || '0'}</span></div>
-                    <div class="detail-item"><span class="detail-label">${s.b5}</span><span class="detail-value">${p[10] || '0'}</span></div>
-                    <div class="detail-item"><span class="detail-label">${s.b6}</span><span class="detail-value">${p[7]}</span></div>
-                </div>`;
-            modal.style.display = 'flex';
-        }
-
-        function closeModal() { document.getElementById('modal').style.display = 'none'; }
-        loadStats();
-    </script>
-</body>
-</html>
+/**
+ * 初期設定用：トリガー作成
+ */
+function setup() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(t => ScriptApp.deleteTrigger(t));
+  
+  ScriptApp.newTrigger('onFormSubmitTrigger')
+    .forSpreadsheet(ss)
+    .onFormSubmit()
+    .create();
+  
+  onFormSubmitTrigger(); // 初回計算
+}
