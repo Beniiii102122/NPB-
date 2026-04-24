@@ -90,7 +90,25 @@
                     const card = document.createElement('div');
                     card.className = 'player-card';
                     // タップした時に詳細を開く指示
-                    card.onclick = () => showDetail(cols);
+                    card.onclick = () => showDetail( // 詳細画面を表示する関数
+        function showDetail(data) {
+            const modal = document.getElementById('modal');
+            const detail = document.getElementById('modal-detail');
+            detail.innerHTML = `
+                <p style="color:#b6a269;">背番号 ${data[0]}</p>
+                <h2 style="color:#fff; font-size:32px;">${data[1]}</h2>
+                <p style="color:#ccc; font-size:14px;">生年月日：${data[8]}</p> <hr>
+                <div style="text-align:left; color:#fff; font-size:18px; line-height:2;">
+                    <p>試合数：${data[2]}</p>
+                    <p>打率：${data[3]}</p>
+                    <p>本塁打：${data[4]}</p>
+                    <p>打点：${data[5]}</p>
+                    <p>安打：${data[6]}</p>
+                    <p>OPS：${data[7]}</p>
+                </div>
+            `;
+            modal.style.display = 'flex';
+        });
                     
                     card.innerHTML = `
                         <p style="margin:0; font-size:12px;">背番号 ${cols[0]}</p>
