@@ -77,14 +77,8 @@
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     let data = cols.map(c => c.replace(/^"|"$/g, '').trim());
                     
-                    // 【修正】エスピノーザ選手だけ背番号を強制的に "00" に上書き
-                    if (data[1] === "エスピノーザ") {
-                        data[0] = "00";
-                    }
-                    // 同様に 渡部選手などが "0" なら
-                    if (data[1] === "渡部遼人") {
-                        data[0] = "0";
-                    }
+                    if (data[1] === "エスピノーザ") data[0] = "00";
+                    if (data[1] === "渡部遼人") data[0] = "0";
 
                     return data;
                 }).filter(p => p[1]);
@@ -121,8 +115,6 @@
             data.forEach(p => {
                 const role = p[9];
                 const rank = p[11];
-                const num = p[0];
-                const birthday = p[8];
                 
                 const card = document.createElement('div');
                 card.className = `player-card card-${role}`;
@@ -134,7 +126,7 @@
 
                 card.innerHTML = `
                     ${rank ? `<div class="rank-badge ${rankClass}">${rank}</div>` : ''}
-                    <p style="margin:0; font-size:11px; color:#b6a269;">${p[10] || role} NO.${num}</p>
+                    <p style="margin:0; font-size:11px; color:#b6a269;">${p[10] || role} NO.${p[0]}</p>
                     <p class="name">${p[1]}</p>
                     <hr>
                     <div class="stats-grid">
@@ -149,22 +141,25 @@
             const role = p[9];
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
+            
+            // M列(インデックス12)のデータをラベルに応じて使い分け
             const labels = (role === '投手') ? 
-                ['登板', '防御率', '勝利', '敗戦', '奪三振', 'WHIP'] : 
-                ['試合', '打率', '本塁打', '打点', '安打', 'OPS'];
+                ['登板', '防御率', '勝利', '敗戦', '奪三振', 'WHIP', '投球回'] : 
+                ['試合', '打率', '本塁打', '打点', '安打', 'OPS', '打数'];
 
             detail.innerHTML = `
                 <p style="color:#b6a269; margin-bottom: 5px;">[${p[11] || '-'}] ${p[10] || role} 背番号 ${p[0]}</p>
                 <h2 style="color:#fff; font-size:32px; margin: 0;">${p[1]}</h2>
                 <p style="color:#ccc; font-size:14px; margin: 10px 0;">生年月日：${p[8] || '----/--/--'}</p>
                 <hr>
-                <div style="text-align:left; color:#fff; font-size:18px; line-height:1.8; width:fit-content; margin: 0 auto;">
+                <div style="text-align:left; color:#fff; font-size:16px; line-height:1.7; width:fit-content; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 30px;">
                     <div>${labels[0]}：${p[2]}</div>
                     <div>${labels[1]}：${p[3]}</div>
                     <div>${labels[2]}：${p[4]}</div>
                     <div>${labels[3]}：${p[5]}</div>
                     <div>${labels[4]}：${p[6]}</div>
                     <div>${labels[5]}：${p[7]}</div>
+                    <div style="grid-column: span 2; border-top: 1px solid rgba(182, 162, 105, 0.2); padding-top: 5px;">${labels[6]}：${p[12] || '0'}</div>
                 </div>`;
             modal.style.display = 'flex';
         }
