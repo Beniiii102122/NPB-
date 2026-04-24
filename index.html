@@ -1,97 +1,107 @@
 /**
- * Baseball Stats Automator
- * GitHub: [Your Repository Name]
- * * 概要: Google Formからの回答を集計し、投手・野手別に統計(打率/防御率等)を算出します。
+ * Baseball Statistics Automator v1.0.0
+ * * [概要]
+ * Google Formから送信された野球の試合データを集計し、
+ * 投手・野手それぞれの指標（打率、防御率、OPS、WHIP等）を自動算出します。
  */
 
-// --- 設定エリア ---
+// ==========================================
+// 1. 設定：環境に合わせてここを書き換えてください
+// ==========================================
 const CONFIG = {
-  MAIN_SHEET_NAME: "シート1",           // 選手名鑑のメインシート
-  RESPONSE_SHEET_NAME: "フォームの回答 3", // フォームの回答が蓄積されるシート
-  START_ROW: 2,                        // データの開始行
-  COLS: {
-    NAME: "B",         // 選手名
-    GAMES: "C",        // 試合数/登板数
-    RATIO: "D",        // 打率/防御率
-    HR_W: "E",         // 本塁打/勝利
-    RBI_L: "F",        // 打点/敗戦
-    HITS_K: "G",       // 安打/奪三振
-    EXTRA_ER: "H",     // 長打/自責点
-    OPS_WHIP: "I",     // OPS/WHIP
-    AB_OUTS: "J",      // 打数/アウト数
-    SB_H: "K",         // 盗塁/ホールド
-    BB_S: "L",         // 四死球/セーブ
-    ROLE: "M"          // 投手/野手の判定
+  SHEET_NAME_MAIN: "シート1",           // 表示用メインシート名
+  SHEET_NAME_RESPONSES: "フォームの回答 3", // 回答蓄積用シート名
+  
+  // メインシートの列定義（1から始まる列番号）
+  COL: {
+    NAME: 2,      // B列: 選手名
+    GAMES: 3,     // C列: 試合数
+    AVG_ERA: 4,   // D列: 打率/防御率
+    HR_W: 5,      // E列: 本塁打/勝利
+    RBI_L: 6,     // F列: 打点/敗戦
+    HITS_K: 7,    // G列: 安打/奪三振
+    EXTRA_ER: 8,  // H列: 長打/自責点
+    OPS_WHIP: 9,  // I列: OPS/WHIP
+    AB_OUTS: 10,  // J列: 打数/アウト数
+    SB_H: 11,     // K列: 盗塁/ホールド
+    BB_S: 12,     // L列: 四死球/セーブ
+    ROLE: 13      // M列: 役割(投手/野手)
   }
 };
 
-/**
- * フォーム送信時に実行されるメイン処理
- */
-function onFormSubmitTrigger() {
+// ==========================================
+// 2. メイン処理：自動更新エンジン
+// ==========================================
+function updateStats() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(CONFIG.MAIN_SHEET_NAME);
-  const lastRow = sheet.getLastRow();
+  const mainSheet = ss.getSheetByName(CONFIG.SHEET_NAME_MAIN);
+  const lastRow = mainSheet.getLastRow();
   
-  if (lastRow < CONFIG.START_ROW) return;
+  if (lastRow < 2) return; // データがない場合は終了
 
-  const targetRange = sheet.getRange(CONFIG.START_ROW, 3, lastRow - CONFIG.START_ROW + 1, 10);
+  // 計算範囲を指定（C列〜L列）
+  const targetRange = mainSheet.getRange(2, 3, lastRow - 1, 10);
   const formulas = [];
 
-  for (let i = CONFIG.START_ROW; i <= lastRow; i++) {
-    formulas.push(generateRowFormulas(i));
+  for (let i = 2; i <= lastRow; i++) {
+    formulas.push(buildRowFormulas(i));
   }
 
+  // 数式を一括書き込み（高速化）
   targetRange.setFormulas(formulas);
   
-  // 書式設定（小数点3桁）
-  sheet.getRange(`${CONFIG.COLS.RATIO}${CONFIG.START_ROW}:${CONFIG.COLS.RATIO}${lastRow}`).setNumberFormat("0.000");
-  sheet.getRange(`${CONFIG.COLS.OPS_WHIP}${CONFIG.START_ROW}:${CONFIG.COLS.OPS_WHIP}${lastRow}`).setNumberFormat("0.000");
+  // 数値フォーマットの適用（小数点以下3桁）
+  applyFormat(mainSheet, lastRow);
 }
 
 /**
- * 各行の数式を生成するサブ関数
+ * 3. 行ごとの数式構築
  */
-function generateRowFormulas(row) {
-  const resp = CONFIG.RESPONSE_SHEET_NAME;
-  const c = CONFIG.COLS;
+function buildRowFormulas(row) {
+  const r = CONFIG.SHEET_NAME_RESPONSES;
+  const c = CONFIG.COL;
+  const colLetter = (num) => String.fromCharCode(64 + num);
+  
+  const name = `$${colLetter(c.NAME)}${row}`;
+  const role = `$${colLetter(c.ROLE)}${row}`;
+  const sumif = (col) => `=IFERROR(SUMIF('${r}'!$B:$B, ${name}, '${r}'!${col}), 0)`;
 
   return [
-    // 試合数 (回答E列)
-    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$E:$E), 0)`,
-    // 打率/防御率
-    `=IF($${c.ROLE}${row}="投手", IFERROR($${c.EXTRA_ER}${row}*9/($${c.AB_OUTS}${row}/3), 0), IFERROR($${c.HITS_K}${row}/$${c.AB_OUTS}${row}, 0))`,
-    // 本塁打/勝利 (回答F列)
-    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$F:$F), 0)`,
-    // 打点/敗戦 (回答G列)
-    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$G:$G), 0)`,
-    // 安打/奪三振 (回答D列)
-    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$D:$D), 0)`,
-    // 長打/自責点 (回答J列)
-    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$J:$J), 0)`,
-    // OPS/WHIP
-    `=IF($${c.ROLE}${row}="投手", IFERROR(($${c.HITS_K}${row}+$${c.BB_S}${row})/($${c.AB_OUTS}${row}/3), 0), IFERROR(($${c.HITS_K}${row}+$${c.BB_S}${row}+$${c.EXTRA_ER}${row}*2)/$${c.AB_OUTS}${row}, 0))`,
-    // 打数/アウト数 (回答C列)
-    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$C:$C), 0)`,
-    // 盗塁/ホールド (回答H列)
-    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$H:$H), 0)`,
-    // 四死球/セーブ (回答I列)
-    `=IFERROR(SUMIF('${resp}'!$B:$B, $${c.NAME}${row}, '${resp}'!$I:$I), 0)`
+    sumif("$E:$E"), // C: 試合数
+    `=IF(${role}="投手", IFERROR($${colLetter(c.EXTRA_ER)}${row}*9/($${colLetter(c.AB_OUTS)}${row}/3), 0), IFERROR($${colLetter(c.HITS_K)}${row}/$${colLetter(c.AB_OUTS)}${row}, 0))`, // D: 率
+    sumif("$F:$F"), // E: 本塁打
+    sumif("$G:$G"), // F: 打点
+    sumif("$D:$D"), // G: 安打
+    sumif("$J:$J"), // H: 長打
+    `=IF(${role}="投手", IFERROR(($${colLetter(c.HITS_K)}${row}+$${colLetter(c.BB_S)}${row})/($${colLetter(c.AB_OUTS)}${row}/3), 0), IFERROR(($${colLetter(c.HITS_K)}${row}+$${colLetter(c.BB_S)}${row}+$${colLetter(c.EXTRA_ER)}${row}*2)/$${colLetter(c.AB_OUTS)}${row}, 0))`, // I: OPS/WHIP
+    sumif("$C:$C"), // J: 打数
+    sumif("$H:$H"), // K: 盗塁
+    sumif("$I:$I")  // L: 四死球
   ];
 }
 
 /**
- * 初期設定用：トリガー作成
+ * 4. 書式設定
+ */
+function applyFormat(sheet, lastRow) {
+  const c = CONFIG.COL;
+  // 率とOPSの列を小数点3桁表示に
+  sheet.getRange(2, c.AVG_ERA, lastRow - 1, 1).setNumberFormat("0.000");
+  sheet.getRange(2, c.OPS_WHIP, lastRow - 1, 1).setNumberFormat("0.000");
+}
+
+/**
+ * 5. 初期化：トリガー設定
+ * インストール後に一度だけ実行してください
  */
 function setup() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const triggers = ScriptApp.getProjectTriggers();
-  triggers.forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.getProjectTriggers().forEach(t => ScriptApp.deleteTrigger(t));
   
-  ScriptApp.newTrigger('onFormSubmitTrigger')
+  ScriptApp.newTrigger('updateStats')
     .forSpreadsheet(ss)
     .onFormSubmit()
     .create();
-  
-  onFormSubmitTrigger(); // 初回計算
+    
+  updateStats();
 }
