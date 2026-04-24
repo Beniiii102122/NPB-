@@ -23,7 +23,6 @@
         }
         .player-card:hover { transform: translateY(-5px); border-color: #b6a269; box-shadow: 0 5px 15px rgba(182, 162, 105, 0.3); }
         
-        /* 軍バッジ */
         .rank-badge {
             position: absolute; top: 8px; right: 8px; font-size: 10px; padding: 2px 8px;
             border-radius: 10px; font-weight: bold;
@@ -111,18 +110,21 @@
             const rankVal = document.getElementById('rank-filter').value;
             const posVal = document.getElementById('pos-filter').value;
             
-            // フィルタリング（軍とポジションの両方で絞り込み）
             let filtered = allPlayers.filter(p => {
-                const matchRank = (rankVal === 'all' || p[11] === rankVal); // L列(11)
-                const matchPos = (posVal === 'all' || p[9] === posVal || p[10] === posVal); // J列(9) or K列(10)
+                const matchRank = (rankVal === 'all' || p[11] === rankVal);
+                const matchPos = (posVal === 'all' || p[9] === posVal || p[10] === posVal);
                 return matchRank && matchPos;
             });
 
-            // 背番号ソート
+            // 背番号ソート（00, 0 を最優先）
             filtered.sort((a, b) => {
-                const valA = a[0] === "00" ? -1 : (a[0] === "0" ? 0 : parseInt(a[0]) || 999);
-                const valB = b[0] === "00" ? -1 : (b[0] === "0" ? 0 : parseInt(b[0]) || 999);
-                return valA - valB;
+                const getNum = (s) => {
+                    if (s === "00") return -2;
+                    if (s === "0") return -1;
+                    const n = parseInt(s);
+                    return isNaN(n) ? 999 : n;
+                };
+                return getNum(a[0]) - getNum(b[0]);
             });
 
             renderCards(filtered);
@@ -134,7 +136,9 @@
 
             data.forEach(cols => {
                 const role = cols[9];
-                const rank = cols[11] || ""; // L列
+                const rank = cols[11] || "";
+                const num = cols[0];
+                
                 const card = document.createElement('div');
                 card.className = `player-card card-${role}`;
                 card.onclick = () => showDetail(cols);
@@ -145,7 +149,7 @@
 
                 card.innerHTML = `
                     ${rank ? `<div class="rank-badge ${rankClass}">${rank}</div>` : ''}
-                    <p style="margin:0; font-size:11px; color:#b6a269;">${cols[10] || role} NO.${cols[0]}</p>
+                    <p style="margin:0; font-size:11px; color:#b6a269;">${cols[10] || role} NO.${num}</p>
                     <p class="name">${cols[1]}</p>
                     <hr>
                     <div class="stats-grid">
@@ -165,9 +169,13 @@
                 ['登板', '防御率', '勝利', '敗戦', '奪三振', 'WHIP'] : 
                 ['試合', '打率', '本塁打', '打点', '安打', 'OPS'];
 
+            // 生年月日はインデックス8 (I列)
+            const birthday = data[8] || "不明";
+
             detail.innerHTML = `
-                <p style="color:#b6a269;">[${data[11] || '-'}] ${data[10] || role} 背番号 ${data[0]}</p>
+                <p style="color:#b6a269; margin-bottom: 5px;">[${data[11] || '-'}] ${data[10] || role} 背番号 ${data[0]}</p>
                 <h2 style="color:#fff; font-size:32px; margin: 0;">${data[1]}</h2>
+                <p style="color:#ccc; font-size:14px; margin: 10px 0;">生年月日：${birthday}</p>
                 <hr>
                 <div style="text-align:left; color:#fff; font-size:18px; line-height:1.8; width:fit-content; margin: 0 auto;">
                     <div>${labels[0]}：${data[2]}</div>
