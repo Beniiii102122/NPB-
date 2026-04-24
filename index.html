@@ -3,38 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>オリックス名鑑 Pro + 投手対応</title>
+    <title>オリックス名鑑 Pro - 投手/野手ハイブリッド版</title>
     <style>
-        body { background-color: #000033; font-family: sans-serif; color: #b6a269; margin: 0; padding-bottom: 50px; }
-        h1 { text-align: center; margin-top: 30px; }
-        
+        body { background-color: #000033; font-family: 'Helvetica Neue', Arial, sans-serif; color: #b6a269; margin: 0; padding-bottom: 50px; }
+        h1 { text-align: center; margin-top: 30px; letter-spacing: 2px; }
+
         .controls { text-align: center; margin: 20px 0; }
         .sort-btn {
             background-color: transparent; color: #b6a269; border: 1px solid #b6a269;
-            padding: 8px 16px; margin: 5px; cursor: pointer; border-radius: 20px;
+            padding: 8px 16px; margin: 5px; cursor: pointer; border-radius: 20px; transition: all 0.3s;
         }
-        .sort-btn.active { background-color: #b6a269; color: #000; }
+        .sort-btn.active { background-color: #b6a269; color: #000; font-weight: bold; }
 
         .player-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; justify-content: center; }
+        
         .player-card { 
             background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(182, 162, 105, 0.3);
             padding: 15px; width: 180px; border-radius: 12px; text-align: center; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        /* 投手カードに少し色を付ける演出 */
-        .card-pitcher { border-left: 4px solid #fff; }
+        .player-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(182, 162, 105, 0.4); border-color: #b6a269; }
+        
+        /* 投手と野手で少しデザインを変える（任意） */
+        .card-投手 { border-left: 5px solid #fff; }
+        .card-野手 { border-left: 5px solid #b6a269; }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
-        .label { font-size: 11px; color: #b6a269; }
+        .label { font-size: 11px; color: #b6a269; opacity: 0.8; }
         .stats { font-size: 18px; color: #fff; font-weight: bold; }
         .name { font-size: 20px; margin: 5px 0; font-weight: bold; color: #fff; }
         hr { border: 0; border-top: 1px solid rgba(182, 162, 105, 0.3); margin: 10px 0; }
 
         #modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 1000;
+            background-color: rgba(0, 0, 0, 0.85); justify-content: center; align-items: center; z-index: 1000;
         }
         .modal-content { background-color: #000044; border: 2px solid #b6a269; padding: 30px; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; }
-        .close-btn { margin-top: 25px; background-color: #b6a269; color: #000; border: none; padding: 10px 30px; border-radius: 20px; cursor: pointer; }
+        .close-btn { margin-top: 25px; background-color: #b6a269; color: #000; border: none; padding: 12px 30px; border-radius: 25px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -42,8 +47,9 @@
     <h1>ORIX PLAYER STATS</h1>
 
     <div class="controls">
-        <button class="sort-btn active" id="btn-num" onclick="sortData('number')">背番号順</button>
-        <button class="sort-btn" id="btn-type" onclick="sortData('type')">位置別</button>
+        <button class="sort-btn" id="btn-num" onclick="sortData('number')">背番号順</button>
+        <button class="sort-btn" id="btn-role" onclick="sortData('role')">投手/野手別</button>
+        <button class="sort-btn" id="btn-main" onclick="sortData('main')">成績順</button>
     </div>
     
     <div id="container" class="player-container">
@@ -70,10 +76,14 @@
                 const csvData = await response.text();
                 const rows = csvData.split(/\r?\n/).slice(1).filter(row => row.trim() !== "");
                 
-                allPlayers = rows.map(row => row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/"/g, '').trim()));
-                renderCards(allPlayers);
+                allPlayers = rows.map(row => {
+                    return row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
+                              .map(col => col.replace(/"/g, '').trim());
+                });
+
+                sortData('number');
             } catch (e) {
-                document.getElementById('loading').innerText = '失敗。スプレッドシートの形式を確認してください。';
+                document.getElementById('loading').innerText = '読み込み失敗。';
             }
         }
 
@@ -82,13 +92,23 @@
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
 
             if (type === 'number') {
-                sorted.sort((a, b) => Number(a[0]) - Number(b[0]));
+                // 背番号順 (00などは特殊なので考慮)
+                sorted.sort((a, b) => {
+                    const numA = a[0] === '00' ? -1 : (a[0] === '0' ? 0 : parseInt(a[0]));
+                    const numB = b[0] === '00' ? -1 : (b[0] === '0' ? 0 : parseInt(b[0]));
+                    return numA - numB;
+                });
                 document.getElementById('btn-num').classList.add('active');
-            } else if (type === 'type') {
-                // 投手か野手かで並び替え
-                sorted.sort((a, b) => a[9].localeCompare(b[9]));
-                document.getElementById('btn-type').classList.add('active');
+            } else if (type === 'role') {
+                // 投手/野手別
+                sorted.sort((a, b) => b[9].localeCompare(a[9]));
+                document.getElementById('btn-role').classList.add('active');
+            } else if (type === 'main') {
+                // 打率・防御率順
+                sorted.sort((a, b) => parseFloat(a[3]) - parseFloat(b[3]));
+                document.getElementById('btn-main').classList.add('active');
             }
+            
             renderCards(sorted);
         }
 
@@ -97,57 +117,49 @@
             container.innerHTML = '';
 
             data.forEach(cols => {
-                const isPitcher = (cols[9] === '投手'); // 10列目が「投手」ならtrue
+                if (cols.length < 10) return;
+                const role = cols[9]; // J列：投手 or 野手
                 const card = document.createElement('div');
-                card.className = `player-card ${isPitcher ? 'card-pitcher' : ''}`;
+                card.className = `player-card card-${role}`;
                 card.onclick = () => showDetail(cols);
                 
-                // 表示ラベルを切り替え
-                const label1 = isPitcher ? '防御率' : '打率';
-                const label2 = isPitcher ? '勝利' : '本塁打';
-                const val1 = cols[3]; // ここはスプレッドシートの並びに合わせる
-                const val2 = cols[4];
+                // 役割によってラベルを変更
+                const label1 = (role === '投手') ? '防御率' : '打率';
+                const label2 = (role === '投手') ? '勝利' : '本塁打';
 
                 card.innerHTML = `
-                    <p style="margin:0; font-size:11px;">${cols[9] || ''} NO.${cols[0]}</p>
+                    <p style="margin:0; font-size:11px; color:#b6a269;">${role} NO. ${cols[0]}</p>
                     <p class="name">${cols[1]}</p>
                     <hr>
                     <div class="stats-grid">
-                        <div><span class="label">${label1}</span><br><span class="stats">${val1}</span></div>
-                        <div><span class="label">${label2}</span><br><span class="stats">${val2}</span></div>
+                        <div><span class="label">${label1}</span><br><span class="stats">${cols[3]}</span></div>
+                        <div><span class="label">${label2}</span><br><span class="stats">${cols[4]}</span></div>
                     </div>`;
                 container.appendChild(card);
             });
         }
 
         function showDetail(data) {
-            const isPitcher = (data[9] === '投手');
+            const role = data[9];
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
-            
-            // 投手用と野手用で詳細レイアウトを出し分ける
-            let statsHtml = isPitcher ? `
-                <p>登板数：${data[2]}</p>
-                <p>防御率：${data[3]}</p>
-                <p>勝利数：${data[4]}</p>
-                <p>奪三振：${data[5]}</p>
-                <p>セーブ：${data[6]}</p>
-                <p>WHIP：${data[7]}</p>
-            ` : `
-                <p>試合数：${data[2]}</p>
-                <p>打率　：${data[3]}</p>
-                <p>本塁打：${data[4]}</p>
-                <p>打点　：${data[5]}</p>
-                <p>安打　：${data[6]}</p>
-                <p>OPS 　：${data[7]}</p>
-            `;
+
+            const statsLabel = (role === '投手') ? 
+                ['登板', '防御率', '勝利', '奪三振', '被安打', 'WHIP'] : 
+                ['試合', '打率', '本塁打', '打点', '安打', 'OPS'];
 
             detail.innerHTML = `
-                <p style="color:#b6a269;">${data[9]} 背番号 ${data[0]}</p>
-                <h2 style="color:#fff; font-size:32px;">${data[1]}</h2>
+                <p style="color:#b6a269; margin-bottom:5px;">${role} 背番号 ${data[0]}</p>
+                <h2 style="color:#fff; font-size:32px; margin:0 0 10px 0;">${data[1]}</h2>
+                <p style="color:#ccc; font-size:14px;">生年月日：${data[8]}</p>
                 <hr>
                 <div style="text-align:left; color:#fff; font-size:18px; line-height:1.8; width:fit-content; margin: 0 auto;">
-                    ${statsHtml}
+                    <div>${statsLabel[0]}：${data[2]}</div>
+                    <div>${statsLabel[1]}：${data[3]}</div>
+                    <div>${statsLabel[2]}：${data[4]}</div>
+                    <div>${statsLabel[3]}：${data[5]}</div>
+                    <div>${statsLabel[4]}：${data[6]}</div>
+                    <div>${statsLabel[5]}：${data[7]}</div>
                 </div>
             `;
             modal.style.display = 'flex';
