@@ -8,22 +8,29 @@
         body { background-color: #000033; font-family: 'Helvetica Neue', Arial, sans-serif; color: #b6a269; margin: 0; padding-bottom: 50px; }
         h1 { text-align: center; margin-top: 30px; letter-spacing: 2px; }
 
-        .controls { text-align: center; margin: 20px 0; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+        .controls { text-align: center; margin: 20px 0; display: flex; flex-direction: row; gap: 10px; justify-content: center; flex-wrap: wrap; }
         
         .filter-select {
             background-color: #000033; color: #fff; border: 1px solid #b6a269;
-            padding: 8px 16px; cursor: pointer; border-radius: 20px; transition: all 0.3s;
-            font-size: 14px; outline: none;
+            padding: 8px 16px; cursor: pointer; border-radius: 20px; font-size: 14px; outline: none;
         }
 
         .player-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; justify-content: center; }
         .player-card { 
             background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(182, 162, 105, 0.3);
             padding: 15px; width: 180px; border-radius: 12px; text-align: center; cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.2s; position: relative;
         }
         .player-card:hover { transform: translateY(-5px); border-color: #b6a269; box-shadow: 0 5px 15px rgba(182, 162, 105, 0.3); }
         
+        /* 軍バッジ */
+        .rank-badge {
+            position: absolute; top: 8px; right: 8px; font-size: 10px; padding: 2px 8px;
+            border-radius: 10px; font-weight: bold;
+        }
+        .rank-1 { background-color: #b6a269; color: #000; }
+        .rank-2 { background-color: #444; color: #fff; border: 1px solid #666; }
+
         .card-投手 { border-top: 4px solid #fff; }
         .card-野手 { border-top: 4px solid #b6a269; }
 
@@ -46,6 +53,12 @@
     <h1>ORIX PLAYER STATS</h1>
 
     <div class="controls">
+        <select id="rank-filter" class="filter-select" onchange="applyFilterAndSort()">
+            <option value="all">すべての軍</option>
+            <option value="一軍">一軍</option>
+            <option value="二軍">二軍</option>
+        </select>
+
         <select id="pos-filter" class="filter-select" onchange="applyFilterAndSort()">
             <option value="all">すべてのポジション</option>
             <option value="投手">投手（すべて）</option>
@@ -95,15 +108,17 @@
         }
 
         function applyFilterAndSort() {
-            const filterVal = document.getElementById('pos-filter').value;
+            const rankVal = document.getElementById('rank-filter').value;
+            const posVal = document.getElementById('pos-filter').value;
             
-            // フィルタリング
+            // フィルタリング（軍とポジションの両方で絞り込み）
             let filtered = allPlayers.filter(p => {
-                if (filterVal === 'all') return true;
-                return p[9] === filterVal || p[10] === filterVal;
+                const matchRank = (rankVal === 'all' || p[11] === rankVal); // L列(11)
+                const matchPos = (posVal === 'all' || p[9] === posVal || p[10] === posVal); // J列(9) or K列(10)
+                return matchRank && matchPos;
             });
 
-            // 常に背番号順でソート
+            // 背番号ソート
             filtered.sort((a, b) => {
                 const valA = a[0] === "00" ? -1 : (a[0] === "0" ? 0 : parseInt(a[0]) || 999);
                 const valB = b[0] === "00" ? -1 : (b[0] === "0" ? 0 : parseInt(b[0]) || 999);
@@ -119,14 +134,17 @@
 
             data.forEach(cols => {
                 const role = cols[9];
+                const rank = cols[11] || ""; // L列
                 const card = document.createElement('div');
                 card.className = `player-card card-${role}`;
                 card.onclick = () => showDetail(cols);
                 
                 const label1 = (role === '投手') ? '防御率' : '打率';
                 const label2 = (role === '投手') ? '勝利' : '本塁打';
+                const rankClass = (rank === '一軍') ? 'rank-1' : 'rank-2';
 
                 card.innerHTML = `
+                    ${rank ? `<div class="rank-badge ${rankClass}">${rank}</div>` : ''}
                     <p style="margin:0; font-size:11px; color:#b6a269;">${cols[10] || role} NO.${cols[0]}</p>
                     <p class="name">${cols[1]}</p>
                     <hr>
@@ -148,7 +166,7 @@
                 ['試合', '打率', '本塁打', '打点', '安打', 'OPS'];
 
             detail.innerHTML = `
-                <p style="color:#b6a269;">${data[10] || role} 背番号 ${data[0]}</p>
+                <p style="color:#b6a269;">[${data[11] || '-'}] ${data[10] || role} 背番号 ${data[0]}</p>
                 <h2 style="color:#fff; font-size:32px; margin: 0;">${data[1]}</h2>
                 <hr>
                 <div style="text-align:left; color:#fff; font-size:18px; line-height:1.8; width:fit-content; margin: 0 auto;">
@@ -163,7 +181,6 @@
         }
 
         function closeModal() { document.getElementById('modal').style.display = 'none'; }
-
         loadStats();
     </script>
 </body>
