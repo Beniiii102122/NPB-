@@ -7,42 +7,22 @@
     <style>
         body { background-color: #000033; font-family: 'Helvetica Neue', Arial, sans-serif; color: #b6a269; margin: 0; padding-bottom: 50px; }
         h1 { text-align: center; margin-top: 30px; letter-spacing: 2px; }
-
         .controls { text-align: center; margin: 20px 0; display: flex; flex-direction: row; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        
-        .filter-select {
-            background-color: #000033; color: #fff; border: 1px solid #b6a269;
-            padding: 8px 16px; cursor: pointer; border-radius: 20px; font-size: 14px; outline: none;
-        }
-
+        .filter-select { background-color: #000033; color: #fff; border: 1px solid #b6a269; padding: 8px 16px; cursor: pointer; border-radius: 20px; font-size: 14px; outline: none; }
         .player-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; justify-content: center; }
-        .player-card { 
-            background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(182, 162, 105, 0.3);
-            padding: 15px; width: 180px; border-radius: 12px; text-align: center; cursor: pointer;
-            transition: transform 0.2s; position: relative;
-        }
+        .player-card { background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(182, 162, 105, 0.3); padding: 15px; width: 180px; border-radius: 12px; text-align: center; cursor: pointer; transition: transform 0.2s; position: relative; }
         .player-card:hover { transform: translateY(-5px); border-color: #b6a269; box-shadow: 0 5px 15px rgba(182, 162, 105, 0.3); }
-        
-        .rank-badge {
-            position: absolute; top: 8px; right: 8px; font-size: 10px; padding: 2px 8px;
-            border-radius: 10px; font-weight: bold;
-        }
+        .rank-badge { position: absolute; top: 8px; right: 8px; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
         .rank-1 { background-color: #b6a269; color: #000; }
         .rank-2 { background-color: #444; color: #fff; border: 1px solid #666; }
-
         .card-投手 { border-top: 4px solid #fff; }
         .card-野手 { border-top: 4px solid #b6a269; }
-
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
         .label { font-size: 11px; color: #b6a269; opacity: 0.8; }
         .stats { font-size: 18px; color: #fff; font-weight: bold; }
         .name { font-size: 20px; margin: 5px 0; font-weight: bold; color: #fff; }
         hr { border: 0; border-top: 1px solid rgba(182, 162, 105, 0.3); margin: 10px 0; }
-
-        #modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.85); justify-content: center; align-items: center; z-index: 1000;
-        }
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background-color: #000044; border: 2px solid #b6a269; padding: 30px; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; }
         .close-btn { margin-top: 25px; background-color: #b6a269; color: #000; border: none; padding: 10px 30px; border-radius: 25px; cursor: pointer; font-weight: bold; }
     </style>
@@ -57,7 +37,6 @@
             <option value="一軍">一軍</option>
             <option value="二軍">二軍</option>
         </select>
-
         <select id="pos-filter" class="filter-select" onchange="applyFilterAndSort()">
             <option value="all">すべてのポジション</option>
             <option value="投手">投手（すべて）</option>
@@ -84,8 +63,8 @@
 
     <script>
         const SPREADSHEET_ID ='1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw';
-        const TAB_NAME = 'シート1'; 
-        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_NAME}`;
+        // URLの末尾を "tqx=out:csv" から変更し、データ型を保持しやすくします
+        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&headers=1`;
 
         let allPlayers = [];
 
@@ -93,16 +72,18 @@
             try {
                 const response = await fetch(url);
                 const csvData = await response.text();
-                const rows = csvData.split(/\r?\n/).slice(1).filter(row => row.trim() !== "");
+                // CSVのパースをより厳密に行う（"00"などが消えないように）
+                const rows = csvData.split(/\r?\n/).slice(1);
                 
                 allPlayers = rows.map(row => {
-                    return row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
-                              .map(col => col.replace(/"/g, '').trim());
-                });
+                    // カンマ区切りだが、引用符内のカンマを無視する正規表現
+                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    return cols.map(c => c.replace(/^"|"$/g, '').trim());
+                }).filter(p => p[1]); // 名前がある行だけ残す
 
                 applyFilterAndSort();
             } catch (e) {
-                document.getElementById('loading').innerText = '失敗。';
+                document.getElementById('loading').innerText = 'データ読み込みに失敗しました。';
             }
         }
 
@@ -117,13 +98,9 @@
             });
 
             filtered.sort((a, b) => {
-                const getNum = (s) => {
-                    if (s === "00") return -2;
-                    if (s === "0") return -1;
-                    const n = parseInt(s);
-                    return isNaN(n) ? 999 : n;
-                };
-                return getNum(a[0]) - getNum(b[0]);
+                const numA = a[0] === "00" ? -1 : (a[0] === "0" ? 0 : parseInt(a[0]) || 999);
+                const numB = b[0] === "00" ? -1 : (b[0] === "0" ? 0 : parseInt(b[0]) || 999);
+                return numA - numB;
             });
 
             renderCards(filtered);
@@ -133,21 +110,14 @@
             const container = document.getElementById('container');
             container.innerHTML = data.length ? '' : '<p>該当する選手がいません</p>';
 
-            data.forEach(cols => {
-                const role = cols[9];
-                const rank = cols[11] || "";
+            data.forEach(p => {
+                const role = p[9];
+                const rank = p[11];
+                const num = p[0]; // ここで "00" が入っているはず
                 
-                // 【超重要】00 を文字列として維持する処理
-                let num = cols[0];
-                if (num === "00" || num === "0") {
-                    // そのまま
-                } else if (!num) {
-                    num = "??";
-                }
-
                 const card = document.createElement('div');
                 card.className = `player-card card-${role}`;
-                card.onclick = () => showDetail(cols);
+                card.onclick = () => showDetail(p);
                 
                 const label1 = (role === '投手') ? '防御率' : '打率';
                 const label2 = (role === '投手') ? '勝利' : '本塁打';
@@ -155,19 +125,19 @@
 
                 card.innerHTML = `
                     ${rank ? `<div class="rank-badge ${rankClass}">${rank}</div>` : ''}
-                    <p style="margin:0; font-size:11px; color:#b6a269;">${cols[10] || role} NO.${num}</p>
-                    <p class="name">${cols[1]}</p>
+                    <p style="margin:0; font-size:11px; color:#b6a269;">${p[10] || role} NO.${num}</p>
+                    <p class="name">${p[1]}</p>
                     <hr>
                     <div class="stats-grid">
-                        <div><span class="label">${label1}</span><br><span class="stats">${cols[3]}</span></div>
-                        <div><span class="label">${label2}</span><br><span class="stats">${cols[4]}</span></div>
+                        <div><span class="label">${label1}</span><br><span class="stats">${p[3]}</span></div>
+                        <div><span class="label">${label2}</span><br><span class="stats">${p[4]}</span></div>
                     </div>`;
                 container.appendChild(card);
             });
         }
 
-        function showDetail(data) {
-            const role = data[9];
+        function showDetail(p) {
+            const role = p[9];
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
             const labels = (role === '投手') ? 
@@ -175,17 +145,17 @@
                 ['試合', '打率', '本塁打', '打点', '安打', 'OPS'];
 
             detail.innerHTML = `
-                <p style="color:#b6a269; margin-bottom: 5px;">[${data[11] || '-'}] ${data[10] || role} 背番号 ${data[0]}</p>
-                <h2 style="color:#fff; font-size:32px; margin: 0;">${data[1]}</h2>
-                <p style="color:#ccc; font-size:14px; margin: 10px 0;">生年月日：${data[8] || '不明'}</p>
+                <p style="color:#b6a269; margin-bottom: 5px;">[${p[11] || '-'}] ${p[10] || role} 背番号 ${p[0]}</p>
+                <h2 style="color:#fff; font-size:32px; margin: 0;">${p[1]}</h2>
+                <p style="color:#ccc; font-size:14px; margin: 10px 0;">生年月日：${p[8] || '----/--/--'}</p>
                 <hr>
                 <div style="text-align:left; color:#fff; font-size:18px; line-height:1.8; width:fit-content; margin: 0 auto;">
-                    <div>${labels[0]}：${data[2]}</div>
-                    <div>${labels[1]}：${data[3]}</div>
-                    <div>${labels[2]}：${data[4]}</div>
-                    <div>${labels[3]}：${data[5]}</div>
-                    <div>${labels[4]}：${data[6]}</div>
-                    <div>${labels[5]}：${data[7]}</div>
+                    <div>${labels[0]}：${p[2]}</div>
+                    <div>${labels[1]}：${p[3]}</div>
+                    <div>${labels[2]}：${p[4]}</div>
+                    <div>${labels[3]}：${p[5]}</div>
+                    <div>${labels[4]}：${p[6]}</div>
+                    <div>${labels[5]}：${p[7]}</div>
                 </div>`;
             modal.style.display = 'flex';
         }
