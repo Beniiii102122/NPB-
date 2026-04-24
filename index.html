@@ -102,7 +102,7 @@
 
                 applyFilterAndSort();
             } catch (e) {
-                document.getElementById('loading').innerText = '読み込み失敗。';
+                document.getElementById('loading').innerText = '失敗。';
             }
         }
 
@@ -116,7 +116,6 @@
                 return matchRank && matchPos;
             });
 
-            // 背番号ソート（00, 0 を最優先）
             filtered.sort((a, b) => {
                 const getNum = (s) => {
                     if (s === "00") return -2;
@@ -137,8 +136,15 @@
             data.forEach(cols => {
                 const role = cols[9];
                 const rank = cols[11] || "";
-                const num = cols[0];
                 
+                // 【超重要】00 を文字列として維持する処理
+                let num = cols[0];
+                if (num === "00" || num === "0") {
+                    // そのまま
+                } else if (!num) {
+                    num = "??";
+                }
+
                 const card = document.createElement('div');
                 card.className = `player-card card-${role}`;
                 card.onclick = () => showDetail(cols);
@@ -164,18 +170,14 @@
             const role = data[9];
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
-
             const labels = (role === '投手') ? 
                 ['登板', '防御率', '勝利', '敗戦', '奪三振', 'WHIP'] : 
                 ['試合', '打率', '本塁打', '打点', '安打', 'OPS'];
 
-            // 生年月日はインデックス8 (I列)
-            const birthday = data[8] || "不明";
-
             detail.innerHTML = `
                 <p style="color:#b6a269; margin-bottom: 5px;">[${data[11] || '-'}] ${data[10] || role} 背番号 ${data[0]}</p>
                 <h2 style="color:#fff; font-size:32px; margin: 0;">${data[1]}</h2>
-                <p style="color:#ccc; font-size:14px; margin: 10px 0;">生年月日：${birthday}</p>
+                <p style="color:#ccc; font-size:14px; margin: 10px 0;">生年月日：${data[8] || '不明'}</p>
                 <hr>
                 <div style="text-align:left; color:#fff; font-size:18px; line-height:1.8; width:fit-content; margin: 0 auto;">
                     <div>${labels[0]}：${data[2]}</div>
