@@ -1,74 +1,60 @@
 /**
- * Baseball Stats Automator - Robust Version
- * データのズレや空行によるバグを防止した修正版
+ * Baseball Stats Automator - Production Version
+ * バグ修正済み：シート名の不一致を自動解決します
  */
-
-const CONFIG = {
-  MAIN_SHEET: "シート1",
-  DATA_SHEET: "フォームの回答 3",
-  START_ROW: 2
-};
 
 function updateStats() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const mainSheet = ss.getSheetByName(CONFIG.MAIN_SHEET);
-  const dataSheet = ss.getSheetByName(CONFIG.DATA_SHEET);
   
+  // 【重要】名前で指定せず、1番目と2番目のシートとして取得
+  const mainSheet = ss.getSheets()[0]; // 一番左のタブ（選手名鑑）
+  const dataSheet = ss.getSheets()[1]; // 左から2番目のタブ（回答）
+
   if (!mainSheet || !dataSheet) {
-    console.error("シート名が見つかりません。設定を確認してください。");
+    console.error("シートが足りません。");
     return;
   }
 
+  const dName = dataSheet.getName(); // 実際のシート名を取得（バグ防止）
   const lastRow = mainSheet.getLastRow();
-  if (lastRow < CONFIG.START_ROW) return;
+  if (lastRow < 2) return;
 
-  // 10列分（C列〜L列）の範囲を取得
-  const targetRange = mainSheet.getRange(CONFIG.START_ROW, 3, lastRow - (CONFIG.START_ROW - 1), 10);
+  // 更新範囲（C列〜L列）
+  const targetRange = mainSheet.getRange(2, 3, lastRow - 1, 10);
   const formulas = [];
 
-  for (let i = CONFIG.START_ROW; i <= lastRow; i++) {
-    formulas.push(buildFormulas(i));
+  for (let i = 2; i <= lastRow; i++) {
+    const name = `$B${i}`;
+    const role = `$M${i}`;
+    const sumif = (col) => `=IFERROR(SUMIF('${dName}'!$B:$B, ${name}, '${dName}'!${col}), 0)`;
+
+    formulas.push([
+      sumif("$E:$E"), // C: 試合数
+      `=IF(${role}="投手", IFERROR($H${i}*9/($J${i}/3), 0), IFERROR($G${i}/$J${i}, 0))`, // D: 率
+      sumif("$F:$F"), // E: 本塁打
+      sumif("$G:$G"), // F: 打点
+      sumif("$D:$D"), // G: 安打
+      sumif("$J:$J"), // H: 長打
+      `=IF(${role}="投手", IFERROR(($G${i}+$L${i})/($J${i}/3), 0), IFERROR(($G${i}+$L${i}+$H${i}*2)/$J${i}, 0))`, // I: OPS
+      sumif("$C:$C"), // J: 打数
+      sumif("$H:$H"), // K: 盗塁
+      sumif("$I:$I")  // L: 四死球
+    ]);
   }
 
   targetRange.setFormulas(formulas);
   
-  // 書式設定
-  mainSheet.getRange(CONFIG.START_ROW, 4, lastRow - 1, 1).setNumberFormat("0.000"); // D列
-  mainSheet.getRange(CONFIG.START_ROW, 9, lastRow - 1, 1).setNumberFormat("0.000"); // I列
+  // 書式を小数点3桁に
+  mainSheet.getRange(2, 4, lastRow - 1, 1).setNumberFormat("0.000"); // D列
+  mainSheet.getRange(2, 9, lastRow - 1, 1).setNumberFormat("0.000"); // I列
 }
 
-function buildFormulas(row) {
-  const d = CONFIG.DATA_SHEET;
-  // B列の名前(名前)とM列の役割(投手/野手)を基準にする
-  const name = `$B${row}`;
-  const role = `$M${row}`;
-  
-  // SUMIFの参照先を「フォームの回答 3」の実際の列に固定
-  const sumif = (col) => `=IFERROR(SUMIF('${d}'!$B:$B, ${name}, '${d}'!${col}), 0)`;
-
-  return [
-    sumif("$E:$E"), // C: 試合数
-    `=IF(${role}="投手", IFERROR($H${row}*9/($J${row}/3), 0), IFERROR($G${row}/$J${row}, 0))`, // D: 打率/防御率
-    sumif("$F:$F"), // E: 本塁打
-    sumif("$G:$G"), // F: 打点
-    sumif("$D:$D"), // G: 安打
-    sumif("$J:$J"), // H: 長打
-    `=IF(${role}="投手", IFERROR(($G${row}+$L${row})/($J${row}/3), 0), IFERROR(($G${row}+$L${row}+$H${row}*2)/$J${row}, 0))`, // I: OPS/WHIP
-    sumif("$C:$C"), // J: 打数
-    sumif("$H:$H"), // K: 盗塁
-    sumif("$I:$I")  // L: 四死球
-  ];
-}
-
+/**
+ * 初期設定：これ一度だけ実行
+ */
 function setup() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const triggers = ScriptApp.getProjectTriggers();
-  triggers.forEach(t => ScriptApp.deleteTrigger(t));
-  
-  ScriptApp.newTrigger('updateStats')
-    .forSpreadsheet(ss)
-    .onFormSubmit()
-    .create();
-    
+  ScriptApp.getProjectTriggers().forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('updateStats').forSpreadsheet(ss).onFormSubmit().create();
   updateStats();
 }
