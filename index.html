@@ -6,54 +6,37 @@
     <title>オリックス名鑑 Pro</title>
     <style>
         body { background-color: #000033; font-family: sans-serif; color: #b6a269; margin: 0; }
-        
         .header-controls { 
-            background: rgba(0,0,51,0.95); 
-            position: sticky; top: 0; z-index: 100; 
-            border-bottom: 1px solid #b6a269; 
-            padding: 15px 10px; text-align: center;
+            background: rgba(0,0,51,0.95); position: sticky; top: 0; z-index: 100; 
+            border-bottom: 1px solid #b6a269; padding: 15px 10px; text-align: center;
         }
-        
         .search-box {
             width: 85%; max-width: 300px; padding: 10px; border-radius: 20px;
             border: 1px solid #b6a269; background: #000044; color: #fff;
             margin-bottom: 12px; outline: none;
         }
-
         .filter-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
         .btn { 
-            background: #b6a269; color: #000; border: none; 
-            padding: 6px 14px; border-radius: 4px; 
-            font-weight: bold; cursor: pointer; font-size: 12px;
+            background: #b6a269; color: #000; border: none; padding: 6px 14px; 
+            border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px;
         }
         .btn-outline { background: transparent; color: #b6a269; border: 1px solid #b6a269; }
         .btn.active { background: #fff; color: #000; border: 1px solid #fff; }
-
         .player-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; justify-content: center; }
         .player-card { 
-            background-color: rgba(255, 255, 255, 0.08); 
-            border: 1px solid #b6a269; padding: 15px; 
-            width: 175px; border-radius: 12px; text-align: center; 
+            background-color: rgba(255, 255, 255, 0.08); border: 1px solid #b6a269; 
+            padding: 15px; width: 175px; border-radius: 12px; text-align: center; 
             cursor: pointer; transition: transform 0.2s; position: relative;
         }
-        
-        .fav-star {
-            position: absolute; top: 10px; right: 10px;
-            font-size: 20px; color: #444; cursor: pointer;
-            transition: color 0.2s;
-        }
+        .fav-star { position: absolute; top: 10px; right: 10px; font-size: 20px; color: #444; cursor: pointer; }
         .fav-star.active { color: #ffcc00; }
-
         .main-stats { background: rgba(182, 162, 105, 0.15); border-radius: 8px; padding: 8px; margin: 10px 0; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
-        
         .label { font-size: 10px; color: #b6a269; display: block; }
         .stats-val { font-size: 18px; color: #fff; font-weight: bold; }
         .sub-stats-val { font-size: 14px; color: #eee; font-weight: bold; }
-        
         .name { font-size: 20px; margin: 5px 0; font-weight: bold; color: #fff; }
         .number-tag { font-size: 11px; background: #b6a269; color: #000; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
-        
         #modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 1000;
@@ -71,22 +54,12 @@
             <button class="btn btn-outline" id="btn-f" onclick="setFilter('野手')">野手</button>
         </div>
     </div>
-
-    <div id="container" class="player-container">
-        <p id="loading">読み込み中...</p>
-    </div>
-
-    <div id="modal" onclick="closeModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div id="modal-detail"></div>
-            <button style="margin-top:20px; padding:10px 20px; background:#b6a269; border:none; font-weight:bold; border-radius:5px;" onclick="closeModal()">閉じる</button>
-        </div>
-    </div>
+    <div id="container" class="player-container"><p id="loading">読み込み中...</p></div>
+    <div id="modal" onclick="closeModal()"><div class="modal-content" onclick="event.stopPropagation()"><div id="modal-detail"></div><button style="margin-top:20px; padding:10px 20px; background:#b6a269; border:none; font-weight:bold; border-radius:5px;" onclick="closeModal()">閉じる</button></div></div>
 
     <script>
         const SPREADSHEET_ID = '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw';
-        const TAB_NAME = 'シート1'; 
-        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_NAME}`;
+        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=シート1`;
 
         let allPlayers = [];
         let currentFilter = 'all';
@@ -99,8 +72,10 @@
                 const rows = csvData.split('\n').slice(1);
                 allPlayers = rows.map(row => {
                     const cols = row.split(',').map(col => col.replace(/"/g, '').trim());
+                    // 背番号を文字列として確実に扱う
+                    const numStr = String(cols[0]);
                     return {
-                        number: cols[0], // 数値化(parseInt)せず、文字列として保持
+                        number: numStr, 
                         name: cols[1],
                         gameCount: cols[2],
                         val1: cols[3],
@@ -111,26 +86,19 @@
                     };
                 }).filter(p => p.name);
                 filterData();
-            } catch (e) {
-                document.getElementById('loading').innerText = 'データ読み込みエラー';
-            }
+            } catch (e) { document.getElementById('loading').innerText = 'データ読み込みエラー'; }
         }
 
         function toggleFav(e, name) {
             e.stopPropagation();
-            if (favorites.includes(name)) {
-                favorites = favorites.filter(f => f !== name);
-            } else {
-                favorites.push(name);
-            }
+            favorites.includes(name) ? favorites = favorites.filter(f => f !== name) : favorites.push(name);
             localStorage.setItem('orix_favs', JSON.stringify(favorites));
             filterData();
         }
 
         function setFilter(type) {
             currentFilter = type;
-            document.querySelectorAll('.btn').forEach(b => b.classList.add('btn-outline'));
-            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.btn').forEach(b => { b.classList.add('btn-outline'); b.classList.remove('active'); });
             const idMap = {'all':'btn-all', 'fav':'btn-fav', '投手':'btn-p', '野手':'btn-f'};
             document.getElementById(idMap[type]).classList.add('active');
             document.getElementById(idMap[type]).classList.remove('btn-outline');
@@ -147,23 +115,18 @@
                 return matchesSearch && matchesFilter;
             });
 
-            // ソート処理（背番号順、ただしお気に入りは最優先）
             filtered.sort((a, b) => {
                 const aFav = favorites.includes(a.name) ? 1 : 0;
                 const bFav = favorites.includes(b.name) ? 1 : 0;
                 if (bFav !== aFav) return bFav - aFav;
-                
-                // 背番号を数値として比較（00や0にも対応）
                 return parseInt(a.number) - parseInt(b.number);
             });
-            
             renderCards(filtered);
         }
 
         function renderCards(data) {
             const container = document.getElementById('container');
             container.innerHTML = data.length ? '' : '<p>該当選手なし</p>';
-            
             data.forEach(p => {
                 const isPitcher = p.role === '投手';
                 const isRelief = p.subRole === 'リリーフ';
@@ -180,6 +143,7 @@
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(p.all);
+                // ${p.number} を直接使う。空文字チェックを排除し、強制表示
                 card.innerHTML = `
                     <div class="fav-star ${isFav?'active':''}" onclick="toggleFav(event, '${p.name}')">★</div>
                     <span class="number-tag">#${p.number}</span>
@@ -202,9 +166,10 @@
         function showDetail(data) {
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
+            const num = String(data[0]);
             detail.innerHTML = `
                 <h2 style="color:#fff; font-size:32px; margin-bottom:5px;">${data[1]}</h2>
-                <p style="color:#b6a269;">#${data[0]} | ${data[14]} | ${data[13]}</p>
+                <p style="color:#b6a269;">#${num} | ${data[14]} | ${data[13]}</p>
                 <hr>
                 <div style="text-align:left; color:#fff; font-size:16px; line-height:2; display:grid; grid-template-columns:1fr 1fr; margin-top:15px;">
                     <p>${data[12]==='投手'?'登板':'試合'}：${data[2]}</p> <p>${data[12]==='投手'?'防御率':'打率'}：${data[3]}</p>
@@ -214,7 +179,6 @@
                 </div>`;
             modal.style.display = 'flex';
         }
-
         function closeModal() { document.getElementById('modal').style.display = 'none'; }
         loadStats();
     </script>
