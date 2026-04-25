@@ -59,6 +59,7 @@
 
     <script>
         const SPREADSHEET_ID = '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw';
+        // URLに tqx=out:csv;header:1 を指定して、極力文字列として取得を試みる
         const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=シート1`;
 
         let allPlayers = [];
@@ -72,11 +73,20 @@
                 const rows = csvData.split('\n').slice(1);
                 allPlayers = rows.map(row => {
                     const cols = row.split(',').map(col => col.replace(/"/g, '').trim());
-                    // 背番号を文字列として確実に扱う
-                    const numStr = String(cols[0]);
+                    
+                    let finalNum = cols[0];
+                    let playerName = cols[1] || "";
+
+                    // エスピノーザ選手専用の絶対表示ロジック
+                    if (playerName.includes("エスピノーザ")) {
+                        finalNum = "00";
+                    } else if (playerName.includes("渡部")) {
+                        finalNum = "0";
+                    }
+
                     return {
-                        number: numStr, 
-                        name: cols[1],
+                        number: finalNum, 
+                        name: playerName,
                         gameCount: cols[2],
                         val1: cols[3],
                         role: cols[12],
@@ -119,6 +129,7 @@
                 const aFav = favorites.includes(a.name) ? 1 : 0;
                 const bFav = favorites.includes(b.name) ? 1 : 0;
                 if (bFav !== aFav) return bFav - aFav;
+                // ソート時は数値として扱う
                 return parseInt(a.number) - parseInt(b.number);
             });
             renderCards(filtered);
@@ -142,8 +153,7 @@
 
                 const card = document.createElement('div');
                 card.className = 'player-card';
-                card.onclick = () => showDetail(p.all);
-                // ${p.number} を直接使う。空文字チェックを排除し、強制表示
+                card.onclick = () => showDetail(p);
                 card.innerHTML = `
                     <div class="fav-star ${isFav?'active':''}" onclick="toggleFav(event, '${p.name}')">★</div>
                     <span class="number-tag">#${p.number}</span>
@@ -163,19 +173,19 @@
             });
         }
 
-        function showDetail(data) {
+        function showDetail(p) {
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
-            const num = String(data[0]);
+            const data = p.all;
             detail.innerHTML = `
-                <h2 style="color:#fff; font-size:32px; margin-bottom:5px;">${data[1]}</h2>
-                <p style="color:#b6a269;">#${num} | ${data[14]} | ${data[13]}</p>
+                <h2 style="color:#fff; font-size:32px; margin-bottom:5px;">${p.name}</h2>
+                <p style="color:#b6a269;">#${p.number} | ${p.group} | ${p.subRole}</p>
                 <hr>
                 <div style="text-align:left; color:#fff; font-size:16px; line-height:2; display:grid; grid-template-columns:1fr 1fr; margin-top:15px;">
-                    <p>${data[12]==='投手'?'登板':'試合'}：${data[2]}</p> <p>${data[12]==='投手'?'防御率':'打率'}：${data[3]}</p>
-                    <p>${data[12]==='投手'?'勝利':'本塁'}：${data[4]}</p> <p>${data[12]==='投手'?'敗戦':'打点'}：${data[5]}</p>
-                    <p>${data[12]==='投手'?'奪三':'安打'}：${data[6]}</p> <p>${data[12]==='投手'?'H':'盗塁'}：${data[10]}</p>
-                    <p>${data[12]==='投手'?'S':'四球'}：${data[11]}</p> <p>${data[12]==='投手'?'WHIP':'OPS'}：${data[8]}</p>
+                    <p>${p.role==='投手'?'登板':'試合'}：${p.gameCount}</p> <p>${p.role==='投手'?'防御率':'打率'}：${p.val1}</p>
+                    <p>${p.role==='投手'?'勝利':'本塁'}：${data[4]}</p> <p>${p.role==='投手'?'敗戦':'打点'}：${data[5]}</p>
+                    <p>${p.role==='投手'?'奪三':'安打'}：${data[6]}</p> <p>${p.role==='投手'?'H':'盗塁'}：${data[10]}</p>
+                    <p>${p.role==='投手'?'S':'四球'}：${data[11]}</p> <p>${p.role==='投手'?'WHIP':'OPS'}：${data[8]}</p>
                 </div>`;
             modal.style.display = 'flex';
         }
