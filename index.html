@@ -22,6 +22,7 @@
         .label { font-size: 11px; color: #b6a269; }
         .stats { font-size: 18px; color: #fff; font-weight: bold; }
         .name { font-size: 20px; margin: 5px 0; font-weight: bold; }
+        .pos { font-size: 12px; color: #ccc; margin-bottom: 5px; }
         hr { border: 0; border-top: 1px solid #b6a269; }
         #modal {
             display: none;
@@ -66,8 +67,8 @@
     </div>
 
     <script>
-        // ★正しいIDに直しました
-        const SPREADSHEET_ID ='1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw';
+        // スプレッドシートの設定
+        const SPREADSHEET_ID = '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw';
         const TAB_NAME = 'シート1'; 
         const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_NAME}`;
 
@@ -75,50 +76,60 @@
             try {
                 const response = await fetch(url);
                 const csvData = await response.text();
+                // 1行目（ヘッダー）を飛ばして処理
                 const rows = csvData.split('\n').slice(1);
                 const container = document.getElementById('container');
                 container.innerHTML = '';
 
                 rows.forEach(row => {
-                    const cols = row.split(',').map(col => col.replace(/"/g, ''));
+                    // CSVのカンマ区切りを配列にする
+                    const cols = row.split(',').map(col => col.replace(/"/g, '').trim());
                     if (cols.length < 2) return;
+
+                    // データの割り当て（スプレッドシートの列順）
+                    const number = cols[0]; // 背番号
+                    const name = cols[1];   // 名前
+                    const avgOrEra = cols[3]; // 打率/防御率
+                    const hrOrWin = cols[4];  // 本塁打/勝利
+                    const pos = cols[13];    // ポジション
+                    const group = cols[14];  // 軍構成
 
                     const card = document.createElement('div');
                     card.className = 'player-card';
-                    card.onclick = () => showDetail(cols); // ここをシンプルにしました
+                    card.onclick = () => showDetail(cols);
                     
                     card.innerHTML = `
-                        <p style="margin:0; font-size:12px;">背番号 ${cols[0]}</p>
-                        <p class="name">${cols[1]}</p>
+                        <p style="margin:0; font-size:12px;">${group} | 背番号 ${number}</p>
+                        <p class="name">${name}</p>
+                        <p class="pos">${pos}</p>
                         <hr>
                         <div class="stats-grid">
-                            <div><span class="label">打率</span><br><span class="stats">${cols[3]}</span></div>
-                            <div><span class="label">本塁打</span><br><span class="stats">${cols[4]}</span></div>
+                            <div><span class="label">打率/防御</span><br><span class="stats">${avgOrEra}</span></div>
+                            <div><span class="label">本塁打/勝</span><br><span class="stats">${hrOrWin}</span></div>
                         </div>
                         <p style="font-size:10px; margin-top:10px;">タップで詳細を表示</p>`;
                     container.appendChild(card);
                 });
             } catch (e) {
-                document.getElementById('loading').innerText = '読み込み失敗。設定を確認してね！';
+                document.getElementById('loading').innerText = '読み込み失敗。スプレッドシートの「ウェブに公開」を確認してね！';
             }
         }
 
-        // 詳細画面を表示する関数（生年月日対応版）
         function showDetail(data) {
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
             detail.innerHTML = `
-                <p style="color:#b6a269;">背番号 ${data[0]}</p>
-                <h2 style="color:#fff; font-size:32px;">${data[1]}</h2>
-                <p style="color:#ccc; font-size:14px;">生年月日：${data[8] || '未入力'}</p>
+                <p style="color:#b6a269;">${data[14]} | 背番号 ${data[0]}</p>
+                <h2 style="color:#fff; font-size:32px; margin-bottom:0;">${data[1]}</h2>
+                <p style="color:#ccc; font-size:14px;">${data[13]}（${data[15]}生）</p>
                 <hr>
-                <div style="text-align:left; color:#fff; font-size:18px; line-height:2;">
-                    <p>試合数：${data[2]}</p>
-                    <p>打率：${data[3]}</p>
-                    <p>本塁打：${data[4]}</p>
-                    <p>打点：${data[5]}</p>
-                    <p>安打：${data[6]}</p>
-                    <p>OPS：${data[7]}</p>
+                <div style="text-align:left; color:#fff; font-size:18px; line-height:1.8;">
+                    <p>試合/登板：${data[2]}</p>
+                    <p>打率/防御率：${data[3]}</p>
+                    <p>本塁打/勝利：${data[4]}</p>
+                    <p>打点/敗戦：${data[5]}</p>
+                    <p>安打/奪三振：${data[6]}</p>
+                    <p>OPS/WHIP：${data[8]}</p>
                 </div>
             `;
             modal.style.display = 'flex';
