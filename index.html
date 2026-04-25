@@ -6,51 +6,79 @@
     <title>オリックス名鑑 Pro</title>
     <style>
         body { background-color: #000033; font-family: sans-serif; color: #b6a269; margin: 0; }
-        .controls { text-align: center; padding: 10px; background: rgba(0,0,0,0.8); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #b6a269; }
-        .sort-btn { background: #b6a269; color: #000; border: none; padding: 6px 14px; margin: 3px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        
+        /* コントロールエリアの装飾 */
+        .header-controls { 
+            background: rgba(0,0,51,0.95); 
+            position: sticky; top: 0; z-index: 100; 
+            border-bottom: 1px solid #b6a269; 
+            padding: 15px 10px;
+            text-align: center;
+        }
+        
+        /* 1. 検索窓のスタイル */
+        .search-box {
+            width: 80%; max-width: 300px;
+            padding: 10px; border-radius: 20px;
+            border: 1px solid #b6a269;
+            background: #000044; color: #fff;
+            margin-bottom: 10px; outline: none;
+        }
+
+        /* 2. フィルターボタンのスタイル */
+        .filter-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+        .btn { 
+            background: #b6a269; color: #000; border: none; 
+            padding: 6px 12px; border-radius: 4px; 
+            font-weight: bold; cursor: pointer; font-size: 12px;
+        }
+        .btn-outline { background: transparent; color: #b6a269; border: 1px solid #b6a269; }
+        .btn.active { background: #fff; color: #000; border: 1px solid #fff; }
+
+        /* カードのスタイル */
         .player-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; justify-content: center; }
         .player-card { 
             background-color: rgba(255, 255, 255, 0.1); 
-            border: 1px solid #b6a269; 
-            padding: 15px; 
-            width: 185px; 
-            border-radius: 8px; 
-            text-align: center; 
-            cursor: pointer;
-            transition: transform 0.2s;
+            border: 1px solid #b6a269; padding: 15px; 
+            width: 180px; border-radius: 8px; text-align: center; 
+            cursor: pointer; transition: transform 0.2s;
         }
         .player-card:active { transform: scale(0.95); }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
         .label { font-size: 10px; color: #b6a269; }
         .stats { font-size: 16px; color: #fff; font-weight: bold; }
         .name { font-size: 20px; margin: 5px 0; font-weight: bold; }
-        .pos { font-size: 12px; color: #ccc; margin-bottom: 5px; }
         hr { border: 0; border-top: 1px solid #b6a269; }
+
+        /* モーダル */
         #modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 1000;
         }
         .modal-content { background-color: #000044; border: 2px solid #b6a269; padding: 30px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; }
-        .close-btn { margin-top: 20px; background-color: #b6a269; color: #000; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h1 style="text-align: center; margin: 20px 0 10px 0;">ORIX PLAYER STATS</h1>
-    
-    <div class="controls">
-        <button class="sort-btn" onclick="sortData('number')">背番号順</button>
-        <button class="sort-btn" onclick="sortData('group')">一軍/二軍</button>
-        <button class="sort-btn" onclick="sortData('role')">投手/野手</button>
+    <div class="header-controls">
+        <input type="text" id="searchInput" class="search-box" placeholder="選手名や背番号で検索..." oninput="filterData()">
+        
+        <div class="filter-group">
+            <button class="btn active" id="btn-all" onclick="setFilter('all')">全員</button>
+            <button class="btn btn-outline" id="btn-p" onclick="setFilter('投手')">投手</button>
+            <button class="btn btn-outline" id="btn-f" onclick="setFilter('野手')">野手</button>
+            <button class="btn btn-outline" id="btn-1" onclick="setFilter('一軍')">一軍</button>
+            <button class="btn btn-outline" id="btn-2" onclick="setFilter('二軍')">二軍</button>
+        </div>
     </div>
 
     <div id="container" class="player-container">
-        <p id="loading">データを読み込み中...</p>
+        <p id="loading">読み込み中...</p>
     </div>
 
     <div id="modal" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div id="modal-detail"></div>
-            <button class="close-btn" onclick="closeModal()">閉じる</button>
+            <button style="margin-top:20px; padding:10px 20px;" onclick="closeModal()">閉じる</button>
         </div>
     </div>
 
@@ -59,109 +87,86 @@
         const TAB_NAME = 'シート1'; 
         const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_NAME}`;
 
-        let playerData = [];
+        let allPlayers = [];
+        let currentFilter = 'all';
 
         async function loadStats() {
             try {
                 const response = await fetch(url);
                 const csvData = await response.text();
                 const rows = csvData.split('\n').slice(1);
-                
-                playerData = rows.map(row => {
+                allPlayers = rows.map(row => {
                     const cols = row.split(',').map(col => col.replace(/"/g, '').trim());
                     return {
-                        number: parseInt(cols[0]) || 0,
-                        name: cols[1],
-                        role: cols[12],     // 役割（投手/野手）
-                        subRole: cols[13],  // ポジション（先発/中継ぎ/抑え/内野手など）
-                        gameCount: cols[2], // 試合数/登板数
-                        stats1: cols[3],    // 打率/防御率
-                        stats2: cols[4],    // 本塁打/勝利
-                        stats3: cols[5],    // 打点/敗戦
-                        stats4: cols[10],   // 盗塁/ホールド
-                        stats5: cols[11],   // 四死球/セーブ
-                        all: cols
+                        number: cols[0], name: cols[1], role: cols[12], 
+                        subRole: cols[13], group: cols[14], all: cols
                     };
                 }).filter(p => p.name);
-
-                renderCards(playerData);
+                filterData();
             } catch (e) {
-                document.getElementById('loading').innerText = '読み込み失敗。設定を確認してね！';
+                document.getElementById('loading').innerText = 'エラーが発生しました';
             }
+        }
+
+        function setFilter(type) {
+            currentFilter = type;
+            document.querySelectorAll('.btn').forEach(b => b.classList.add('btn-outline'));
+            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+            const targetId = type === 'all' ? 'btn-all' : type === '投手' ? 'btn-p' : type === '野手' ? 'btn-f' : type === '一軍' ? 'btn-1' : 'btn-2';
+            document.getElementById(targetId).classList.add('active');
+            document.getElementById(targetId).classList.remove('btn-outline');
+            filterData();
+        }
+
+        function filterData() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allPlayers.filter(p => {
+                const matchesSearch = p.name.includes(searchText) || p.number.includes(searchText);
+                let matchesFilter = true;
+                if (currentFilter === '投手' || currentFilter === '野手') matchesFilter = p.role === currentFilter;
+                if (currentFilter === '一軍' || currentFilter === '二軍') matchesFilter = p.group === currentFilter;
+                return matchesSearch && matchesFilter;
+            });
+            renderCards(filtered);
         }
 
         function renderCards(data) {
             const container = document.getElementById('container');
-            container.innerHTML = '';
+            container.innerHTML = data.length ? '' : '<p>該当する選手がいません</p>';
             data.forEach(p => {
-                let l1, v1, l2, v2, l3, v3, l4, v4;
                 const isPitcher = p.role === '投手';
-
-                if (isPitcher) {
-                    l1 = '登板'; v1 = p.gameCount;
-                    l2 = '防御率'; v2 = p.stats1;
-                    if (p.subRole === '先発') {
-                        l3 = '勝利'; v3 = p.stats2;
-                        l4 = '敗戦'; v4 = p.stats3;
-                    } else {
-                        l3 = 'ホールド'; v3 = p.stats4;
-                        l4 = 'セーブ'; v4 = p.stats5;
-                    }
-                } else {
-                    l1 = '試合'; v1 = p.gameCount;
-                    l2 = '打率'; v2 = p.stats1;
-                    l3 = '本塁打'; v3 = p.stats2;
-                    l4 = '打点'; v4 = p.stats3;
-                }
-
+                const l1 = isPitcher ? '防御率' : '打率';
+                const l2 = isPitcher ? (p.subRole === '先発' ? '勝利' : 'セーブ') : '本塁打';
+                
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(p.all);
                 card.innerHTML = `
-                    <p style="margin:0; font-size:10px;">${p.all[14]} | ${p.subRole}</p>
-                    <p style="margin:0; font-size:11px;">背番号 ${p.all[0]}</p>
+                    <p style="margin:0; font-size:10px;">${p.group} | ${p.subRole}</p>
+                    <p style="margin:0; font-size:11px;">#${p.number}</p>
                     <p class="name">${p.name}</p>
                     <hr>
                     <div class="stats-grid">
-                        <div><span class="label">${l1}</span><br><span class="stats">${v1}</span></div>
-                        <div><span class="label">${l2}</span><br><span class="stats">${v2}</span></div>
-                        <div><span class="label">${l3}</span><br><span class="stats">${v3}</span></div>
-                        <div><span class="label">${l4}</span><br><span class="stats">${v4}</span></div>
+                        <div><span class="label">${l1}</span><br><span class="stats">${p.all[3]}</span></div>
+                        <div><span class="label">${l2}</span><br><span class="stats">${isPitcher && p.subRole !== '先発' ? p.all[11] : p.all[4]}</span></div>
                     </div>`;
                 container.appendChild(card);
             });
         }
 
-        function sortData(type) {
-            let sorted = [...playerData];
-            if (type === 'number') sorted.sort((a, b) => a.number - b.number);
-            else if (type === 'group') sorted.sort((a, b) => a.all[14].localeCompare(b.all[14]));
-            else if (type === 'role') sorted.sort((a, b) => a.role.localeCompare(b.role));
-            renderCards(sorted);
-        }
-
         function showDetail(data) {
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
-            const isPitcher = data[12] === '投手';
-            const isSenpatsu = data[13] === '先発';
-
             detail.innerHTML = `
-                <p style="color:#b6a269;">${data[14]} | 背番号 ${data[0]}</p>
-                <h2 style="color:#fff; font-size:32px; margin: 10px 0;">${data[1]}</h2>
-                <p style="color:#ccc; font-size:14px;">${data[13]} | ${data[12]}</p>
+                <h2 style="color:#fff; font-size:32px; margin-bottom:5px;">${data[1]}</h2>
+                <p style="color:#b6a269;">#${data[0]} | ${data[14]} | ${data[13]}</p>
                 <hr>
-                <div style="text-align:left; color:#fff; font-size:16px; line-height:1.7; margin-top:15px; display: grid; grid-template-columns: 1fr 1fr;">
-                    <p>${isPitcher ? '登板' : '試合'}：${data[2]}</p>
-                    <p>${isPitcher ? '防御率' : '打率'}：${data[3]}</p>
-                    <p>${isPitcher ? '勝利' : '本塁打'}：${data[4]}</p>
-                    <p>${isPitcher ? '敗戦' : '打点'}：${data[5]}</p>
-                    <p>${isPitcher ? '奪三振' : '安打'}：${data[6]}</p>
-                    <p>${isPitcher ? 'ホールド' : '盗塁'}：${data[10]}</p>
-                    <p>${isPitcher ? 'セーブ' : '四死球'}：${data[11]}</p>
-                    <p>${isPitcher ? 'WHIP' : 'OPS'}：${data[8]}</p>
-                </div>
-            `;
+                <div style="text-align:left; color:#fff; font-size:16px; line-height:2; display:grid; grid-template-columns:1fr 1fr; margin-top:15px;">
+                    <p>試合：${data[2]}</p> <p>打率/防御：${data[3]}</p>
+                    <p>本塁/勝利：${data[4]}</p> <p>打点/敗戦：${data[5]}</p>
+                    <p>安打/奪三：${data[6]}</p> <p>盗塁/H：${data[10]}</p>
+                    <p>四球/S：${data[11]}</p> <p>OPS/WHIP：${data[8]}</p>
+                </div>`;
             modal.style.display = 'flex';
         }
 
