@@ -37,7 +37,6 @@
             cursor: pointer; transition: transform 0.2s; position: relative;
         }
         
-        /* お気に入り星マーク */
         .fav-star {
             position: absolute; top: 10px; right: 10px;
             font-size: 20px; color: #444; cursor: pointer;
@@ -80,7 +79,7 @@
     <div id="modal" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div id="modal-detail"></div>
-            <button style="margin-top:20px; padding:10px 20px; background:#b6a269; border:none; font-weight:bold;" onclick="closeModal()">閉じる</button>
+            <button style="margin-top:20px; padding:10px 20px; background:#b6a269; border:none; font-weight:bold; border-radius:5px;" onclick="closeModal()">閉じる</button>
         </div>
     </div>
 
@@ -143,7 +142,6 @@
                 return matchesSearch && matchesFilter;
             });
 
-            // お気に入りを上に並べる（「全員」表示の時など）
             if (currentFilter !== 'fav') {
                 filtered.sort((a, b) => {
                     const aFav = favorites.includes(a.name) ? 1 : 0;
@@ -160,7 +158,19 @@
             
             data.forEach(p => {
                 const isPitcher = p.role === '投手';
+                const isRelief = p.subRole === 'リリーフ';
                 const isFav = favorites.includes(p.name);
+                
+                // 表示ラベルの決定
+                const mainLabel1 = isPitcher ? '登板' : '試合';
+                const mainLabel2 = isPitcher ? '防御率' : '打率';
+                const subLabel1 = isPitcher ? (isRelief ? 'ホールド' : '勝利') : '本塁打';
+                const subLabel2 = isPitcher ? (isRelief ? 'セーブ' : '敗戦') : '打点';
+                
+                // 値の取得（リリーフの場合は10列目と11列目を使用）
+                const valSub1 = (isPitcher && isRelief) ? p.all[10] : p.all[4];
+                const valSub2 = (isPitcher && isRelief) ? p.all[11] : p.all[5];
+
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(p.all);
@@ -171,13 +181,13 @@
                     <p class="name">${p.name}</p>
                     <div class="main-stats">
                         <div class="stats-grid" style="margin-top:0;">
-                            <div><span class="label">${isPitcher?'登板':'試合'}</span><span class="stats-val">${p.gameCount}</span></div>
-                            <div><span class="label">${isPitcher?'防御率':'打率'}</span><span class="stats-val">${p.val1}</span></div>
+                            <div><span class="label">${mainLabel1}</span><span class="stats-val">${p.gameCount}</span></div>
+                            <div><span class="label">${mainLabel2}</span><span class="stats-val">${p.val1}</span></div>
                         </div>
                     </div>
                     <div class="stats-grid">
-                        <div><span class="label">${isPitcher?'勝利':'本塁'}</span><span class="sub-stats-val">${p.val2}</span></div>
-                        <div><span class="label">${isPitcher?'敗戦':'打点'}</span><span class="sub-stats-val">${p.val3}</span></div>
+                        <div><span class="label">${subLabel1}</span><span class="sub-stats-val">${valSub1}</span></div>
+                        <div><span class="label">${subLabel2}</span><span class="sub-stats-val">${valSub2}</span></div>
                     </div>`;
                 container.appendChild(card);
             });
