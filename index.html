@@ -1,26 +1,25 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>選手成績名鑑</title>
-    <link href="https://unpkg.com/tabulator-tables/dist/css/tabulator.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/tabulator-tables/dist/js/tabulator.min.js"></script>
-</head>
-<body>
-    <h1>2026年度 選手成績</h1>
-    <div id="stats-table"></div>
+function onFormSubmit(e) {
+  const GITHUB_TOKEN = "あなたのトークン";
+  const REPO_OWNER = "あなたのユーザー名";
+  const REPO_NAME = "リポジトリ名";
+  const FILE_PATH = "data.json"; // 保存先ファイル名
 
-    <script>
-        // ここでCSVを読み込んで表にする処理を書く
-        var table = new Tabulator("#stats-table", {
-            ajaxURL: "data.csv", // あなたのCSVファイル
-            layout: "fitColumns",
-            columns: [
-                {title: "背番号", field: "背番号"},
-                {title: "名前", field: "名前"},
-                {title: "打率", field: "打率/防御率"},
-                // ...項目を並べる
-            ],
-        });
-    </script>
-</body>
-</html>
+  // 1. スプレッドシートの全データを取得してJSONにする
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const values = sheet.getDataRange().getValues();
+  const headers = values[0];
+  const data = values.slice(1).map(row => {
+    let obj = {};
+    headers.forEach((header, i) => obj[header] = row[i]);
+    return obj;
+  });
+
+  const content = Utilities.base64Encode(JSON.stringify(data, null, 2), Utilities.Charset.UTF_8);
+  
+  // 2. GitHub APIを叩いてファイルを更新
+  // (※実際には現在のファイルのSHAを取得する処理が必要ですが、簡略化しています)
+  const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+  
+  // ここでGitHubにデータをPushする処理を実行
+  // ...
+}
