@@ -22,12 +22,22 @@
         }
         .btn-outline { background: transparent; color: #b6a269; border: 1px solid #b6a269; }
         .btn.active { background: #fff; color: #000; border: 1px solid #fff; }
+
         .player-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; justify-content: center; }
         .player-card { 
             background-color: rgba(255, 255, 255, 0.08); border: 1px solid #b6a269; 
             padding: 15px; width: 175px; border-radius: 12px; text-align: center; 
             cursor: pointer; transition: transform 0.2s; position: relative;
         }
+
+        /* 誕生日の演出 */
+        .birthday-card { border: 2px solid #ff69b4 !important; background: rgba(255, 105, 180, 0.1) !important; }
+        .birthday-badge { 
+            background: #ff69b4; color: #fff; font-size: 10px; padding: 2px 8px; 
+            border-radius: 10px; position: absolute; top: -10px; left: 50%; 
+            transform: translateX(-50%); font-weight: bold; white-space: nowrap;
+        }
+
         .fav-star { position: absolute; top: 10px; right: 10px; font-size: 20px; color: #444; cursor: pointer; }
         .fav-star.active { color: #ffcc00; }
         .main-stats { background: rgba(182, 162, 105, 0.15); border-radius: 8px; padding: 8px; margin: 10px 0; }
@@ -37,6 +47,7 @@
         .sub-stats-val { font-size: 14px; color: #eee; font-weight: bold; }
         .name { font-size: 20px; margin: 5px 0; font-weight: bold; color: #fff; }
         .number-tag { font-size: 11px; background: #b6a269; color: #000; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
+        
         #modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 1000;
@@ -59,12 +70,19 @@
 
     <script>
         const SPREADSHEET_ID = '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw';
-        // URLに tqx=out:csv;header:1 を指定して、極力文字列として取得を試みる
         const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=シート1`;
 
         let allPlayers = [];
         let currentFilter = 'all';
         let favorites = JSON.parse(localStorage.getItem('orix_favs')) || [];
+
+        // 今日が誕生日か判定する関数 (月/日が一致するか)
+        function isTodayBirthday(birthdayStr) {
+            if (!birthdayStr) return false;
+            const today = new Date();
+            const birthDate = new Date(birthdayStr);
+            return today.getMonth() === birthDate.getMonth() && today.getDate() === birthDate.getDate();
+        }
 
         async function loadStats() {
             try {
@@ -73,16 +91,10 @@
                 const rows = csvData.split('\n').slice(1);
                 allPlayers = rows.map(row => {
                     const cols = row.split(',').map(col => col.replace(/"/g, '').trim());
-                    
                     let finalNum = cols[0];
                     let playerName = cols[1] || "";
-
-                    // エスピノーザ選手専用の絶対表示ロジック
-                    if (playerName.includes("エスピノーザ")) {
-                        finalNum = "00";
-                    } else if (playerName.includes("渡部")) {
-                        finalNum = "0";
-                    }
+                    if (playerName.includes("エスピノーザ")) finalNum = "00";
+                    else if (playerName.includes("渡部")) finalNum = "0";
 
                     return {
                         number: finalNum, 
@@ -92,6 +104,7 @@
                         role: cols[12],
                         subRole: cols[13],
                         group: cols[14],
+                        birthday: cols[15], // 生年月日列(16番目)
                         all: cols
                     };
                 }).filter(p => p.name);
@@ -126,10 +139,14 @@
             });
 
             filtered.sort((a, b) => {
+                // 誕生日を最優先、次にお気に入り、次に背番号
+                const aBirth = isTodayBirthday(a.birthday) ? 1 : 0;
+                const bBirth = isTodayBirthday(b.birthday) ? 1 : 0;
+                if (bBirth !== aBirth) return bBirth - aBirth;
+
                 const aFav = favorites.includes(a.name) ? 1 : 0;
                 const bFav = favorites.includes(b.name) ? 1 : 0;
                 if (bFav !== aFav) return bFav - aFav;
-                // ソート時は数値として扱う
                 return parseInt(a.number) - parseInt(b.number);
             });
             renderCards(filtered);
@@ -142,6 +159,7 @@
                 const isPitcher = p.role === '投手';
                 const isRelief = p.subRole === 'リリーフ';
                 const isFav = favorites.includes(p.name);
+                const isBirthday = isTodayBirthday(p.birthday);
                 
                 const mainLabel1 = isPitcher ? '登板' : '試合';
                 const mainLabel2 = isPitcher ? '防御率' : '打率';
@@ -152,9 +170,10 @@
                 const valSub2 = (isPitcher && isRelief) ? p.all[11] : p.all[5];
 
                 const card = document.createElement('div');
-                card.className = 'player-card';
+                card.className = `player-card ${isBirthday ? 'birthday-card' : ''}`;
                 card.onclick = () => showDetail(p);
                 card.innerHTML = `
+                    ${isBirthday ? '<div class="birthday-badge">🎂 HAPPY BIRTHDAY!</div>' : ''}
                     <div class="fav-star ${isFav?'active':''}" onclick="toggleFav(event, '${p.name}')">★</div>
                     <span class="number-tag">#${p.number}</span>
                     <p style="margin:5px 0 0 0; font-size:10px; color:#ccc;">${p.group} | ${p.subRole}</p>
@@ -180,6 +199,7 @@
             detail.innerHTML = `
                 <h2 style="color:#fff; font-size:32px; margin-bottom:5px;">${p.name}</h2>
                 <p style="color:#b6a269;">#${p.number} | ${p.group} | ${p.subRole}</p>
+                <p style="color:#fff; font-size:14px;">🎂 誕生日: ${p.birthday}</p>
                 <hr>
                 <div style="text-align:left; color:#fff; font-size:16px; line-height:2; display:grid; grid-template-columns:1fr 1fr; margin-top:15px;">
                     <p>${p.role==='投手'?'登板':'試合'}：${p.gameCount}</p> <p>${p.role==='投手'?'防御率':'打率'}：${p.val1}</p>
