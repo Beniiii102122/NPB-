@@ -7,50 +7,54 @@
     <style>
         body { background-color: #000033; font-family: sans-serif; color: #b6a269; margin: 0; }
         
-        /* コントロールエリアの装飾 */
         .header-controls { 
             background: rgba(0,0,51,0.95); 
             position: sticky; top: 0; z-index: 100; 
             border-bottom: 1px solid #b6a269; 
-            padding: 15px 10px;
-            text-align: center;
+            padding: 15px 10px; text-align: center;
         }
         
-        /* 1. 検索窓のスタイル */
         .search-box {
-            width: 80%; max-width: 300px;
-            padding: 10px; border-radius: 20px;
-            border: 1px solid #b6a269;
-            background: #000044; color: #fff;
-            margin-bottom: 10px; outline: none;
+            width: 85%; max-width: 300px; padding: 10px; border-radius: 20px;
+            border: 1px solid #b6a269; background: #000044; color: #fff;
+            margin-bottom: 12px; outline: none;
         }
 
-        /* 2. フィルターボタンのスタイル */
-        .filter-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+        .filter-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
         .btn { 
             background: #b6a269; color: #000; border: none; 
-            padding: 6px 12px; border-radius: 4px; 
+            padding: 6px 14px; border-radius: 4px; 
             font-weight: bold; cursor: pointer; font-size: 12px;
         }
         .btn-outline { background: transparent; color: #b6a269; border: 1px solid #b6a269; }
         .btn.active { background: #fff; color: #000; border: 1px solid #fff; }
 
-        /* カードのスタイル */
         .player-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; justify-content: center; }
         .player-card { 
-            background-color: rgba(255, 255, 255, 0.1); 
+            background-color: rgba(255, 255, 255, 0.08); 
             border: 1px solid #b6a269; padding: 15px; 
-            width: 180px; border-radius: 8px; text-align: center; 
-            cursor: pointer; transition: transform 0.2s;
+            width: 175px; border-radius: 12px; text-align: center; 
+            cursor: pointer; transition: transform 0.2s; position: relative;
         }
-        .player-card:active { transform: scale(0.95); }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
-        .label { font-size: 10px; color: #b6a269; }
-        .stats { font-size: 16px; color: #fff; font-weight: bold; }
-        .name { font-size: 20px; margin: 5px 0; font-weight: bold; }
-        hr { border: 0; border-top: 1px solid #b6a269; }
+        
+        /* お気に入り星マーク */
+        .fav-star {
+            position: absolute; top: 10px; right: 10px;
+            font-size: 20px; color: #444; cursor: pointer;
+            transition: color 0.2s;
+        }
+        .fav-star.active { color: #ffcc00; }
 
-        /* モーダル */
+        .main-stats { background: rgba(182, 162, 105, 0.15); border-radius: 8px; padding: 8px; margin: 10px 0; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
+        
+        .label { font-size: 10px; color: #b6a269; display: block; }
+        .stats-val { font-size: 18px; color: #fff; font-weight: bold; }
+        .sub-stats-val { font-size: 14px; color: #eee; font-weight: bold; }
+        
+        .name { font-size: 20px; margin: 5px 0; font-weight: bold; color: #fff; }
+        .number-tag { font-size: 11px; background: #b6a269; color: #000; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
+        
         #modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 1000;
@@ -60,14 +64,12 @@
 </head>
 <body>
     <div class="header-controls">
-        <input type="text" id="searchInput" class="search-box" placeholder="選手名や背番号で検索..." oninput="filterData()">
-        
+        <input type="text" id="searchInput" class="search-box" placeholder="名前・背番号で検索..." oninput="filterData()">
         <div class="filter-group">
             <button class="btn active" id="btn-all" onclick="setFilter('all')">全員</button>
+            <button class="btn btn-outline" id="btn-fav" onclick="setFilter('fav')">★推し</button>
             <button class="btn btn-outline" id="btn-p" onclick="setFilter('投手')">投手</button>
             <button class="btn btn-outline" id="btn-f" onclick="setFilter('野手')">野手</button>
-            <button class="btn btn-outline" id="btn-1" onclick="setFilter('一軍')">一軍</button>
-            <button class="btn btn-outline" id="btn-2" onclick="setFilter('二軍')">二軍</button>
         </div>
     </div>
 
@@ -78,7 +80,7 @@
     <div id="modal" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div id="modal-detail"></div>
-            <button style="margin-top:20px; padding:10px 20px;" onclick="closeModal()">閉じる</button>
+            <button style="margin-top:20px; padding:10px 20px; background:#b6a269; border:none; font-weight:bold;" onclick="closeModal()">閉じる</button>
         </div>
     </div>
 
@@ -89,6 +91,7 @@
 
         let allPlayers = [];
         let currentFilter = 'all';
+        let favorites = JSON.parse(localStorage.getItem('orix_favs')) || [];
 
         async function loadStats() {
             try {
@@ -98,57 +101,83 @@
                 allPlayers = rows.map(row => {
                     const cols = row.split(',').map(col => col.replace(/"/g, '').trim());
                     return {
-                        number: cols[0], name: cols[1], role: cols[12], 
-                        subRole: cols[13], group: cols[14], all: cols
+                        number: cols[0], name: cols[1], gameCount: cols[2],
+                        val1: cols[3], val2: cols[4], val3: cols[5],
+                        role: cols[12], subRole: cols[13], group: cols[14], all: cols
                     };
                 }).filter(p => p.name);
                 filterData();
             } catch (e) {
-                document.getElementById('loading').innerText = 'エラーが発生しました';
+                document.getElementById('loading').innerText = 'データ読み込みエラー';
             }
+        }
+
+        function toggleFav(e, name) {
+            e.stopPropagation();
+            if (favorites.includes(name)) {
+                favorites = favorites.filter(f => f !== name);
+            } else {
+                favorites.push(name);
+            }
+            localStorage.setItem('orix_favs', JSON.stringify(favorites));
+            filterData();
         }
 
         function setFilter(type) {
             currentFilter = type;
             document.querySelectorAll('.btn').forEach(b => b.classList.add('btn-outline'));
             document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-            const targetId = type === 'all' ? 'btn-all' : type === '投手' ? 'btn-p' : type === '野手' ? 'btn-f' : type === '一軍' ? 'btn-1' : 'btn-2';
-            document.getElementById(targetId).classList.add('active');
-            document.getElementById(targetId).classList.remove('btn-outline');
+            const idMap = {'all':'btn-all', 'fav':'btn-fav', '投手':'btn-p', '野手':'btn-f'};
+            document.getElementById(idMap[type]).classList.add('active');
+            document.getElementById(idMap[type]).classList.remove('btn-outline');
             filterData();
         }
 
         function filterData() {
             const searchText = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allPlayers.filter(p => {
+            let filtered = allPlayers.filter(p => {
                 const matchesSearch = p.name.includes(searchText) || p.number.includes(searchText);
                 let matchesFilter = true;
-                if (currentFilter === '投手' || currentFilter === '野手') matchesFilter = p.role === currentFilter;
-                if (currentFilter === '一軍' || currentFilter === '二軍') matchesFilter = p.group === currentFilter;
+                if (currentFilter === 'fav') matchesFilter = favorites.includes(p.name);
+                else if (currentFilter === '投手' || currentFilter === '野手') matchesFilter = p.role === currentFilter;
                 return matchesSearch && matchesFilter;
             });
+
+            // お気に入りを上に並べる（「全員」表示の時など）
+            if (currentFilter !== 'fav') {
+                filtered.sort((a, b) => {
+                    const aFav = favorites.includes(a.name) ? 1 : 0;
+                    const bFav = favorites.includes(b.name) ? 1 : 0;
+                    return bFav - aFav;
+                });
+            }
             renderCards(filtered);
         }
 
         function renderCards(data) {
             const container = document.getElementById('container');
-            container.innerHTML = data.length ? '' : '<p>該当する選手がいません</p>';
+            container.innerHTML = data.length ? '' : '<p>該当選手なし</p>';
+            
             data.forEach(p => {
                 const isPitcher = p.role === '投手';
-                const l1 = isPitcher ? '防御率' : '打率';
-                const l2 = isPitcher ? (p.subRole === '先発' ? '勝利' : 'セーブ') : '本塁打';
-                
+                const isFav = favorites.includes(p.name);
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(p.all);
                 card.innerHTML = `
-                    <p style="margin:0; font-size:10px;">${p.group} | ${p.subRole}</p>
-                    <p style="margin:0; font-size:11px;">#${p.number}</p>
+                    <div class="fav-star ${isFav?'active':''}" onclick="toggleFav(event, '${p.name}')">★</div>
+                    <span class="number-tag">#${p.number}</span>
+                    <p style="margin:5px 0 0 0; font-size:10px; color:#ccc;">${p.group} | ${p.subRole}</p>
                     <p class="name">${p.name}</p>
-                    <hr>
+                    <div class="main-stats">
+                        <div class="stats-grid" style="margin-top:0;">
+                            <div><span class="label">${isPitcher?'登板':'試合'}</span><span class="stats-val">${p.gameCount}</span></div>
+                            <div><span class="label">${isPitcher?'防御率':'打率'}</span><span class="stats-val">${p.val1}</span></div>
+                        </div>
+                    </div>
                     <div class="stats-grid">
-                        <div><span class="label">${l1}</span><br><span class="stats">${p.all[3]}</span></div>
-                        <div><span class="label">${l2}</span><br><span class="stats">${isPitcher && p.subRole !== '先発' ? p.all[11] : p.all[4]}</span></div>
+                        <div><span class="label">${isPitcher?'勝利':'本塁'}</span><span class="sub-stats-val">${p.val2}</span></div>
+                        <div><span class="label">${isPitcher?'敗戦':'打点'}</span><span class="sub-stats-val">${p.val3}</span></div>
                     </div>`;
                 container.appendChild(card);
             });
@@ -162,10 +191,10 @@
                 <p style="color:#b6a269;">#${data[0]} | ${data[14]} | ${data[13]}</p>
                 <hr>
                 <div style="text-align:left; color:#fff; font-size:16px; line-height:2; display:grid; grid-template-columns:1fr 1fr; margin-top:15px;">
-                    <p>試合：${data[2]}</p> <p>打率/防御：${data[3]}</p>
-                    <p>本塁/勝利：${data[4]}</p> <p>打点/敗戦：${data[5]}</p>
-                    <p>安打/奪三：${data[6]}</p> <p>盗塁/H：${data[10]}</p>
-                    <p>四球/S：${data[11]}</p> <p>OPS/WHIP：${data[8]}</p>
+                    <p>${data[12]==='投手'?'登板':'試合'}：${data[2]}</p> <p>${data[12]==='投手'?'防御率':'打率'}：${data[3]}</p>
+                    <p>${data[12]==='投手'?'勝利':'本塁'}：${data[4]}</p> <p>${data[12]==='投手'?'敗戦':'打点'}：${data[5]}</p>
+                    <p>${data[12]==='投手'?'奪三':'安打'}：${data[6]}</p> <p>${data[12]==='投手'?'H':'盗塁'}：${data[10]}</p>
+                    <p>${data[12]==='投手'?'S':'四球'}：${data[11]}</p> <p>${data[12]==='投手'?'WHIP':'OPS'}：${data[8]}</p>
                 </div>`;
             modal.style.display = 'flex';
         }
