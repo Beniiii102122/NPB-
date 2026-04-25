@@ -13,7 +13,7 @@
             background-color: rgba(255, 255, 255, 0.1); 
             border: 1px solid #b6a269; 
             padding: 15px; 
-            width: 180px; 
+            width: 185px; 
             border-radius: 8px; 
             text-align: center; 
             cursor: pointer;
@@ -70,22 +70,23 @@
                 playerData = rows.map(row => {
                     const cols = row.split(',').map(col => col.replace(/"/g, '').trim());
                     return {
-                        number: parseInt(cols[0]) || 999,
+                        number: parseInt(cols[0]) || 0,
                         name: cols[1],
-                        role: cols[12],
-                        stats1: cols[3], // 打率/防御率
-                        stats2: cols[4], // 本塁打/勝利
-                        stats3: cols[10], // 盗塁/ホールド
-                        stats4: cols[11], // 四死球/セーブ
-                        pos: cols[13],
-                        group: cols[14],
+                        role: cols[12],     // 役割（投手/野手）
+                        subRole: cols[13],  // ポジション（先発/中継ぎ/抑え/内野手など）
+                        gameCount: cols[2], // 試合数/登板数
+                        stats1: cols[3],    // 打率/防御率
+                        stats2: cols[4],    // 本塁打/勝利
+                        stats3: cols[5],    // 打点/敗戦
+                        stats4: cols[10],   // 盗塁/ホールド
+                        stats5: cols[11],   // 四死球/セーブ
                         all: cols
                     };
                 }).filter(p => p.name);
 
                 renderCards(playerData);
             } catch (e) {
-                document.getElementById('loading').innerText = '読み込み失敗。スプレッドシートの公開設定を確認してね！';
+                document.getElementById('loading').innerText = '読み込み失敗。設定を確認してね！';
             }
         }
 
@@ -93,25 +94,39 @@
             const container = document.getElementById('container');
             container.innerHTML = '';
             data.forEach(p => {
+                let l1, v1, l2, v2, l3, v3, l4, v4;
                 const isPitcher = p.role === '投手';
-                const label1 = isPitcher ? '防御率' : '打率';
-                const label2 = isPitcher ? '勝利' : '本塁打';
-                const label3 = isPitcher ? 'ホールド' : '盗塁';
+
+                if (isPitcher) {
+                    l1 = '登板'; v1 = p.gameCount;
+                    l2 = '防御率'; v2 = p.stats1;
+                    if (p.subRole === '先発') {
+                        l3 = '勝利'; v3 = p.stats2;
+                        l4 = '敗戦'; v4 = p.stats3;
+                    } else {
+                        l3 = 'ホールド'; v3 = p.stats4;
+                        l4 = 'セーブ'; v4 = p.stats5;
+                    }
+                } else {
+                    l1 = '試合'; v1 = p.gameCount;
+                    l2 = '打率'; v2 = p.stats1;
+                    l3 = '本塁打'; v3 = p.stats2;
+                    l4 = '打点'; v4 = p.stats3;
+                }
 
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(p.all);
                 card.innerHTML = `
-                    <p style="margin:0; font-size:10px;">${p.group} | ${p.role}</p>
-                    <p style="margin:0; font-size:11px;">背番号 ${p.number === 999 ? '00' : p.number}</p>
+                    <p style="margin:0; font-size:10px;">${p.all[14]} | ${p.subRole}</p>
+                    <p style="margin:0; font-size:11px;">背番号 ${p.all[0]}</p>
                     <p class="name">${p.name}</p>
-                    <p class="pos">${p.pos}</p>
                     <hr>
                     <div class="stats-grid">
-                        <div><span class="label">${label1}</span><br><span class="stats">${p.stats1}</span></div>
-                        <div><span class="label">${label2}</span><br><span class="stats">${p.stats2}</span></div>
-                        <div><span class="label">${label3}</span><br><span class="stats">${p.stats3}</span></div>
-                        <div><span class="label">${isPitcher ? 'セーブ' : '四死球'}</span><br><span class="stats">${p.stats4}</span></div>
+                        <div><span class="label">${l1}</span><br><span class="stats">${v1}</span></div>
+                        <div><span class="label">${l2}</span><br><span class="stats">${v2}</span></div>
+                        <div><span class="label">${l3}</span><br><span class="stats">${v3}</span></div>
+                        <div><span class="label">${l4}</span><br><span class="stats">${v4}</span></div>
                     </div>`;
                 container.appendChild(card);
             });
@@ -120,7 +135,7 @@
         function sortData(type) {
             let sorted = [...playerData];
             if (type === 'number') sorted.sort((a, b) => a.number - b.number);
-            else if (type === 'group') sorted.sort((a, b) => a.group.localeCompare(b.group));
+            else if (type === 'group') sorted.sort((a, b) => a.all[14].localeCompare(b.all[14]));
             else if (type === 'role') sorted.sort((a, b) => a.role.localeCompare(b.role));
             renderCards(sorted);
         }
@@ -129,7 +144,8 @@
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
             const isPitcher = data[12] === '投手';
-            
+            const isSenpatsu = data[13] === '先発';
+
             detail.innerHTML = `
                 <p style="color:#b6a269;">${data[14]} | 背番号 ${data[0]}</p>
                 <h2 style="color:#fff; font-size:32px; margin: 10px 0;">${data[1]}</h2>
