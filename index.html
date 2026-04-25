@@ -100,9 +100,14 @@
                 allPlayers = rows.map(row => {
                     const cols = row.split(',').map(col => col.replace(/"/g, '').trim());
                     return {
-                        number: cols[0], name: cols[1], gameCount: cols[2],
-                        val1: cols[3], val2: cols[4], val3: cols[5],
-                        role: cols[12], subRole: cols[13], group: cols[14], all: cols
+                        number: cols[0], // 数値化(parseInt)せず、文字列として保持
+                        name: cols[1],
+                        gameCount: cols[2],
+                        val1: cols[3],
+                        role: cols[12],
+                        subRole: cols[13],
+                        group: cols[14],
+                        all: cols
                     };
                 }).filter(p => p.name);
                 filterData();
@@ -142,13 +147,16 @@
                 return matchesSearch && matchesFilter;
             });
 
-            if (currentFilter !== 'fav') {
-                filtered.sort((a, b) => {
-                    const aFav = favorites.includes(a.name) ? 1 : 0;
-                    const bFav = favorites.includes(b.name) ? 1 : 0;
-                    return bFav - aFav;
-                });
-            }
+            // ソート処理（背番号順、ただしお気に入りは最優先）
+            filtered.sort((a, b) => {
+                const aFav = favorites.includes(a.name) ? 1 : 0;
+                const bFav = favorites.includes(b.name) ? 1 : 0;
+                if (bFav !== aFav) return bFav - aFav;
+                
+                // 背番号を数値として比較（00や0にも対応）
+                return parseInt(a.number) - parseInt(b.number);
+            });
+            
             renderCards(filtered);
         }
 
@@ -161,13 +169,11 @@
                 const isRelief = p.subRole === 'リリーフ';
                 const isFav = favorites.includes(p.name);
                 
-                // 表示ラベルの決定
                 const mainLabel1 = isPitcher ? '登板' : '試合';
                 const mainLabel2 = isPitcher ? '防御率' : '打率';
                 const subLabel1 = isPitcher ? (isRelief ? 'ホールド' : '勝利') : '本塁打';
                 const subLabel2 = isPitcher ? (isRelief ? 'セーブ' : '敗戦') : '打点';
                 
-                // 値の取得（リリーフの場合は10列目と11列目を使用）
                 const valSub1 = (isPitcher && isRelief) ? p.all[10] : p.all[4];
                 const valSub2 = (isPitcher && isRelief) ? p.all[11] : p.all[5];
 
