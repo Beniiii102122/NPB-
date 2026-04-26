@@ -36,41 +36,49 @@
             <button class="btn btn-outline" id="btn-f" onclick="setFilter('野手')">野手</button>
         </div>
     </div>
-    <div id="container" class="player-container"><p id="loading">CSVを読み込み中...</p></div>
+    <div id="container" class="player-container"><p id="loading">選手データを読み込み中...</p></div>
     <div id="modal" onclick="closeModal()"><div class="modal-content" onclick="event.stopPropagation()"><div id="modal-detail"></div><button style="margin-top:20px; padding:10px 20px; background:#b6a269; border:none; font-weight:bold; border-radius:5px;" onclick="closeModal()">閉じる</button></div></div>
 
     <script>
-        // GitHubに上げたCSVのファイル名
         const CSV_FILE = '選手名鑑 - オリックス.csv';
-
         let allPlayers = [];
         let currentFilter = 'all';
         let favorites = JSON.parse(localStorage.getItem('orix_favs')) || [];
 
-        // CSVを解析する関数
-        function parseCSV(text) {
-            const lines = text.split(/\r?\n/);
-            const headers = lines[0].split(',');
-            return lines.slice(1).filter(line => line).map(line => {
-                const values = line.split(',');
-                let obj = {};
-                headers.forEach((header, i) => {
-                    obj[header.trim()] = values[i] ? values[i].trim() : "";
-                });
-                return obj;
-            });
-        }
-
-        async function loadData() {
+        // 文字コードを判別して解析する関数
+        async function loadAndParseCSV() {
             try {
-                // 同じフォルダにあるCSVファイルを読み込む
-                const res = await fetch(CSV_FILE);
-                if (!res.ok) throw new Error();
-                const text = await res.acceptCharset ? await res.text() : await res.text();
-                allPlayers = parseCSV(text).filter(p => p["名前"]);
+                const response = await fetch(CSV_FILE);
+                if (!response.ok) throw new Error('File not found');
+                
+                const arrayBuffer = await response.arrayBuffer();
+                const decoder = new TextDecoder('utf-8');
+                let text = decoder.decode(arrayBuffer);
+
+                // もし文字化けしていたらShift-JISで再読み込み
+                if (text.includes('')) {
+                    const sjisDecoder = new TextDecoder('shift-jis');
+                    text = sjisDecoder.decode(arrayBuffer);
+                }
+
+                const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+                const headers = lines[0].split(',').map(h => h.trim());
+                
+                allPlayers = lines.slice(1).map(line => {
+                    const values = line.split(',');
+                    let obj = {};
+                    headers.forEach((header, i) => {
+                        obj[header] = values[i] ? values[i].trim() : "";
+                    });
+                    return obj;
+                }).filter(p => p["名前"]);
+
+                if (allPlayers.length === 0) throw new Error('No data');
                 filterData();
             } catch (e) {
-                document.getElementById('loading').innerText = 'CSVファイルが見つかりません。index.htmlと同じ場所にアップロードしてください。';
+                document.getElementById('loading').innerHTML = 
+                    `<p style="color:red;">データの読み込みに失敗しました。</p>
+                     <p style="font-size:12px;">確認事項:<br>1. ファイル名が「${CSV_FILE}」か<br>2. index.htmlと同じ場所にあるか</p>`;
             }
         }
 
@@ -100,12 +108,11 @@
             container.innerHTML = data.length ? '' : '<p>該当選手なし</p>';
             data.forEach(p => {
                 const isP = p["役割"] === '投手';
-                const isFav = favorites.includes(p["名前"]);
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(p);
                 card.innerHTML = `
-                    <div class="fav-star ${isFav?'active':''}" onclick="event.stopPropagation(); toggleFav('${p["名前"]}')">★</div>
+                    <div class="fav-star ${favorites.includes(p["名前"])?'active':''}" onclick="event.stopPropagation(); toggleFav('${p["名前"]}')">★</div>
                     <span class="number-tag">#${p["背番号"]}</span>
                     <p style="margin:5px 0 0 0; font-size:10px; color:#ccc;">${p["ポジション"]}</p>
                     <p class="name">${p["名前"]}</p>
@@ -128,16 +135,17 @@
         function showDetail(p) {
             const isP = p["役割"] === '投手';
             document.getElementById('modal-detail').innerHTML = `
-                <h2 style="font-size:28px; margin-bottom:10px;">${p["名前"]}</h2>
+                <h2 style="font-size:28px;">${p["名前"]}</h2>
                 <p>#${p["背番号"]} | ${p["ポジション"]}</p>
-                <div style="display:grid; grid-template-columns:1fr 1fr; text-align:left; gap:10px; margin-top:15px; border-top:1px solid #b6a269; pt:15px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; text-align:left; gap:10px; margin-top:15px; border-top:1px solid #b6a269; padding-top:15px;">
                     <p>${isP?'登板':'試合'}: ${p["試合数/登板数"]}</p><p>${isP?'防御':'打率'}: ${p["打率/防御率"]}</p>
                     <p>${isP?'勝利':'本塁'}: ${p["本塁打/勝利"]}</p><p>${isP?'敗戦':'打点'}: ${p["打点/敗戦"]}</p>
                 </div>`;
             document.getElementById('modal').style.display = 'flex';
         }
         function closeModal() { document.getElementById('modal').style.display = 'none'; }
-        loadData();
+        
+        loadAndParseCSV();
     </script>
 </body>
 </html>
