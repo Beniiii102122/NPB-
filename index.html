@@ -1,14 +1,15 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>オリックス名鑑 Pro</title>
     <style>
+        /* オリックスカラー（ネイビー＆ゴールド） */
         body { background-color: #000033; font-family: sans-serif; color: #b6a269; margin: 0; }
         .header-controls { 
             background: rgba(0,0,51,0.95); position: sticky; top: 0; z-index: 100; 
-            border-bottom: 1px solid #b6a269; padding: 15px 10px; text-align: center;
+            border-bottom: 2px solid #b6a269; padding: 15px 10px; text-align: center;
         }
         .search-box {
             width: 85%; max-width: 300px; padding: 10px; border-radius: 20px;
@@ -29,6 +30,7 @@
             padding: 15px; width: 175px; border-radius: 12px; text-align: center; 
             cursor: pointer; transition: transform 0.2s; position: relative;
         }
+        .player-card:hover { transform: scale(1.03); background-color: rgba(182, 162, 105, 0.1); }
 
         /* 誕生日の演出 */
         .birthday-card { border: 2px solid #ff69b4 !important; background: rgba(255, 105, 180, 0.1) !important; }
@@ -69,47 +71,34 @@
     <div id="modal" onclick="closeModal()"><div class="modal-content" onclick="event.stopPropagation()"><div id="modal-detail"></div><button style="margin-top:20px; padding:10px 20px; background:#b6a269; border:none; font-weight:bold; border-radius:5px;" onclick="closeModal()">閉じる</button></div></div>
 
     <script>
-        const SPREADSHEET_ID = '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw';
-        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=シート1`;
+        // 【重要】あなたのGASウェブアプリURLをここに貼り付けてください
+        const API_URL = 'あなたのGASウェブアプリURL';
 
         let allPlayers = [];
         let currentFilter = 'all';
         let favorites = JSON.parse(localStorage.getItem('orix_favs')) || [];
 
-        // 今日が誕生日か判定する関数 (月/日が一致するか)
         function isTodayBirthday(birthdayStr) {
             if (!birthdayStr) return false;
             const today = new Date();
             const birthDate = new Date(birthdayStr);
+            if (isNaN(birthDate.getTime())) return false;
             return today.getMonth() === birthDate.getMonth() && today.getDate() === birthDate.getDate();
         }
 
         async function loadStats() {
             try {
-                const response = await fetch(url);
-                const csvData = await response.text();
-                const rows = csvData.split('\n').slice(1);
-                allPlayers = rows.map(row => {
-                    const cols = row.split(',').map(col => col.replace(/"/g, '').trim());
-                    let finalNum = cols[0];
-                    let playerName = cols[1] || "";
-                    if (playerName.includes("エスピノーザ")) finalNum = "00";
-                    else if (playerName.includes("渡部")) finalNum = "0";
-
-                    return {
-                        number: finalNum, 
-                        name: playerName,
-                        gameCount: cols[2],
-                        val1: cols[3],
-                        role: cols[12],
-                        subRole: cols[13],
-                        group: cols[14],
-                        birthday: cols[15], // 生年月日列(16番目)
-                        all: cols
-                    };
-                }).filter(p => p.name);
+                const response = await fetch(API_URL);
+                allPlayers = await response.json();
+                
+                if (allPlayers.error) throw new Error(allPlayers.error);
+                
+                allPlayers = allPlayers.filter(p => p["名前"]);
                 filterData();
-            } catch (e) { document.getElementById('loading').innerText = 'データ読み込みエラー'; }
+            } catch (e) { 
+                console.error(e);
+                document.getElementById('loading').innerText = 'エラー：GASのURLを確認してください'; 
+            }
         }
 
         function toggleFav(e, name) {
@@ -131,23 +120,27 @@
         function filterData() {
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             let filtered = allPlayers.filter(p => {
-                const matchesSearch = p.name.includes(searchText) || p.number.includes(searchText);
+                const name = String(p["名前"] || "");
+                const num = String(p["背番号"] || "");
+                const role = p["役割"] || "";
+                
+                const matchesSearch = name.includes(searchText) || num.includes(searchText);
                 let matchesFilter = true;
-                if (currentFilter === 'fav') matchesFilter = favorites.includes(p.name);
-                else if (currentFilter === '投手' || currentFilter === '野手') matchesFilter = p.role === currentFilter;
+                if (currentFilter === 'fav') matchesFilter = favorites.includes(name);
+                else if (currentFilter === '投手' || currentFilter === '野手') matchesFilter = role === currentFilter;
                 return matchesSearch && matchesFilter;
             });
 
             filtered.sort((a, b) => {
-                // 誕生日を最優先、次にお気に入り、次に背番号
-                const aBirth = isTodayBirthday(a.birthday) ? 1 : 0;
-                const bBirth = isTodayBirthday(b.birthday) ? 1 : 0;
+                const aBirth = isTodayBirthday(a["生年月日"]) ? 1 : 0;
+                const bBirth = isTodayBirthday(b["生年月日"]) ? 1 : 0;
                 if (bBirth !== aBirth) return bBirth - aBirth;
 
-                const aFav = favorites.includes(a.name) ? 1 : 0;
-                const bFav = favorites.includes(b.name) ? 1 : 0;
+                const aFav = favorites.includes(a["名前"]) ? 1 : 0;
+                const bFav = favorites.includes(b["名前"]) ? 1 : 0;
                 if (bFav !== aFav) return bFav - aFav;
-                return parseInt(a.number) - parseInt(b.number);
+                
+                return parseInt(a["背番号"]) - parseInt(b["背番号"]);
             });
             renderCards(filtered);
         }
@@ -155,38 +148,30 @@
         function renderCards(data) {
             const container = document.getElementById('container');
             container.innerHTML = data.length ? '' : '<p>該当選手なし</p>';
+            
             data.forEach(p => {
-                const isPitcher = p.role === '投手';
-                const isRelief = p.subRole === 'リリーフ';
-                const isFav = favorites.includes(p.name);
-                const isBirthday = isTodayBirthday(p.birthday);
-                
-                const mainLabel1 = isPitcher ? '登板' : '試合';
-                const mainLabel2 = isPitcher ? '防御率' : '打率';
-                const subLabel1 = isPitcher ? (isRelief ? 'ホールド' : '勝利') : '本塁打';
-                const subLabel2 = isPitcher ? (isRelief ? 'セーブ' : '敗戦') : '打点';
-                
-                const valSub1 = (isPitcher && isRelief) ? p.all[10] : p.all[4];
-                const valSub2 = (isPitcher && isRelief) ? p.all[11] : p.all[5];
+                const isP = p["役割"] === '投手';
+                const isB = isTodayBirthday(p["生年月日"]);
+                const isFav = favorites.includes(p["名前"]);
 
                 const card = document.createElement('div');
-                card.className = `player-card ${isBirthday ? 'birthday-card' : ''}`;
+                card.className = `player-card ${isB ? 'birthday-card' : ''}`;
                 card.onclick = () => showDetail(p);
                 card.innerHTML = `
-                    ${isBirthday ? '<div class="birthday-badge">🎂 HAPPY BIRTHDAY!</div>' : ''}
-                    <div class="fav-star ${isFav?'active':''}" onclick="toggleFav(event, '${p.name}')">★</div>
-                    <span class="number-tag">#${p.number}</span>
-                    <p style="margin:5px 0 0 0; font-size:10px; color:#ccc;">${p.group} | ${p.subRole}</p>
-                    <p class="name">${p.name}</p>
+                    ${isB ? '<div class="birthday-badge">🎂 HAPPY BIRTHDAY!</div>' : ''}
+                    <div class="fav-star ${isFav?'active':''}" onclick="toggleFav(event, '${p["名前"]}')">★</div>
+                    <span class="number-tag">#${p["背番号"]}</span>
+                    <p style="margin:5px 0 0 0; font-size:10px; color:#ccc;">${p["軍構成"]} | ${p["ポジション"]}</p>
+                    <p class="name">${p["名前"]}</p>
                     <div class="main-stats">
                         <div class="stats-grid" style="margin-top:0;">
-                            <div><span class="label">${mainLabel1}</span><span class="stats-val">${p.gameCount}</span></div>
-                            <div><span class="label">${mainLabel2}</span><span class="stats-val">${p.val1}</span></div>
+                            <div><span class="label">${isP?'登板':'試合'}</span><span class="stats-val">${p["試合数/登板数"]}</span></div>
+                            <div><span class="label">${isP?'防御':'打率'}</span><span class="stats-val">${p["打率/防御率"]}</span></div>
                         </div>
                     </div>
                     <div class="stats-grid">
-                        <div><span class="label">${subLabel1}</span><span class="sub-stats-val">${valSub1}</span></div>
-                        <div><span class="label">${subLabel2}</span><span class="sub-stats-val">${valSub2}</span></div>
+                        <div><span class="label">${isP?'勝利':'本塁'}</span><span class="sub-stats-val">${p["本塁打/勝利"]}</span></div>
+                        <div><span class="label">${isP?'敗戦':'打点'}</span><span class="sub-stats-val">${p["打点/敗戦"]}</span></div>
                     </div>`;
                 container.appendChild(card);
             });
@@ -195,20 +180,22 @@
         function showDetail(p) {
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
-            const data = p.all;
+            const isP = p["役割"] === '投手';
+            
             detail.innerHTML = `
-                <h2 style="color:#fff; font-size:32px; margin-bottom:5px;">${p.name}</h2>
-                <p style="color:#b6a269;">#${p.number} | ${p.group} | ${p.subRole}</p>
-                <p style="color:#fff; font-size:14px;">🎂 誕生日: ${p.birthday}</p>
-                <hr>
+                <h2 style="color:#fff; font-size:32px; margin-bottom:5px;">${p["名前"]}</h2>
+                <p style="color:#b6a269;">#${p["背番号"]} | ${p["軍構成"]} | ${p["ポジション"]}</p>
+                <p style="color:#fff; font-size:14px;">🎂 生年月日: ${p["生年月日"] || '未設定'}</p>
+                <hr style="border-color:#b6a269">
                 <div style="text-align:left; color:#fff; font-size:16px; line-height:2; display:grid; grid-template-columns:1fr 1fr; margin-top:15px;">
-                    <p>${p.role==='投手'?'登板':'試合'}：${p.gameCount}</p> <p>${p.role==='投手'?'防御率':'打率'}：${p.val1}</p>
-                    <p>${p.role==='投手'?'勝利':'本塁'}：${data[4]}</p> <p>${p.role==='投手'?'敗戦':'打点'}：${data[5]}</p>
-                    <p>${p.role==='投手'?'奪三':'安打'}：${data[6]}</p> <p>${p.role==='投手'?'H':'盗塁'}：${data[10]}</p>
-                    <p>${p.role==='投手'?'S':'四球'}：${data[11]}</p> <p>${p.role==='投手'?'WHIP':'OPS'}：${data[8]}</p>
+                    <p>${isP?'登板':'試合'}：${p["試合数/登板数"]}</p> <p>${isP?'防御':'打率'}：${p["打率/防御率"]}</p>
+                    <p>${isP?'勝利':'本塁'}：${p["本塁打/勝利"]}</p> <p>${isP?'敗戦':'打点'}：${p["打点/敗戦"]}</p>
+                    <p>${isP?'奪三':'安打'}：${p["安打/奪三振"]}</p> <p>${isP?'H':'盗塁'}：${p["盗塁/ホールド"]}</p>
+                    <p>${isP?'S':'四球'}：${p["四死球/セーブ"]}</p> <p>${isP?'WHIP':'OPS'}：${p["OPS/WHIP"]}</p>
                 </div>`;
             modal.style.display = 'flex';
         }
+        
         function closeModal() { document.getElementById('modal').style.display = 'none'; }
         loadStats();
     </script>
