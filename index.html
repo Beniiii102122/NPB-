@@ -36,34 +36,47 @@
             <button class="btn btn-outline" id="btn-f" onclick="setFilter('野手')">野手</button>
         </div>
     </div>
-    <div id="container" class="player-container"><p id="loading">データ通信中...</p></div>
+    <div id="container" class="player-container"><p id="loading">CSVを読み込み中...</p></div>
     <div id="modal" onclick="closeModal()"><div class="modal-content" onclick="event.stopPropagation()"><div id="modal-detail"></div><button style="margin-top:20px; padding:10px 20px; background:#b6a269; border:none; font-weight:bold; border-radius:5px;" onclick="closeModal()">閉じる</button></div></div>
 
     <script>
-        const API_URL = 'あなたの新しいGASウェブアプリURL';
+        // GitHubに上げたCSVのファイル名
+        const CSV_FILE = '選手名鑑 - オリックス.csv';
+
         let allPlayers = [];
         let currentFilter = 'all';
         let favorites = JSON.parse(localStorage.getItem('orix_favs')) || [];
 
-        async function loadStats() {
+        // CSVを解析する関数
+        function parseCSV(text) {
+            const lines = text.split(/\r?\n/);
+            const headers = lines[0].split(',');
+            return lines.slice(1).filter(line => line).map(line => {
+                const values = line.split(',');
+                let obj = {};
+                headers.forEach((header, i) => {
+                    obj[header.trim()] = values[i] ? values[i].trim() : "";
+                });
+                return obj;
+            });
+        }
+
+        async function loadData() {
             try {
-                const res = await fetch(API_URL);
-                const data = await res.json();
-                if (data.error) {
-                    document.getElementById('loading').innerText = 'エラー: ' + data.error;
-                    return;
-                }
-                allPlayers = data;
+                // 同じフォルダにあるCSVファイルを読み込む
+                const res = await fetch(CSV_FILE);
+                if (!res.ok) throw new Error();
+                const text = await res.acceptCharset ? await res.text() : await res.text();
+                allPlayers = parseCSV(text).filter(p => p["名前"]);
                 filterData();
             } catch (e) {
-                document.getElementById('loading').innerText = '通信失敗。URLを確認してください。';
+                document.getElementById('loading').innerText = 'CSVファイルが見つかりません。index.htmlと同じ場所にアップロードしてください。';
             }
         }
 
         function setFilter(type) {
             currentFilter = type;
-            document.querySelectorAll('.btn').forEach(b => b.classList.add('btn-outline'));
-            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.btn').forEach(b => { b.classList.add('btn-outline'); b.classList.remove('active'); });
             const idMap = {'all':'btn-all', 'fav':'btn-fav', '投手':'btn-p', '野手':'btn-f'};
             document.getElementById(idMap[type]).classList.remove('btn-outline');
             document.getElementById(idMap[type]).classList.add('active');
@@ -116,7 +129,7 @@
             const isP = p["役割"] === '投手';
             document.getElementById('modal-detail').innerHTML = `
                 <h2 style="font-size:28px; margin-bottom:10px;">${p["名前"]}</h2>
-                <p>#${p["背番号"]} | ${p["軍構成"]}</p>
+                <p>#${p["背番号"]} | ${p["ポジション"]}</p>
                 <div style="display:grid; grid-template-columns:1fr 1fr; text-align:left; gap:10px; margin-top:15px; border-top:1px solid #b6a269; pt:15px;">
                     <p>${isP?'登板':'試合'}: ${p["試合数/登板数"]}</p><p>${isP?'防御':'打率'}: ${p["打率/防御率"]}</p>
                     <p>${isP?'勝利':'本塁'}: ${p["本塁打/勝利"]}</p><p>${isP?'敗戦':'打点'}: ${p["打点/敗戦"]}</p>
@@ -124,7 +137,7 @@
             document.getElementById('modal').style.display = 'flex';
         }
         function closeModal() { document.getElementById('modal').style.display = 'none'; }
-        loadStats();
+        loadData();
     </script>
 </body>
 </html>
