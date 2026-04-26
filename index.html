@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -13,10 +13,9 @@
             border-bottom: 1px solid var(--team-color); padding: 10px; text-align: center;
         }
 
-        /* チーム選択ボタン */
         .team-selector { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; overflow-x: auto; padding: 5px; }
         .team-btn { 
-            padding: 5px 15px; border-radius: 20px; border: 2px solid var(--team-color);
+            padding: 8px 18px; border-radius: 20px; border: 2px solid var(--team-color);
             background: transparent; color: var(--team-color); font-weight: bold; cursor: pointer; white-space: nowrap;
         }
         .team-btn.active { background: var(--team-color); color: #000; }
@@ -42,13 +41,14 @@
             cursor: pointer; transition: transform 0.2s; position: relative;
         }
 
-        .birthday-badge { background: #ff69b4; color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 10px; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-weight: bold; }
+        .birthday-badge { background: #ff69b4; color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 10px; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-weight: bold; z-index: 10; }
         .fav-star { position: absolute; top: 10px; right: 10px; font-size: 20px; color: #444; cursor: pointer; }
         .fav-star.active { color: #ffcc00; }
         .main-stats { background: rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 8px; margin: 10px 0; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
         .label { font-size: 10px; color: var(--team-color); display: block; }
         .stats-val { font-size: 18px; color: #fff; font-weight: bold; }
+        .sub-stats-val { font-size: 14px; color: #eee; font-weight: bold; }
         .name { font-size: 20px; margin: 5px 0; font-weight: bold; color: #fff; }
         .number-tag { font-size: 11px; background: var(--team-color); color: #000; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
         
@@ -59,10 +59,10 @@
 <body>
     <div class="header-controls">
         <div class="team-selector">
-            <button class="team-btn active" onclick="changeTeam('オリックス', 'シート1', '#b6a269', '#000033')">B</button>
-            <button class="team-btn" onclick="changeTeam('巨人', 'ジャイアンツ', '#ff8c00', '#000000')">G</button>
-            <button class="team-btn" onclick="changeTeam('ソフトバンク', 'ホークス', '#f5c700', '#000000')">H</button>
-            </div>
+            <button class="team-btn active" onclick="changeTeam('オリックス', 'シート1', '#b6a269', '#000033', this)">B</button>
+            <button class="team-btn" onclick="changeTeam('巨人', 'ジャイアンツ', '#ff8c00', '#000000', this)">G</button>
+            <button class="team-btn" onclick="changeTeam('ソフトバンク', 'ホークス', '#f5c700', '#000000', this)">H</button>
+        </div>
 
         <input type="text" id="searchInput" class="search-box" placeholder="名前・背番号で検索..." oninput="filterData()">
         <div class="filter-group">
@@ -79,7 +79,7 @@
 
     <script>
         const SPREADSHEET_ID = '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw';
-        let currentSheet = 'シート1';
+        let currentSheet = 'シート1'; // 初回はオリックス
         let allPlayers = [];
         let currentFilter = 'all';
         let favorites = JSON.parse(localStorage.getItem('orix_favs')) || [];
@@ -91,40 +91,55 @@
             return today.getMonth() === b.getMonth() && today.getDate() === b.getDate();
         }
 
-        // チーム切り替え処理
-        function changeTeam(teamName, sheetName, mainColor, bgColor) {
+        function changeTeam(teamName, sheetName, mainColor, bgColor, element) {
             currentSheet = sheetName;
             document.documentElement.style.setProperty('--team-color', mainColor);
             document.documentElement.style.setProperty('--team-bg', bgColor);
             
-            // ボタンの見た目更新
             document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            element.classList.add('active');
             
             loadStats();
         }
 
         async function loadStats() {
-            document.getElementById('container').innerHTML = '<p id="loading">読み込み中...</p>';
+            const container = document.getElementById('container');
+            container.innerHTML = '<p id="loading">データを取得中...</p>';
+            
             const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(currentSheet)}`;
+            
             try {
                 const response = await fetch(url);
                 const csvData = await response.text();
                 const rows = csvData.split('\n').slice(1);
+                
                 allPlayers = rows.map(row => {
                     const cols = row.split(',').map(col => col.replace(/"/g, '').trim());
-                    let num = cols[0];
-                    if (cols[1]?.includes("エスピノーザ")) num = "00";
-                    if (cols[1]?.includes("渡部")) num = "0";
                     
+                    let playerName = cols[1] || "";
+                    let finalNum = cols[0];
+
+                    // 【復旧】エスピノーザ・渡部選手の背番号ガード
+                    if (playerName.includes("エスピノーザ")) finalNum = "00";
+                    else if (playerName.includes("渡部")) finalNum = "0";
+
                     return {
-                        number: num, name: cols[1], gameCount: cols[2], val1: cols[3],
-                        role: cols[12], subRole: cols[13], group: cols[14],
-                        birthday: cols[15], all: cols
+                        number: finalNum,
+                        name: playerName,
+                        gameCount: cols[2],
+                        val1: cols[3],
+                        role: cols[12],
+                        subRole: cols[13],
+                        group: cols[14],
+                        birthday: cols[15],
+                        all: cols
                     };
                 }).filter(p => p.name);
+                
                 filterData();
-            } catch (e) { document.getElementById('loading').innerText = 'エラー：タブ名を確認してください'; }
+            } catch (e) {
+                container.innerHTML = `<p>エラー：スプレッドシートに「${currentSheet}」という名前のタブがあるか確認してください。</p>`;
+            }
         }
 
         function toggleFav(e, name) {
@@ -136,7 +151,10 @@
 
         function setFilter(type) {
             currentFilter = type;
-            document.querySelectorAll('.btn').forEach(b => b.classList.add('btn-outline'));
+            document.querySelectorAll('.btn').forEach(b => {
+                b.classList.add('btn-outline');
+                b.classList.remove('active');
+            });
             const idMap = {'all':'btn-all', 'fav':'btn-fav', '投手':'btn-p', '野手':'btn-f'};
             document.getElementById(idMap[type]).classList.remove('btn-outline');
             document.getElementById(idMap[type]).classList.add('active');
@@ -144,66 +162,4 @@
         }
 
         function filterData() {
-            const searchText = document.getElementById('searchInput').value.toLowerCase();
-            let filtered = allPlayers.filter(p => {
-                const matchesSearch = p.name.includes(searchText) || p.number.includes(searchText);
-                let matchesFilter = true;
-                if (currentFilter === 'fav') matchesFilter = favorites.includes(p.name);
-                else if (currentFilter === '投手' || currentFilter === '野手') matchesFilter = p.role === currentFilter;
-                return matchesSearch && matchesFilter;
-            });
-
-            filtered.sort((a, b) => {
-                const aB = isTodayBirthday(a.birthday)?1:0; const bB = isTodayBirthday(b.birthday)?1:0;
-                if (bB !== aB) return bB - aB;
-                const aF = favorites.includes(a.name)?1:0; const bF = favorites.includes(b.name)?1:0;
-                if (bF !== aF) return bF - aF;
-                return parseInt(a.number) - parseInt(b.number);
-            });
-            renderCards(filtered);
-        }
-
-        function renderCards(data) {
-            const container = document.getElementById('container');
-            container.innerHTML = data.length ? '' : '<p>該当なし</p>';
-            data.forEach(p => {
-                const isP = p.role === '投手'; const isR = p.subRole === 'リリーフ';
-                const isB = isTodayBirthday(p.birthday);
-                const card = document.createElement('div');
-                card.className = 'player-card';
-                card.onclick = () => showDetail(p);
-                card.innerHTML = `
-                    ${isB ? '<div class="birthday-badge">🎂 BIRTHDAY!</div>' : ''}
-                    <div class="fav-star ${favorites.includes(p.name)?'active':''}" onclick="toggleFav(event, '${p.name}')">★</div>
-                    <span class="number-tag">#${p.number}</span>
-                    <p style="font-size:10px; color:#ccc; margin:5px 0;">${p.group} | ${p.subRole}</p>
-                    <p class="name">${p.name}</p>
-                    <div class="main-stats">
-                        <div class="stats-grid" style="margin-top:0;">
-                            <div><span class="label">${isP?'登板':'試合'}</span><span class="stats-val">${p.gameCount}</span></div>
-                            <div><span class="label">${isP?'防御率':'打率'}</span><span class="stats-val">${p.val1}</span></div>
-                        </div>
-                    </div>`;
-                container.appendChild(card);
-            });
-        }
-
-        function showDetail(p) {
-            const data = p.all;
-            document.getElementById('modal-detail').innerHTML = `
-                <h2 style="color:#fff; margin-bottom:5px;">${p.name}</h2>
-                <p>#${p.number} | ${p.group} | ${p.subRole}</p>
-                <p>🎂 ${p.birthday}</p><hr>
-                <div style="display:grid; grid-template-columns:1fr 1fr; text-align:left; line-height:2;">
-                    <p>記録：${p.gameCount}</p><p>指標：${p.val1}</p>
-                    <p>勝/本：${data[4]}</p><p>敗/点：${data[5]}</p>
-                    <p>三/安：${data[6]}</p><p>H/盗：${data[10]}</p>
-                    <p>S/四：${data[11]}</p><p>W/O：${data[8]}</p>
-                </div>`;
-            document.getElementById('modal').style.display = 'flex';
-        }
-        function closeModal() { document.getElementById('modal').style.display = 'none'; }
-        loadStats();
-    </script>
-</body>
-</html>
+            const searchText =
