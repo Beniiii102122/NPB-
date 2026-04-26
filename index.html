@@ -93,11 +93,12 @@
                 
                 if (allPlayers.error) throw new Error(allPlayers.error);
                 
+                // 「名前」列が存在する行のみ抽出
                 allPlayers = allPlayers.filter(p => p["名前"]);
                 filterData();
             } catch (e) { 
                 console.error(e);
-                document.getElementById('loading').innerText = 'エラー：GASのURLを確認してください'; 
+                document.getElementById('loading').innerText = 'エラー：GASのURLまたはスプレッドシートIDを確認してください'; 
             }
         }
 
@@ -131,6 +132,7 @@
                 return matchesSearch && matchesFilter;
             });
 
+            // 誕生日 > 推し > 背番号の順でソート
             filtered.sort((a, b) => {
                 const aBirth = isTodayBirthday(a["生年月日"]) ? 1 : 0;
                 const bBirth = isTodayBirthday(b["生年月日"]) ? 1 : 0;
@@ -140,6 +142,7 @@
                 const bFav = favorites.includes(b["名前"]) ? 1 : 0;
                 if (bFav !== aFav) return bFav - aFav;
                 
+                // 背番号は文字列（00など）があるため数値に変換してソート
                 return parseInt(a["背番号"]) - parseInt(b["背番号"]);
             });
             renderCards(filtered);
@@ -154,6 +157,12 @@
                 const isB = isTodayBirthday(p["生年月日"]);
                 const isFav = favorites.includes(p["名前"]);
 
+                // スプレッドシートの見出し名と完全一致させる
+                const gameCount = p["試合数/登板数"] || "0";
+                const mainRate = p["打率/防御率"] || ".000";
+                const sub1 = p["本塁打/勝利"] || "0";
+                const sub2 = p["打点/敗戦"] || "0";
+
                 const card = document.createElement('div');
                 card.className = `player-card ${isB ? 'birthday-card' : ''}`;
                 card.onclick = () => showDetail(p);
@@ -165,13 +174,13 @@
                     <p class="name">${p["名前"]}</p>
                     <div class="main-stats">
                         <div class="stats-grid" style="margin-top:0;">
-                            <div><span class="label">${isP?'登板':'試合'}</span><span class="stats-val">${p["試合数/登板数"]}</span></div>
-                            <div><span class="label">${isP?'防御':'打率'}</span><span class="stats-val">${p["打率/防御率"]}</span></div>
+                            <div><span class="label">${isP?'登板':'試合'}</span><span class="stats-val">${gameCount}</span></div>
+                            <div><span class="label">${isP?'防御':'打率'}</span><span class="stats-val">${mainRate}</span></div>
                         </div>
                     </div>
                     <div class="stats-grid">
-                        <div><span class="label">${isP?'勝利':'本塁'}</span><span class="sub-stats-val">${p["本塁打/勝利"]}</span></div>
-                        <div><span class="label">${isP?'敗戦':'打点'}</span><span class="sub-stats-val">${p["打点/敗戦"]}</span></div>
+                        <div><span class="label">${isP?'勝利':'本塁'}</span><span class="sub-stats-val">${sub1}</span></div>
+                        <div><span class="label">${isP?'敗戦':'打点'}</span><span class="sub-stats-val">${sub2}</span></div>
                     </div>`;
                 container.appendChild(card);
             });
@@ -192,6 +201,10 @@
                     <p>${isP?'勝利':'本塁'}：${p["本塁打/勝利"]}</p> <p>${isP?'敗戦':'打点'}：${p["打点/敗戦"]}</p>
                     <p>${isP?'奪三':'安打'}：${p["安打/奪三振"]}</p> <p>${isP?'H':'盗塁'}：${p["盗塁/ホールド"]}</p>
                     <p>${isP?'S':'四球'}：${p["四死球/セーブ"]}</p> <p>${isP?'WHIP':'OPS'}：${p["OPS/WHIP"]}</p>
+                </div>
+                <div style="margin-top:15px; text-align:left; color:#ccc; font-size:12px;">
+                    <p>${isP?'アウト':'打数'}：${p["打数/アウト数"]}</p>
+                    <p>${isP?'自責点':'長打'}：${p["長打/自責点"]}</p>
                 </div>`;
             modal.style.display = 'flex';
         }
