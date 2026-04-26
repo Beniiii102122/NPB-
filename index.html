@@ -29,14 +29,11 @@
             padding: 15px; width: 175px; border-radius: 12px; text-align: center; 
             cursor: pointer; transition: transform 0.2s; position: relative;
         }
-        .player-card:hover { transform: scale(1.03); background-color: rgba(182, 162, 105, 0.1); }
-
         .birthday-badge { 
             background: #ff69b4; color: #fff; font-size: 10px; padding: 2px 8px; 
             border-radius: 10px; position: absolute; top: -10px; left: 50%; 
             transform: translateX(-50%); font-weight: bold; white-space: nowrap;
         }
-
         .fav-star { position: absolute; top: 10px; right: 10px; font-size: 20px; color: #444; cursor: pointer; }
         .fav-star.active { color: #ffcc00; }
         .main-stats { background: rgba(182, 162, 105, 0.15); border-radius: 8px; padding: 8px; margin: 10px 0; }
@@ -47,11 +44,8 @@
         .name { font-size: 20px; margin: 5px 0; font-weight: bold; color: #fff; }
         .number-tag { font-size: 11px; background: #b6a269; color: #000; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
         
-        #modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 1000;
-        }
-        .modal-content { background-color: #000044; border: 2px solid #b6a269; padding: 30px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; }
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #000044; border: 2px solid #b6a269; padding: 30px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; }
     </style>
 </head>
 <body>
@@ -64,47 +58,46 @@
             <button class="btn btn-outline" id="btn-f" onclick="setFilter('野手')">野手</button>
         </div>
     </div>
-    <div id="container" class="player-container"><p id="loading">読み込み中...</p></div>
+    <div id="container" class="player-container"><p id="loading">データ通信中...</p></div>
     <div id="modal" onclick="closeModal()"><div class="modal-content" onclick="event.stopPropagation()"><div id="modal-detail"></div><button style="margin-top:20px; padding:10px 20px; background:#b6a269; border:none; font-weight:bold; border-radius:5px;" onclick="closeModal()">閉じる</button></div></div>
 
     <script>
-        // デプロイしたGASのURLを入れてください
-        const API_URL = 'あなたのGASウェブアプリURL';
+        // 【重要】ここに新しいデプロイURLを貼り付け
+        const API_URL = 'あなたの新しいGASウェブアプリURL';
 
         let allPlayers = [];
         let currentFilter = 'all';
         let favorites = JSON.parse(localStorage.getItem('orix_favs')) || [];
 
-        function isTodayBirthday(birthdayStr) {
-            if (!birthdayStr) return false;
+        function isTodayBirthday(dateStr) {
+            if (!dateStr) return false;
             const today = new Date();
-            const birthDate = new Date(birthdayStr);
-            return today.getMonth() === birthDate.getMonth() && today.getDate() === birthDate.getDate();
+            const bDay = new Date(dateStr);
+            return today.getMonth() === bDay.getMonth() && today.getDate() === bDay.getDate();
         }
 
         async function loadStats() {
             try {
-                const response = await fetch(API_URL);
-                allPlayers = await response.json();
-                allPlayers = allPlayers.filter(p => p["名前"]);
+                const res = await fetch(API_URL);
+                allPlayers = await res.json();
+                if (allPlayers.error) throw new Error(allPlayers.error);
                 filterData();
-            } catch (e) { document.getElementById('loading').innerText = 'データ取得失敗'; }
+            } catch (e) { document.getElementById('loading').innerText = 'データ読み込みに失敗しました。URLを確認してください。'; }
         }
 
         function setFilter(type) {
             currentFilter = type;
-            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active', 'btn-outline'));
-            document.querySelectorAll('.btn').forEach(b => b.classList.add('btn-outline'));
+            document.querySelectorAll('.btn').forEach(b => { b.classList.add('btn-outline'); b.classList.remove('active'); });
             const idMap = {'all':'btn-all', 'fav':'btn-fav', '投手':'btn-p', '野手':'btn-f'};
-            document.getElementById(idMap[type]).classList.add('active');
-            document.getElementById(idMap[type]).classList.remove('btn-outline');
+            document.getElementById(idMap[type]).classList.replace('btn-outline', 'active');
             filterData();
         }
 
         function filterData() {
-            const searchText = document.getElementById('searchInput').value.toLowerCase();
-            let filtered = allPlayers.filter(p => {
-                const matchesSearch = String(p["名前"]).includes(searchText) || String(p["背番号"]).includes(searchText);
+            const word = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allPlayers.filter(p => {
+                if (!p["名前"]) return false;
+                const matchesSearch = String(p["名前"]).includes(word) || String(p["背番号"]).includes(word);
                 let matchesFilter = true;
                 if (currentFilter === 'fav') matchesFilter = favorites.includes(p["名前"]);
                 else if (currentFilter === '投手' || currentFilter === '野手') matchesFilter = p["役割"] === currentFilter;
@@ -115,12 +108,12 @@
 
         function renderCards(data) {
             const container = document.getElementById('container');
-            container.innerHTML = '';
+            container.innerHTML = data.length ? '' : '<p>該当選手なし</p>';
             data.forEach(p => {
                 const isP = p["役割"] === '投手';
                 const isB = isTodayBirthday(p["生年月日"]);
                 const card = document.createElement('div');
-                card.className = 'player-card';
+                card.className = `player-card ${isB ? 'birthday-card' : ''}`;
                 card.onclick = () => showDetail(p);
                 card.innerHTML = `
                     ${isB ? '<div class="birthday-badge">🎂 HAPPY BIRTHDAY!</div>' : ''}
@@ -130,8 +123,8 @@
                     <p class="name">${p["名前"]}</p>
                     <div class="main-stats">
                         <div class="stats-grid" style="margin-top:0;">
-                            <div><span class="label">${isP?'登板':'試合'}</span><span class="stats-val">${p["試合数/登板数"]}</span></div>
-                            <div><span class="label">${isP?'防御':'打率'}</span><span class="stats-val">${p["打率/防御率"]}</span></div>
+                            <div><span class="label">${isP?'登板':'試合'}</span><span class="stats-val">${p["試合数/登板数"] || 0}</span></div>
+                            <div><span class="label">${isP?'防御':'打率'}</span><span class="stats-val">${p["打率/防御率"] || '.000'}</span></div>
                         </div>
                     </div>`;
                 container.appendChild(card);
@@ -147,15 +140,17 @@
         function showDetail(p) {
             const isP = p["役割"] === '投手';
             document.getElementById('modal-detail').innerHTML = `
-                <h2 style="color:#fff;">${p["名前"]}</h2>
-                <p>#${p["背番号"]} | ${p["軍構成"]}</p>
-                <div style="display:grid; grid-template-columns:1fr 1fr; text-align:left; gap:10px;">
+                <h2 style="color:#fff; font-size:28px;">${p["名前"]}</h2>
+                <p style="color:#b6a269;">#${p["背番号"]} | ${p["軍構成"]}</p>
+                <hr style="border-color:#b6a269">
+                <div style="display:grid; grid-template-columns:1fr 1fr; text-align:left; color:#fff; gap:10px; margin-top:15px;">
                     <p>${isP?'登板':'試合'}: ${p["試合数/登板数"]}</p><p>${isP?'防御':'打率'}: ${p["打率/防御率"]}</p>
                     <p>${isP?'勝利':'本塁'}: ${p["本塁打/勝利"]}</p><p>${isP?'敗戦':'打点'}: ${p["打点/敗戦"]}</p>
+                    <p>${isP?'奪三':'安打'}: ${p["安打/奪三振"]}</p><p>${isP?'H':'盗塁'}: ${p["盗塁/ホールド"]}</p>
+                    <p>${isP?'S':'四球'}: ${p["四死球/セーブ"]}</p><p>${isP?'WHIP':'OPS'}: ${p["OPS/WHIP"]}</p>
                 </div>`;
             document.getElementById('modal').style.display = 'flex';
         }
-
         function closeModal() { document.getElementById('modal').style.display = 'none'; }
         loadStats();
     </script>
