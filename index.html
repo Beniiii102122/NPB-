@@ -45,7 +45,8 @@
         .stats-val { font-size: 18px; color: #fff; font-weight: bold; }
         .sub-stats-val { font-size: 14px; color: #eee; font-weight: bold; }
         .name { font-size: 20px; margin: 5px 0; font-weight: bold; color: #fff; }
-        .number-tag { font-size: 11px; background: #b6a269; color: #000; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
+        /* 背番号タグのスタイル強化 */
+        .number-tag { font-size: 12px; background: #b6a269; color: #000; padding: 2px 8px; border-radius: 4px; font-weight: 900; display: inline-block; margin-bottom: 5px; }
         
         #modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -90,7 +91,7 @@
                 allPlayers = rows.map(row => {
                     const cols = row.split(',').map(col => col.replace(/"/g, '').trim());
                     return {
-                        number: cols[0],     
+                        number: cols[0] || '??', // 背番号が空なら??を表示
                         name: cols[1],       
                         gameCount: cols[2],  
                         val1: cols[3],       
@@ -124,7 +125,7 @@
         function filterData() {
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             let filtered = allPlayers.filter(p => {
-                const matchesSearch = p.name.includes(searchText) || p.number.includes(searchText);
+                const matchesSearch = p.name.includes(searchText) || p.number.toString().includes(searchText);
                 let matchesFilter = true;
                 if (currentFilter === 'fav') matchesFilter = favorites.includes(p.name);
                 else if (currentFilter === '投手' || currentFilter === '野手') matchesFilter = p.role === currentFilter;
@@ -161,19 +162,19 @@
                     if (isRelief) {
                         subLabel1 = 'ホールド';
                         subLabel2 = 'セーブ';
-                        valSub1 = p.all[10]; // K列: ホールド
-                        valSub2 = p.all[11]; // L列: セーブ
+                        valSub1 = p.all[10]; 
+                        valSub2 = p.all[11]; 
                     } else {
                         subLabel1 = '勝利';
                         subLabel2 = '敗戦';
-                        valSub1 = p.all[4];  // E列: 勝利
-                        valSub2 = p.all[5];  // F列: 敗戦
+                        valSub1 = p.all[4];  
+                        valSub2 = p.all[5];  
                     }
                 } else {
                     subLabel1 = '本塁打';
                     subLabel2 = '打点';
-                    valSub1 = p.all[4];  // E列
-                    valSub2 = p.all[5];  // F列
+                    valSub1 = p.all[4];  
+                    valSub2 = p.all[5];  
                 }
 
                 const card = document.createElement('div');
@@ -182,8 +183,8 @@
                 card.innerHTML = `
                     ${isBirthday ? '<div class="birthday-badge">🎂 HAPPY BIRTHDAY!</div>' : ''}
                     <div class="fav-star ${isFav?'active':''}" onclick="toggleFav(event, '${p.name}')">★</div>
-                    <span class="number-tag">#${p.number}</span>
-                    <p style="margin:5px 0 0 0; font-size:10px; color:#ccc;">${p.group} | ${p.subRole}</p>
+                    <div class="number-tag">#${p.number}</div>
+                    <p style="margin:2px 0 0 0; font-size:10px; color:#ccc;">${p.group} | ${p.subRole}</p>
                     <p class="name">${p.name}</p>
                     <div class="main-stats">
                         <div class="stats-grid" style="margin-top:0;">
@@ -205,7 +206,7 @@
             const d = p.all;
             const isP = p.role === '投手';
 
-            detail.innerHTML = `
+            let detailHtml = `
                 <h2 style="color:#fff; font-size:32px; margin-bottom:5px;">${p.name}</h2>
                 <p style="color:#b6a269;">#${p.number} | ${p.group} | ${p.subRole}</p>
                 <p style="color:#fff; font-size:14px;">🎂 誕生日: ${p.birthday}</p>
@@ -213,10 +214,28 @@
                 <div style="text-align:left; color:#fff; font-size:16px; line-height:2; display:grid; grid-template-columns:1fr 1fr; margin-top:15px;">
                     <p>${isP?'登板':'試合'}：${p.gameCount}</p> <p>${isP?'防御率':'打率'}：${p.val1}</p>
                     <p>${isP?'勝利':'本塁'}：${d[4]}</p> <p>${isP?'敗戦':'打点'}：${d[5]}</p>
-                    <p>${isP?'奪三振':'安打'}：${d[6]}</p> <p>${isP?'自責点':'単打'}：${d[7]}</p>
-                    <p>${isP?'WHIP':'OPS'}：${d[8]}</p> <p>${isP?'H/S':'盗塁'}：${d[10]}/${d[11]}</p>
-                    <p>${isP?'被安打':'二塁打'}：${d[12]}</p> <p>${isP?'与四球':'三塁打'}：${d[13]}</p>
-                </div>`;
+                    <p>${isP?'奪三振':'安打'}：${d[6]}</p>
+            `;
+
+            if (isP) {
+                detailHtml += `
+                    <p>WHIP：${d[8]}</p>
+                    <p>ホールド：${d[10]}</p>
+                    <p>セーブ：${d[11]}</p>
+                `;
+            } else {
+                detailHtml += `
+                    <p>単打：${d[7]}</p>
+                    <p>OPS：${d[8]}</p>
+                    <p>盗塁：${d[10]}</p>
+                    <p>四死球：${d[11]}</p>
+                    <p>二塁打：${d[12]}</p>
+                    <p>三塁打：${d[13]}</p>
+                `;
+            }
+
+            detailHtml += `</div>`;
+            detail.innerHTML = detailHtml;
             modal.style.display = 'flex';
         }
 
