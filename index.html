@@ -30,7 +30,6 @@
             cursor: pointer; transition: transform 0.2s; position: relative;
         }
 
-        /* 誕生日の演出 */
         .birthday-card { border: 2px solid #ff69b4 !important; background: rgba(255, 105, 180, 0.1) !important; }
         .birthday-badge { 
             background: #ff69b4; color: #fff; font-size: 10px; padding: 2px 8px; 
@@ -76,7 +75,6 @@
         let currentFilter = 'all';
         let favorites = JSON.parse(localStorage.getItem('orix_favs')) || [];
 
-        // 今日が誕生日か判定する関数 (月/日が一致するか)
         function isTodayBirthday(birthdayStr) {
             if (!birthdayStr) return false;
             const today = new Date();
@@ -91,21 +89,16 @@
                 const rows = csvData.split('\n').slice(1);
                 allPlayers = rows.map(row => {
                     const cols = row.split(',').map(col => col.replace(/"/g, '').trim());
-                    let finalNum = cols[0];
-                    let playerName = cols[1] || "";
-                    if (playerName.includes("エスピノーザ")) finalNum = "00";
-                    else if (playerName.includes("渡部")) finalNum = "0";
-
                     return {
-                        number: finalNum, 
-                        name: playerName,
-                        gameCount: cols[2],
-                        val1: cols[3],
-                        role: cols[12],
-                        subRole: cols[13],
-                        group: cols[14],
-                        birthday: cols[15], // 生年月日列(16番目)
-                        all: cols
+                        number: cols[0],     // 背番号
+                        name: cols[1],       // 名前
+                        gameCount: cols[2],  // 試合数/登板数
+                        val1: cols[3],       // 打率/防御率
+                        role: cols[14],      // 役割 (O列)
+                        subRole: cols[15],   // ポジション (P列)
+                        group: cols[16],     // 軍構成 (Q列)
+                        birthday: cols[17],  // 生年月日 (R列)
+                        all: cols            // 全データ
                     };
                 }).filter(p => p.name);
                 filterData();
@@ -139,11 +132,9 @@
             });
 
             filtered.sort((a, b) => {
-                // 誕生日を最優先、次にお気に入り、次に背番号
                 const aBirth = isTodayBirthday(a.birthday) ? 1 : 0;
                 const bBirth = isTodayBirthday(b.birthday) ? 1 : 0;
                 if (bBirth !== aBirth) return bBirth - aBirth;
-
                 const aFav = favorites.includes(a.name) ? 1 : 0;
                 const bFav = favorites.includes(b.name) ? 1 : 0;
                 if (bFav !== aFav) return bFav - aFav;
@@ -156,18 +147,17 @@
             const container = document.getElementById('container');
             container.innerHTML = data.length ? '' : '<p>該当選手なし</p>';
             data.forEach(p => {
-                const isPitcher = p.role === '投手';
-                const isRelief = p.subRole === 'リリーフ';
+                const isP = p.role === '投手';
                 const isFav = favorites.includes(p.name);
                 const isBirthday = isTodayBirthday(p.birthday);
                 
-                const mainLabel1 = isPitcher ? '登板' : '試合';
-                const mainLabel2 = isPitcher ? '防御率' : '打率';
-                const subLabel1 = isPitcher ? (isRelief ? 'ホールド' : '勝利') : '本塁打';
-                const subLabel2 = isPitcher ? (isRelief ? 'セーブ' : '敗戦') : '打点';
+                const mainLabel1 = isP ? '登板' : '試合';
+                const mainLabel2 = isP ? '防御率' : '打率';
+                const subLabel1 = isP ? '勝利' : '本塁打';
+                const subLabel2 = isP ? '奪三振' : '打点';
                 
-                const valSub1 = (isPitcher && isRelief) ? p.all[10] : p.all[4];
-                const valSub2 = (isPitcher && isRelief) ? p.all[11] : p.all[5];
+                const valSub1 = p.all[4]; 
+                const valSub2 = isP ? p.all[6] : p.all[5];
 
                 const card = document.createElement('div');
                 card.className = `player-card ${isBirthday ? 'birthday-card' : ''}`;
@@ -195,20 +185,24 @@
         function showDetail(p) {
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
-            const data = p.all;
+            const d = p.all;
+            const isP = p.role === '投手';
+
             detail.innerHTML = `
                 <h2 style="color:#fff; font-size:32px; margin-bottom:5px;">${p.name}</h2>
                 <p style="color:#b6a269;">#${p.number} | ${p.group} | ${p.subRole}</p>
                 <p style="color:#fff; font-size:14px;">🎂 誕生日: ${p.birthday}</p>
-                <hr>
+                <hr style="border-color:#333;">
                 <div style="text-align:left; color:#fff; font-size:16px; line-height:2; display:grid; grid-template-columns:1fr 1fr; margin-top:15px;">
-                    <p>${p.role==='投手'?'登板':'試合'}：${p.gameCount}</p> <p>${p.role==='投手'?'防御率':'打率'}：${p.val1}</p>
-                    <p>${p.role==='投手'?'勝利':'本塁'}：${data[4]}</p> <p>${p.role==='投手'?'敗戦':'打点'}：${data[5]}</p>
-                    <p>${p.role==='投手'?'奪三':'安打'}：${data[6]}</p> <p>${p.role==='投手'?'H':'盗塁'}：${data[10]}</p>
-                    <p>${p.role==='投手'?'S':'四球'}：${data[11]}</p> <p>${p.role==='投手'?'WHIP':'OPS'}：${data[8]}</p>
+                    <p>${isP?'登板':'試合'}：${p.gameCount}</p> <p>${isP?'防御率':'打率'}：${p.val1}</p>
+                    <p>${isP?'勝利':'本塁'}：${d[4]}</p> <p>${isP?'敗戦':'打点'}：${d[5]}</p>
+                    <p>${isP?'奪三振':'安打'}：${d[6]}</p> <p>${isP?'自責点':'単打'}：${d[7]}</p>
+                    <p>${isP?'WHIP':'OPS'}：${d[8]}</p> <p>${isP?'H/S':'盗塁'}：${d[10]}/${d[11]}</p>
+                    <p>${isP?'被安打':'二塁打'}：${d[12]}</p> <p>${isP?'与四球':'三塁打'}：${d[13]}</p>
                 </div>`;
             modal.style.display = 'flex';
         }
+
         function closeModal() { document.getElementById('modal').style.display = 'none'; }
         loadStats();
     </script>
