@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>オリックス名鑑 Pro - 背番号修正版</title>
+    <title>オリックス名鑑 Pro - 背番号個別補正版</title>
     <style>
         body { background-color: #000033; font-family: sans-serif; color: #b6a269; margin: 0; }
         .header-controls { 
@@ -99,13 +99,16 @@
                     let rawNum = cols[0];
                     let name = cols[1];
 
-                    // 【背番号 00 特殊補正】
-                    // 名前がエスピノーザ、または取得した背番号が "0" の場合、強制的に "00" に書き換える
-                    if (name === "エスピノーザ" || rawNum === "0") {
+                    // 【背番号個別補正ロジック】
+                    // 1. 名前がエスピノーザで、背番号が 0 や空の場合のみ 00 に固定
+                    if (name === "エスピノーザ" && (rawNum === "0" || rawNum === "")) {
                         rawNum = "00";
-                    } else if (rawNum === "" || rawNum === undefined) {
+                    } 
+                    // 2. それ以外で空の場合は ??
+                    else if (rawNum === "" || rawNum === undefined) {
                         rawNum = "??";
                     }
+                    // 渡部選手などの 0 はそのまま 0 として維持される
 
                     return {
                         number: String(rawNum), 
