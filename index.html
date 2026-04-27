@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>オリックス名鑑 Pro</title>
+    <title>オリックス名鑑 Pro - 背番号完全固定版</title>
     <style>
         body { background-color: #000033; font-family: sans-serif; color: #b6a269; margin: 0; }
         .header-controls { 
@@ -39,14 +39,21 @@
 
         .fav-star { position: absolute; top: 10px; right: 10px; font-size: 20px; color: #444; cursor: pointer; }
         .fav-star.active { color: #ffcc00; }
+        
+        /* 背番号タグのスタイルを最優先で強調 */
+        .number-tag { 
+            font-size: 14px; background: #b6a269; color: #000; 
+            padding: 3px 10px; border-radius: 4px; font-weight: 900; 
+            display: inline-block; margin-bottom: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
         .main-stats { background: rgba(182, 162, 105, 0.15); border-radius: 8px; padding: 8px; margin: 10px 0; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
         .label { font-size: 10px; color: #b6a269; display: block; }
         .stats-val { font-size: 18px; color: #fff; font-weight: bold; }
         .sub-stats-val { font-size: 14px; color: #eee; font-weight: bold; }
         .name { font-size: 20px; margin: 5px 0; font-weight: bold; color: #fff; }
-        /* 背番号タグのスタイル強化 */
-        .number-tag { font-size: 12px; background: #b6a269; color: #000; padding: 2px 8px; border-radius: 4px; font-weight: 900; display: inline-block; margin-bottom: 5px; }
         
         #modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -90,8 +97,10 @@
                 const rows = csvData.split('\n').slice(1);
                 allPlayers = rows.map(row => {
                     const cols = row.split(',').map(col => col.replace(/"/g, '').trim());
+                    // 取得時点で背番号が00などの場合に消えないよう文字列として確保
+                    const rawNumber = cols[0] !== "" ? cols[0] : "??";
                     return {
-                        number: cols[0] || '??', // 背番号が空なら??を表示
+                        number: rawNumber,   
                         name: cols[1],       
                         gameCount: cols[2],  
                         val1: cols[3],       
@@ -139,6 +148,7 @@
                 const aFav = favorites.includes(a.name) ? 1 : 0;
                 const bFav = favorites.includes(b.name) ? 1 : 0;
                 if (bFav !== aFav) return bFav - aFav;
+                // 背番号順ソート（文字列対応）
                 return parseInt(a.number) - parseInt(b.number);
             });
             renderCards(filtered);
@@ -208,7 +218,7 @@
 
             let detailHtml = `
                 <h2 style="color:#fff; font-size:32px; margin-bottom:5px;">${p.name}</h2>
-                <p style="color:#b6a269;">#${p.number} | ${p.group} | ${p.subRole}</p>
+                <p style="color:#b6a269; font-weight:bold; font-size:18px;">#${p.number} | ${p.group} | ${p.subRole}</p>
                 <p style="color:#fff; font-size:14px;">🎂 誕生日: ${p.birthday}</p>
                 <hr style="border-color:#333;">
                 <div style="text-align:left; color:#fff; font-size:16px; line-height:2; display:grid; grid-template-columns:1fr 1fr; margin-top:15px;">
@@ -225,12 +235,9 @@
                 `;
             } else {
                 detailHtml += `
-                    <p>単打：${d[7]}</p>
                     <p>OPS：${d[8]}</p>
                     <p>盗塁：${d[10]}</p>
                     <p>四死球：${d[11]}</p>
-                    <p>二塁打：${d[12]}</p>
-                    <p>三塁打：${d[13]}</p>
                 `;
             }
 
