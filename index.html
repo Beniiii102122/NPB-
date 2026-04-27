@@ -90,15 +90,15 @@
                 allPlayers = rows.map(row => {
                     const cols = row.split(',').map(col => col.replace(/"/g, '').trim());
                     return {
-                        number: cols[0],     // 背番号
-                        name: cols[1],       // 名前
-                        gameCount: cols[2],  // 試合数/登板数
-                        val1: cols[3],       // 打率/防御率
-                        role: cols[14],      // 役割 (O列)
-                        subRole: cols[15],   // ポジション (P列)
-                        group: cols[16],     // 軍構成 (Q列)
-                        birthday: cols[17],  // 生年月日 (R列)
-                        all: cols            // 全データ
+                        number: cols[0],     
+                        name: cols[1],       
+                        gameCount: cols[2],  
+                        val1: cols[3],       
+                        role: cols[14],      
+                        subRole: cols[15],   
+                        group: cols[16],     
+                        birthday: cols[17],  
+                        all: cols            
                     };
                 }).filter(p => p.name);
                 filterData();
@@ -148,16 +148,33 @@
             container.innerHTML = data.length ? '' : '<p>該当選手なし</p>';
             data.forEach(p => {
                 const isP = p.role === '投手';
+                const isRelief = p.subRole === 'リリーフ'; 
                 const isFav = favorites.includes(p.name);
                 const isBirthday = isTodayBirthday(p.birthday);
                 
                 const mainLabel1 = isP ? '登板' : '試合';
                 const mainLabel2 = isP ? '防御率' : '打率';
-                const subLabel1 = isP ? '勝利' : '本塁打';
-                const subLabel2 = isP ? '奪三振' : '打点';
                 
-                const valSub1 = p.all[4]; 
-                const valSub2 = isP ? p.all[6] : p.all[5];
+                let subLabel1, subLabel2, valSub1, valSub2;
+
+                if (isP) {
+                    if (isRelief) {
+                        subLabel1 = 'ホールド';
+                        subLabel2 = 'セーブ';
+                        valSub1 = p.all[10]; // K列: ホールド
+                        valSub2 = p.all[11]; // L列: セーブ
+                    } else {
+                        subLabel1 = '勝利';
+                        subLabel2 = '敗戦';
+                        valSub1 = p.all[4];  // E列: 勝利
+                        valSub2 = p.all[5];  // F列: 敗戦
+                    }
+                } else {
+                    subLabel1 = '本塁打';
+                    subLabel2 = '打点';
+                    valSub1 = p.all[4];  // E列
+                    valSub2 = p.all[5];  // F列
+                }
 
                 const card = document.createElement('div');
                 card.className = `player-card ${isBirthday ? 'birthday-card' : ''}`;
