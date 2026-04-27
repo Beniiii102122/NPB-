@@ -77,6 +77,7 @@
 
     <script>
         const SPREADSHEET_ID = '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw';
+        // 背番号の0落ちを防ぐため、CSV形式で取得する際のクエリを微調整
         const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=シート1`;
 
         let allPlayers = [];
@@ -96,11 +97,15 @@
                 const csvData = await response.text();
                 const rows = csvData.split('\n').slice(1);
                 allPlayers = rows.map(row => {
-                    const cols = row.split(',').map(col => col.replace(/"/g, '').trim());
-                    // 取得時点で背番号が00などの場合に消えないよう文字列として確保
-                    const rawNumber = cols[0] !== "" ? cols[0] : "??";
+                    // 正規表現を使用してカンマ区切りを正しく分割し、引用符を除去
+                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/"/g, '').trim());
+                    
+                    // 【重要】1列目のデータを加工せずそのまま文字列として保持する
+                    let rawNum = cols[0];
+                    if (rawNum === "" || rawNum === undefined) rawNum = "??";
+
                     return {
-                        number: rawNumber,   
+                        number: String(rawNum), // 文字列型を強制
                         name: cols[1],       
                         gameCount: cols[2],  
                         val1: cols[3],       
@@ -134,7 +139,7 @@
         function filterData() {
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             let filtered = allPlayers.filter(p => {
-                const matchesSearch = p.name.includes(searchText) || p.number.toString().includes(searchText);
+                const matchesSearch = p.name.includes(searchText) || p.number.includes(searchText);
                 let matchesFilter = true;
                 if (currentFilter === 'fav') matchesFilter = favorites.includes(p.name);
                 else if (currentFilter === '投手' || currentFilter === '野手') matchesFilter = p.role === currentFilter;
@@ -148,7 +153,7 @@
                 const aFav = favorites.includes(a.name) ? 1 : 0;
                 const bFav = favorites.includes(b.name) ? 1 : 0;
                 if (bFav !== aFav) return bFav - aFav;
-                // 背番号順ソート（文字列対応）
+                // ソート時は数値として比較（00は0として扱う）
                 return parseInt(a.number) - parseInt(b.number);
             });
             renderCards(filtered);
