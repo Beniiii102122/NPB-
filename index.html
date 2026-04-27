@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>オリックス名鑑 Pro - 背番号完全固定版</title>
+    <title>オリックス名鑑 Pro - 背番号修正版</title>
     <style>
         body { background-color: #000033; font-family: sans-serif; color: #b6a269; margin: 0; }
         .header-controls { 
@@ -40,12 +40,10 @@
         .fav-star { position: absolute; top: 10px; right: 10px; font-size: 20px; color: #444; cursor: pointer; }
         .fav-star.active { color: #ffcc00; }
         
-        /* 背番号タグのスタイルを最優先で強調 */
         .number-tag { 
             font-size: 14px; background: #b6a269; color: #000; 
             padding: 3px 10px; border-radius: 4px; font-weight: 900; 
             display: inline-block; margin-bottom: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
         .main-stats { background: rgba(182, 162, 105, 0.15); border-radius: 8px; padding: 8px; margin: 10px 0; }
@@ -77,7 +75,6 @@
 
     <script>
         const SPREADSHEET_ID = '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw';
-        // 背番号の0落ちを防ぐため、CSV形式で取得する際のクエリを微調整
         const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=シート1`;
 
         let allPlayers = [];
@@ -97,16 +94,22 @@
                 const csvData = await response.text();
                 const rows = csvData.split('\n').slice(1);
                 allPlayers = rows.map(row => {
-                    // 正規表現を使用してカンマ区切りを正しく分割し、引用符を除去
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/"/g, '').trim());
                     
-                    // 【重要】1列目のデータを加工せずそのまま文字列として保持する
                     let rawNum = cols[0];
-                    if (rawNum === "" || rawNum === undefined) rawNum = "??";
+                    let name = cols[1];
+
+                    // 【背番号 00 特殊補正】
+                    // 名前がエスピノーザ、または取得した背番号が "0" の場合、強制的に "00" に書き換える
+                    if (name === "エスピノーザ" || rawNum === "0") {
+                        rawNum = "00";
+                    } else if (rawNum === "" || rawNum === undefined) {
+                        rawNum = "??";
+                    }
 
                     return {
-                        number: String(rawNum), // 文字列型を強制
-                        name: cols[1],       
+                        number: String(rawNum), 
+                        name: name,       
                         gameCount: cols[2],  
                         val1: cols[3],       
                         role: cols[14],      
@@ -153,7 +156,6 @@
                 const aFav = favorites.includes(a.name) ? 1 : 0;
                 const bFav = favorites.includes(b.name) ? 1 : 0;
                 if (bFav !== aFav) return bFav - aFav;
-                // ソート時は数値として比較（00は0として扱う）
                 return parseInt(a.number) - parseInt(b.number);
             });
             renderCards(filtered);
