@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>オリックス名鑑 Pro - 最新版</title>
+    <title>オリックス名鑑 Pro</title>
     <style>
         body { background-color: #000033; font-family: sans-serif; color: #b6a269; margin: 0; }
         .player-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; justify-content: center; }
@@ -37,8 +37,8 @@
             border: 2px solid #b6a269;
             padding: 30px;
             border-radius: 15px;
-            width: 80%;
-            max-width: 400px;
+            width: 90%;
+            max-width: 450px;
             text-align: center;
         }
         .close-btn {
@@ -68,7 +68,6 @@
     </div>
 
     <script>
-        // スプレッドシートIDとシート名
         const SPREADSHEET_ID ='1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw';
         const TAB_NAME = 'シート1'; 
         const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_NAME}`;
@@ -77,21 +76,16 @@
             try {
                 const response = await fetch(url);
                 const csvData = await response.text();
-                // 行ごとに分割し、空行を除去
                 const rows = csvData.split('\n').filter(row => row.trim() !== '').slice(1);
                 const container = document.getElementById('container');
                 container.innerHTML = '';
 
                 rows.forEach(row => {
-                    // カンマ区切りで分割（引用符内のカンマを無視する正規表現）
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/"/g, '').trim());
-                    
                     if (cols.length < 15) return;
 
                     const isPitcher = cols[14] === '投手'; // O列
                     const rateLabel = isPitcher ? '防御率' : '打率';
-                    const mainRate = cols[12]; // M列
-                    const opsOrWhip = cols[13]; // N列
                     const opsLabel = isPitcher ? 'WHIP' : 'OPS';
 
                     const card = document.createElement('div');
@@ -99,14 +93,14 @@
                     card.onclick = () => showDetail(cols);
                     
                     card.innerHTML = `
-                        <p style="margin:0; font-size:12px; color:#aaa;">背番号 ${cols[0]}</p>
+                        <p style="margin:0; font-size:12px; color:#aaa;">背番号 ${cols[0]} | ${cols[16]}</p>
                         <p class="name">${cols[1]}</p>
                         <hr>
                         <div class="stats-grid">
-                            <div><span class="label">${rateLabel}</span><br><span class="stats">${mainRate}</span></div>
-                            <div><span class="label">${opsLabel}</span><br><span class="stats">${opsOrWhip}</span></div>
+                            <div><span class="label">${rateLabel}</span><br><span class="stats">${cols[12]}</span></div>
+                            <div><span class="label">${opsLabel}</span><br><span class="stats">${cols[13]}</span></div>
                         </div>
-                        <p style="font-size:10px; margin-top:10px; color:#b6a269;">詳細を見る</p>`;
+                        <p style="font-size:10px; margin-top:10px; color:#b6a269;">${cols[15]}</p>`;
                     container.appendChild(card);
                 });
             } catch (e) {
@@ -120,20 +114,25 @@
             const isPitcher = data[14] === '投手';
 
             detail.innerHTML = `
-                <p style="color:#b6a269; margin-bottom:5px;">背番号 ${data[0]} | ${data[14]} | ${data[15]}</p>
+                <p style="color:#b6a269; margin-bottom:5px;">背番号 ${data[0]} | ${data[14]} (${data[15]}) | ${data[16]}</p>
                 <h2 style="color:#fff; font-size:32px; margin:0 0 10px 0;">${data[1]}</h2>
                 <p style="color:#ccc; font-size:14px; margin-bottom:15px;">生年月日：${data[17] || '---'}</p>
                 <hr>
-                <div style="text-align:left; color:#fff; font-size:16px; line-height:2.0; display:grid; grid-template-columns: 1fr 1fr; margin-top:15px;">
+                <div style="text-align:left; color:#fff; font-size:15px; line-height:2.2; display:grid; grid-template-columns: 1fr 1fr; margin-top:15px;">
                     <div>試合/登板：${data[2]}</div>
                     <div>${isPitcher ? '勝利' : '打数'}：${data[3]}</div>
-                    <div>${isPitcher ? '防御率' : '打率'}：${data[12]}</div>
-                    <div>${isPitcher ? 'WHIP' : 'OPS'}：${data[13]}</div>
+                    <div>${isPitcher ? '敗戦' : '安打'}：${data[4]}</div>
+                    <div>${isPitcher ? 'ホールド' : '本塁打'}：${data[5]}</div>
+                    <div>${isPitcher ? 'セーブ' : '打点'}：${data[6]}</div>
                     <div>${isPitcher ? 'アウト数' : '四死球'}：${data[7]}</div>
                     <div>${isPitcher ? '被安打' : '犠飛'}：${data[8]}</div>
                     <div>${isPitcher ? '奪三振' : '盗塁'}：${data[9]}</div>
                     <div>${isPitcher ? '与四球' : '塁打'}：${data[10]}</div>
-                    <div>${isPitcher ? '自責点' : '本塁打'}：${isPitcher ? data[11] : data[5]}</div>
+                    <div>${isPitcher ? '自責点' : '-'}：${isPitcher ? data[11] : '---'}</div>
+                    <div style="grid-column: span 2; border-top: 1px solid #333; margin-top: 5px; padding-top: 5px;">
+                        <span style="color:#b6a269;">${isPitcher ? '防御率' : '打率'}:</span> ${data[12]} 
+                        <span style="color:#b6a269; margin-left:20px;">${isPitcher ? 'WHIP' : 'OPS'}:</span> ${data[13]}
+                    </div>
                 </div>
             `;
             modal.style.display = 'flex';
