@@ -35,7 +35,7 @@
         .modal-content {
             background-color: #000044;
             border: 2px solid #b6a269;
-            padding: 30px;
+            padding: 25px;
             border-radius: 15px;
             width: 90%;
             max-width: 450px;
@@ -57,7 +57,7 @@
     <h1 style="text-align: center; margin-top: 20px;">ORIX PLAYER STATS</h1>
     
     <div id="container" class="player-container">
-        <p id="loading">データを読み込み中...</p>
+        <p id="loading">最新データを読み込み中...</p>
     </div>
 
     <div id="modal" onclick="closeModal()">
@@ -68,23 +68,29 @@
     </div>
 
     <script>
+        // ★スプレッドシートID
         const SPREADSHEET_ID ='1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw';
         const TAB_NAME = 'シート1'; 
-        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_NAME}`;
+        
+        // URLにランダムな数字を付けて「古いデータ（キャッシュ）」を読み込まないようにします
+        const cacheBuster = new Date().getTime();
+        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_NAME}&cache=${cacheBuster}`;
 
         async function loadStats() {
             try {
                 const response = await fetch(url);
                 const csvData = await response.text();
+                // 空行を除去して配列化
                 const rows = csvData.split('\n').filter(row => row.trim() !== '').slice(1);
                 const container = document.getElementById('container');
                 container.innerHTML = '';
 
                 rows.forEach(row => {
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/"/g, '').trim());
+                    
                     if (cols.length < 15) return;
 
-                    const isPitcher = cols[14] === '投手'; // O列
+                    const isPitcher = cols[14] === '投手'; 
                     const rateLabel = isPitcher ? '防御率' : '打率';
                     const opsLabel = isPitcher ? 'WHIP' : 'OPS';
 
@@ -100,11 +106,11 @@
                             <div><span class="label">${rateLabel}</span><br><span class="stats">${cols[12]}</span></div>
                             <div><span class="label">${opsLabel}</span><br><span class="stats">${cols[13]}</span></div>
                         </div>
-                        <p style="font-size:10px; margin-top:10px; color:#b6a269;">${cols[15]}</p>`;
+                        <p style="font-size:11px; margin-top:10px; color:#b6a269;">${cols[15]}</p>`;
                     container.appendChild(card);
                 });
             } catch (e) {
-                document.getElementById('loading').innerText = '読み込み失敗。共有設定を確認してください。';
+                document.getElementById('loading').innerText = '読み込み失敗。共有設定またはネット接続を確認してください。';
             }
         }
 
@@ -129,7 +135,7 @@
                     <div>${isPitcher ? '奪三振' : '盗塁'}：${data[9]}</div>
                     <div>${isPitcher ? '与四球' : '塁打'}：${data[10]}</div>
                     <div>${isPitcher ? '自責点' : '-'}：${isPitcher ? data[11] : '---'}</div>
-                    <div style="grid-column: span 2; border-top: 1px solid #333; margin-top: 5px; padding-top: 5px;">
+                    <div style="grid-column: span 2; border-top: 1px solid #444; margin-top: 8px; padding-top: 8px; text-align:center;">
                         <span style="color:#b6a269;">${isPitcher ? '防御率' : '打率'}:</span> ${data[12]} 
                         <span style="color:#b6a269; margin-left:20px;">${isPitcher ? 'WHIP' : 'OPS'}:</span> ${data[13]}
                     </div>
@@ -142,6 +148,7 @@
             document.getElementById('modal').style.display = 'none';
         }
 
+        // ページを読み込んだら実行
         loadStats();
     </script>
 </body>
