@@ -57,7 +57,7 @@
     <h1 style="text-align: center; margin-top: 20px;">ORIX PLAYER STATS</h1>
     
     <div id="container" class="player-container">
-        <p id="loading">最新データを読み込み中...</p>
+        <p id="loading">データを読み込み中...</p>
     </div>
 
     <div id="modal" onclick="closeModal()">
@@ -68,11 +68,10 @@
     </div>
 
     <script>
-        // ★スプレッドシートID
         const SPREADSHEET_ID ='1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw';
         const TAB_NAME = 'シート1'; 
         
-        // URLにランダムな数字を付けて「古いデータ（キャッシュ）」を読み込まないようにします
+        // キャッシュ対策
         const cacheBuster = new Date().getTime();
         const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_NAME}&cache=${cacheBuster}`;
 
@@ -80,7 +79,6 @@
             try {
                 const response = await fetch(url);
                 const csvData = await response.text();
-                // 空行を除去して配列化
                 const rows = csvData.split('\n').filter(row => row.trim() !== '').slice(1);
                 const container = document.getElementById('container');
                 container.innerHTML = '';
@@ -88,9 +86,18 @@
                 rows.forEach(row => {
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/"/g, '').trim());
                     
+                    // 列が足りない場合はスキップ
                     if (cols.length < 15) return;
 
-                    const isPitcher = cols[14] === '投手'; 
+                    // ★ここが修正ポイント：列番号を正確に指定
+                    const name = cols[1];      // B列:名前
+                    const rate = cols[12];     // M列:打率/防御率
+                    const ops  = cols[13];     // N列:OPS/WHIP
+                    const role = cols[14];     // O列:役割
+                    const pos  = cols[15];     // P列:ポジション
+                    const team = cols[16];     // Q列:軍構成
+
+                    const isPitcher = (role === '投手'); 
                     const rateLabel = isPitcher ? '防御率' : '打率';
                     const opsLabel = isPitcher ? 'WHIP' : 'OPS';
 
@@ -99,25 +106,25 @@
                     card.onclick = () => showDetail(cols);
                     
                     card.innerHTML = `
-                        <p style="margin:0; font-size:12px; color:#aaa;">背番号 ${cols[0]} | ${cols[16]}</p>
-                        <p class="name">${cols[1]}</p>
+                        <p style="margin:0; font-size:12px; color:#aaa;">背番号 ${cols[0]} | ${team}</p>
+                        <p class="name">${name}</p>
                         <hr>
                         <div class="stats-grid">
-                            <div><span class="label">${rateLabel}</span><br><span class="stats">${cols[12]}</span></div>
-                            <div><span class="label">${opsLabel}</span><br><span class="stats">${cols[13]}</span></div>
+                            <div><span class="label">${rateLabel}</span><br><span class="stats">${rate}</span></div>
+                            <div><span class="label">${opsLabel}</span><br><span class="stats">${ops}</span></div>
                         </div>
-                        <p style="font-size:11px; margin-top:10px; color:#b6a269;">${cols[15]}</p>`;
+                        <p style="font-size:11px; margin-top:10px; color:#b6a269;">${pos}</p>`;
                     container.appendChild(card);
                 });
             } catch (e) {
-                document.getElementById('loading').innerText = '読み込み失敗。共有設定またはネット接続を確認してください。';
+                document.getElementById('loading').innerText = '読み込み失敗。共有設定を確認してください。';
             }
         }
 
         function showDetail(data) {
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
-            const isPitcher = data[14] === '投手';
+            const isPitcher = (data[14] === '投手');
 
             detail.innerHTML = `
                 <p style="color:#b6a269; margin-bottom:5px;">背番号 ${data[0]} | ${data[14]} (${data[15]}) | ${data[16]}</p>
@@ -148,7 +155,6 @@
             document.getElementById('modal').style.display = 'none';
         }
 
-        // ページを読み込んだら実行
         loadStats();
     </script>
 </body>
