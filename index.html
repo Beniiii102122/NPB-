@@ -68,40 +68,40 @@
     </div>
 
     <script>
-        // スプレッドシート設定
         const SPREADSHEET_ID ='1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw';
         const TAB_NAME = 'シート1'; 
         
-        // キャッシュ対策（常に最新のCSVを読み込む）
+        // 最新データを強制取得するためのキャッシュ対策
         const cacheBuster = new Date().getTime();
-        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_NAME}&cache=${cacheBuster}`;
+        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_NAME}&t=${cacheBuster}`;
 
         async function loadStats() {
             try {
                 const response = await fetch(url);
                 const csvData = await response.text();
+                // 空行を除去
                 const rows = csvData.split('\n').filter(row => row.trim() !== '').slice(1);
                 const container = document.getElementById('container');
                 container.innerHTML = '';
 
                 rows.forEach(row => {
-                    // CSVパース（カンマ区切り。引用符対応）
+                    // CSVの各列を正確に分割
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/"/g, '').trim());
                     
                     if (cols.length < 15) return;
 
-                    // データのマッピング（列番号固定）
-                    const p = {
-                        no: cols[0],       // A:背番号
-                        name: cols[1],     // B:名前
-                        rate: cols[12],    // M:打率/防御率
-                        ops: cols[13],     // N:OPS/WHIP
-                        role: cols[14],    // O:役割
-                        pos: cols[15],     // P:ポジション
-                        team: cols[16]     // Q:軍構成
+                    // 最新ファイルに基づく列番号の定義
+                    const player = {
+                        no: cols[0],      // A: 背番号
+                        name: cols[1],    // B: 名前
+                        rate: cols[12],   // M: 打率/防御率
+                        ops: cols[13],    // N: OPS/WHIP
+                        role: cols[14],   // O: 役割
+                        pos: cols[15],    // P: ポジション
+                        team: cols[16]    // Q: 軍構成
                     };
 
-                    const isPitcher = (p.role === '投手'); 
+                    const isPitcher = (player.role === '投手'); 
                     const rateLabel = isPitcher ? '防御率' : '打率';
                     const opsLabel = isPitcher ? 'WHIP' : 'OPS';
 
@@ -110,18 +110,18 @@
                     card.onclick = () => showDetail(cols);
                     
                     card.innerHTML = `
-                        <p style="margin:0; font-size:12px; color:#aaa;">#${p.no} | ${p.team}</p>
-                        <p class="name">${p.name}</p>
+                        <p style="margin:0; font-size:12px; color:#aaa;">#${player.no} | ${player.team}</p>
+                        <p class="name">${player.name}</p>
                         <hr>
                         <div class="stats-grid">
-                            <div><span class="label">${rateLabel}</span><br><span class="stats">${p.rate}</span></div>
-                            <div><span class="label">${opsLabel}</span><br><span class="stats">${p.ops}</span></div>
+                            <div><span class="label">${rateLabel}</span><br><span class="stats">${player.rate}</span></div>
+                            <div><span class="label">${opsLabel}</span><br><span class="stats">${player.ops}</span></div>
                         </div>
-                        <p style="font-size:11px; margin-top:10px; color:#b6a269;">${p.pos}</p>`;
+                        <p style="font-size:11px; margin-top:10px; color:#b6a269;">${player.pos}</p>`;
                     container.appendChild(card);
                 });
             } catch (e) {
-                document.getElementById('loading').innerText = '読み込み失敗。スプレッドシートの共有設定を確認してください。';
+                document.getElementById('loading').innerText = 'データの取得に失敗しました。';
             }
         }
 
