@@ -5,35 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>オリックス名鑑 Pro</title>
     <style>
-        /* チームカラー（ネイビー×ゴールド）の配色 */
         body { background-color: #000033; font-family: 'Helvetica Neue', Arial, sans-serif; color: #b6a269; margin: 0; }
         h1 { text-align: center; margin-top: 20px; letter-spacing: 2px; }
         
-        /* 選手カードの配置 */
         .player-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; justify-content: center; }
         
         .player-card { 
             background-color: rgba(255, 255, 255, 0.05); 
             border: 1px solid #b6a269; 
             padding: 15px; 
-            width: 160px; 
+            width: 170px; 
             border-radius: 12px; 
             text-align: center; 
             cursor: pointer;
-            transition: transform 0.2s, background-color 0.2s;
+            transition: transform 0.2s;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-        .player-card:hover { background-color: rgba(182, 162, 105, 0.1); }
         .player-card:active { transform: scale(0.95); }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
-        .label { font-size: 10px; color: #b6a269; text-transform: uppercase; }
-        .stats { font-size: 18px; color: #fff; font-weight: bold; }
+        .label { font-size: 11px; color: #b6a269; font-weight: bold; }
+        .stats { font-size: 19px; color: #fff; font-weight: bold; }
         .name { font-size: 18px; margin: 5px 0; font-weight: bold; color: #fff; }
-        .number { font-size: 12px; color: #b6a269; opacity: 0.8; }
+        .number { font-size: 12px; color: #b6a269; }
         hr { border: 0; border-top: 1px solid #b6a269; opacity: 0.3; margin: 10px 0; }
 
-        /* モーダル表示 */
         #modal {
             display: none;
             position: fixed;
@@ -51,7 +47,6 @@
             width: 85%;
             max-width: 350px;
             text-align: center;
-            box-shadow: 0 0 20px rgba(182, 162, 105, 0.4);
         }
         .close-btn {
             margin-top: 20px;
@@ -95,45 +90,47 @@
             try {
                 const response = await fetch(url);
                 const csvData = await response.text();
-                
-                // 改行で分割し、空行を除去
                 const rows = csvData.split(/\r?\n/).filter(row => row.trim() !== "").slice(1);
                 const container = document.getElementById('container');
                 container.innerHTML = '';
 
                 rows.forEach(row => {
-                    // CSVのクォート処理を考慮した分割（正規表現）
                     const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, ''));
-                    
-                    if (cols.length < 13) return;
+                    if (cols.length < 15) return;
 
+                    const role = cols[14]; // 投手 or 野手
+                    const isPitcher = (role === '投手');
+                    
                     const card = document.createElement('div');
                     card.className = 'player-card';
                     card.onclick = () => showDetail(cols);
                     
-                    // インデックスはCSVの列順：0:背番号, 1:名前, 12:打率/防御率, 5:本塁打/ホールド
+                    // カード内の表示内容を投手/野手で分岐
                     card.innerHTML = `
                         <div class="number">No. ${cols[0]}</div>
                         <div class="name">${cols[1]}</div>
                         <hr>
                         <div class="stats-grid">
-                            <div><span class="label">${cols[14] === '投手' ? '防御率' : '打率'}</span><br><span class="stats">${cols[12]}</span></div>
-                            <div><span class="label">${cols[14] === '投手' ? '奪三振' : 'HR'}</span><br><span class="stats">${cols[14] === '投手' ? cols[9] : cols[5]}</span></div>
+                            <div>
+                                <span class="label">${isPitcher ? '登板' : '試合'}</span><br>
+                                <span class="stats">${cols[2]}</span>
+                            </div>
+                            <div>
+                                <span class="label">${isPitcher ? '防御率' : '打率'}</span><br>
+                                <span class="stats">${cols[12]}</span>
+                            </div>
                         </div>
                     `;
                     container.appendChild(card);
                 });
             } catch (e) {
-                console.error(e);
-                document.getElementById('loading').innerText = '読み込み失敗。スプレッドシートの共有設定を確認してください。';
+                document.getElementById('loading').innerText = 'データの取得に失敗しました。';
             }
         }
 
         function showDetail(data) {
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
-            
-            // 投手か野手かでラベルを切り替え
             const isPitcher = (data[14] === '投手');
             
             detail.innerHTML = `
@@ -142,13 +139,12 @@
                 <p style="color:#b6a269; font-size:14px; margin-bottom:15px;">${data[15]} | ${data[16]}</p>
                 
                 <div style="text-align:left; margin-top:10px;">
-                    <div class="detail-item"><span>生年月日</span><span>${data[17]}</span></div>
-                    <div class="detail-item"><span>試合数</span><span>${data[2]}</span></div>
-                    <div class="detail-item"><span>${isPitcher ? '勝利' : '打数'}</span><span>${data[3]}</span></div>
-                    <div class="detail-item"><span>${isPitcher ? '敗戦' : '安打'}</span><span>${data[4]}</span></div>
+                    <div class="detail-item"><span>${isPitcher ? '登板数' : '試合数'}</span><span>${data[2]}</span></div>
+                    <div class="detail-item"><span>${isPitcher ? '防御率' : '打率'}</span><span>${data[12]}</span></div>
+                    <div class="detail-item"><span>${isPitcher ? '勝利' : '安打'}</span><span>${isPitcher ? data[3] : data[4]}</span></div>
                     <div class="detail-item"><span>${isPitcher ? '奪三振' : '本塁打'}</span><span>${isPitcher ? data[9] : data[5]}</span></div>
-                    <div class="detail-item"><span>${isPitcher ? 'ERA' : '打点'}</span><span>${data[12]}</span></div>
                     <div class="detail-item"><span>${isPitcher ? 'WHIP' : 'OPS'}</span><span>${data[13]}</span></div>
+                    <div class="detail-item"><span>生年月日</span><span>${data[17]}</span></div>
                 </div>
             `;
             modal.style.display = 'flex';
