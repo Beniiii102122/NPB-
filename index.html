@@ -12,7 +12,7 @@
         .sort-controls { 
             display: flex; 
             justify-content: center; 
-            gap: 10px; 
+            gap: 12px; 
             margin: 20px auto; 
             flex-wrap: wrap; 
             max-width: 90%;
@@ -21,10 +21,10 @@
             background-color: transparent;
             border: 1px solid #b6a269;
             color: #b6a269;
-            padding: 8px 15px;
+            padding: 8px 18px;
             border-radius: 20px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 13px;
             transition: all 0.3s;
         }
         .sort-btn:hover, .sort-btn.active {
@@ -96,7 +96,6 @@
         <button class="sort-btn active" onclick="sortData('number', this)">背番号順</button>
         <button class="sort-btn" onclick="sortData('role', this)">投手/野手</button>
         <button class="sort-btn" onclick="sortData('stats', this)">打率/防御率順</button>
-        <button class="sort-btn" onclick="sortData('games', this)">試合/登板順</button>
     </div>
     
     <div id="container" class="player-container">
@@ -115,7 +114,7 @@
         const TAB_NAME = 'シート1'; 
         const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_NAME}`;
 
-        let allPlayers = []; // 全データを保持する配列
+        let allPlayers = []; 
 
         async function loadStats() {
             try {
@@ -133,7 +132,6 @@
             }
         }
 
-        // カードを描画する関数
         function renderCards(dataList) {
             const container = document.getElementById('container');
             container.innerHTML = '';
@@ -157,27 +155,25 @@
             });
         }
 
-        // ソート実行関数
         function sortData(key, btn) {
-            // ボタンのスタイル更新
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
             let sorted = [...allPlayers];
 
             if (key === 'number') {
-                // 背番号順（数値として比較、00などは特別処理が必要だが簡易的に数値化）
-                sorted.sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]));
+                // 背番号順（数値化して比較）
+                sorted.sort((a, b) => {
+                    const numA = a[0] === '00' ? -1 : (a[0] === '0' ? 0 : parseFloat(a[0]));
+                    const numB = b[0] === '00' ? -1 : (b[0] === '0' ? 0 : parseFloat(b[0]));
+                    return numA - numB;
+                });
             } else if (key === 'role') {
-                // 投手・野手順（文字列比較）
                 sorted.sort((a, b) => a[14].localeCompare(b[14], 'ja'));
             } else if (key === 'stats') {
-                // 打率/防御率順
-                // ※防御率は低い方が上、打率は高い方が上という処理が必要な場合は分岐
+                // 打率は降順（高い順）、防御率は昇順（低い順）にしたい場合が多いですが、
+                // 今回はシンプルに数値の大きい順（打率順メイン）にしています
                 sorted.sort((a, b) => parseFloat(b[12]) - parseFloat(a[12]));
-            } else if (key === 'games') {
-                // 試合・登板数順（降順）
-                sorted.sort((a, b) => parseFloat(b[2]) - parseFloat(a[2]));
             }
 
             renderCards(sorted);
