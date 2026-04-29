@@ -8,10 +8,10 @@
         body { background-color: #000033; font-family: 'Helvetica Neue', Arial, sans-serif; color: #b6a269; margin: 0; padding-bottom: 50px; }
         h1 { text-align: center; margin-top: 20px; letter-spacing: 2px; }
         
-        .sort-controls { display: flex; justify-content: center; gap: 12px; margin: 20px auto; flex-wrap: wrap; max-width: 90%; }
+        .sort-controls { display: flex; justify-content: center; gap: 8px; margin: 20px auto; flex-wrap: wrap; max-width: 95%; }
         .sort-btn {
             background-color: transparent; border: 1px solid #b6a269; color: #b6a269;
-            padding: 8px 18px; border-radius: 20px; cursor: pointer; font-size: 13px; transition: all 0.3s;
+            padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 12px; transition: all 0.3s;
         }
         .sort-btn:hover, .sort-btn.active { background-color: #b6a269; color: #000; }
 
@@ -51,9 +51,10 @@
     <h1>ORIX PLAYER STATS</h1>
 
     <div class="sort-controls">
-        <button class="sort-btn active" onclick="sortData('number', this)">背番号順</button>
-        <button class="sort-btn" onclick="sortData('role', this)">投手/野手</button>
-        <button class="sort-btn" onclick="sortData('stats', this)">打率/防御率順</button>
+        <button class="sort-btn active" onclick="sortData('all', this)">全員</button>
+        <button class="sort-btn" onclick="sortData('number', this)">背番号順</button>
+        <button class="sort-btn" onclick="sortData('avg', this)">打率順(野手)</button>
+        <button class="sort-btn" onclick="sortData('era', this)">防御率順(投手)</button>
     </div>
     
     <div id="container" class="player-container">
@@ -115,30 +116,43 @@
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
-            let sorted = [...allPlayers];
+            let displayList = [...allPlayers];
+
+            if (key === 'all') {
+                renderCards(allPlayers);
+                return;
+            }
+
+            // 共通：出場なし(試合数0)は常に下
+            const sortByGames = (list) => {
+                return list.sort((a, b) => {
+                    const gA = parseFloat(a[2]) || 0;
+                    const gB = parseFloat(b[2]) || 0;
+                    if (gA === 0 && gB !== 0) return 1;
+                    if (gA !== 0 && gB === 0) return -1;
+                    return 0;
+                });
+            };
 
             if (key === 'number') {
-                sorted.sort((a, b) => {
+                displayList.sort((a, b) => {
                     const numA = a[0] === '00' ? -1 : (a[0] === '0' ? 0 : parseFloat(a[0]));
                     const numB = b[0] === '00' ? -1 : (b[0] === '0' ? 0 : parseFloat(b[0]));
                     return numA - numB;
                 });
-            } else if (key === 'role') {
-                sorted.sort((a, b) => a[14].localeCompare(b[14], 'ja'));
-            } else if (key === 'stats') {
-                // 特殊ソート：投手は防御率が「低い」順、野手は打率が「高い」順
-                sorted.sort((a, b) => {
-                    const valA = parseFloat(a[12]) || 0;
-                    const valB = parseFloat(b[12]) || 0;
-                    const isPitcherA = a[14] === '投手';
-                    const isPitcherB = b[14] === '投手';
-
-                    if (isPitcherA && isPitcherB) return valA - valB; // 投手同士なら低い順
-                    if (!isPitcherA && !isPitcherB) return valB - valA; // 野手同士なら高い順
-                    return isPitcherA ? -1 : 1; // 投手と野手が混ざる場合は投手を上に
-                });
+            } else if (key === 'avg') {
+                // 野手のみ抽出して打率降順
+                displayList = allPlayers.filter(p => p[14] === '野手');
+                displayList.sort((a, b) => (parseFloat(b[12]) || 0) - (parseFloat(a[12]) || 0));
+                displayList = sortByGames(displayList);
+            } else if (key === 'era') {
+                // 投手のみ抽出して防御率昇順
+                displayList = allPlayers.filter(p => p[14] === '投手');
+                displayList.sort((a, b) => (parseFloat(a[12]) || 0) - (parseFloat(b[12]) || 0));
+                displayList = sortByGames(displayList);
             }
-            renderCards(sorted);
+            
+            renderCards(displayList);
         }
 
         function showDetail(data) {
