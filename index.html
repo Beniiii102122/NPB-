@@ -5,16 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>オリックス名鑑 Pro</title>
     <style>
-        body { background-color: #000033; font-family: 'Helvetica Neue', Arial, sans-serif; color: #b6a269; margin: 0; }
+        body { background-color: #000033; font-family: 'Helvetica Neue', Arial, sans-serif; color: #b6a269; margin: 0; padding-bottom: 50px; }
         h1 { text-align: center; margin-top: 20px; letter-spacing: 2px; }
         
+        /* ソートボタンのエリア */
+        .sort-controls { 
+            display: flex; 
+            justify-content: center; 
+            gap: 10px; 
+            margin: 20px auto; 
+            flex-wrap: wrap; 
+            max-width: 90%;
+        }
+        .sort-btn {
+            background-color: transparent;
+            border: 1px solid #b6a269;
+            color: #b6a269;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        .sort-btn:hover, .sort-btn.active {
+            background-color: #b6a269;
+            color: #000;
+        }
+
         .player-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; justify-content: center; }
         
         .player-card { 
             background-color: rgba(255, 255, 255, 0.05); 
             border: 1px solid #b6a269; 
             padding: 15px; 
-            width: 170px; 
+            width: 160px; 
             border-radius: 12px; 
             text-align: center; 
             cursor: pointer;
@@ -26,7 +50,7 @@
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
         .label { font-size: 11px; color: #b6a269; font-weight: bold; }
         .stats { font-size: 19px; color: #fff; font-weight: bold; }
-        .name { font-size: 18px; margin: 5px 0; font-weight: bold; color: #fff; }
+        .name { font-size: 17px; margin: 5px 0; font-weight: bold; color: #fff; height: 2.5em; display: flex; align-items: center; justify-content: center; }
         .number { font-size: 12px; color: #b6a269; }
         hr { border: 0; border-top: 1px solid #b6a269; opacity: 0.3; margin: 10px 0; }
 
@@ -59,16 +83,21 @@
             cursor: pointer;
         }
         .detail-item {
-            display: flex;
-            justify-content: space-between;
+            display: flex; justify-content: space-between;
             border-bottom: 1px solid rgba(182, 162, 105, 0.2);
-            padding: 8px 0;
-            color: #fff;
+            padding: 8px 0; color: #fff;
         }
     </style>
 </head>
 <body>
     <h1>ORIX PLAYER STATS</h1>
+
+    <div class="sort-controls">
+        <button class="sort-btn active" onclick="sortData('number', this)">背番号順</button>
+        <button class="sort-btn" onclick="sortData('role', this)">投手/野手</button>
+        <button class="sort-btn" onclick="sortData('stats', this)">打率/防御率順</button>
+        <button class="sort-btn" onclick="sortData('games', this)">試合/登板順</button>
+    </div>
     
     <div id="container" class="player-container">
         <p id="loading">データを読み込み中...</p>
@@ -86,73 +115,93 @@
         const TAB_NAME = 'シート1'; 
         const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${TAB_NAME}`;
 
+        let allPlayers = []; // 全データを保持する配列
+
         async function loadStats() {
             try {
                 const response = await fetch(url);
                 const csvData = await response.text();
                 const rows = csvData.split(/\r?\n/).filter(row => row.trim() !== "").slice(1);
-                const container = document.getElementById('container');
-                container.innerHTML = '';
+                
+                allPlayers = rows.map(row => {
+                    return row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, ''));
+                }).filter(cols => cols.length >= 15);
 
-                rows.forEach(row => {
-                    const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, ''));
-                    if (cols.length < 15) return;
-
-                    const role = cols[14]; // 投手 or 野手
-                    const isPitcher = (role === '投手');
-                    
-                    const card = document.createElement('div');
-                    card.className = 'player-card';
-                    card.onclick = () => showDetail(cols);
-                    
-                    // カード内の表示内容を投手/野手で分岐
-                    card.innerHTML = `
-                        <div class="number">No. ${cols[0]}</div>
-                        <div class="name">${cols[1]}</div>
-                        <hr>
-                        <div class="stats-grid">
-                            <div>
-                                <span class="label">${isPitcher ? '登板' : '試合'}</span><br>
-                                <span class="stats">${cols[2]}</span>
-                            </div>
-                            <div>
-                                <span class="label">${isPitcher ? '防御率' : '打率'}</span><br>
-                                <span class="stats">${cols[12]}</span>
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(card);
-                });
+                renderCards(allPlayers);
             } catch (e) {
-                document.getElementById('loading').innerText = 'データの取得に失敗しました。';
+                document.getElementById('loading').innerText = '読み込み失敗。';
             }
+        }
+
+        // カードを描画する関数
+        function renderCards(dataList) {
+            const container = document.getElementById('container');
+            container.innerHTML = '';
+
+            dataList.forEach(cols => {
+                const isPitcher = (cols[14] === '投手');
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                card.onclick = () => showDetail(cols);
+                
+                card.innerHTML = `
+                    <div class="number">No. ${cols[0]}</div>
+                    <div class="name">${cols[1]}</div>
+                    <hr>
+                    <div class="stats-grid">
+                        <div><span class="label">${isPitcher ? '登板' : '試合'}</span><br><span class="stats">${cols[2]}</span></div>
+                        <div><span class="label">${isPitcher ? '防御率' : '打率'}</span><br><span class="stats">${cols[12]}</span></div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // ソート実行関数
+        function sortData(key, btn) {
+            // ボタンのスタイル更新
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            let sorted = [...allPlayers];
+
+            if (key === 'number') {
+                // 背番号順（数値として比較、00などは特別処理が必要だが簡易的に数値化）
+                sorted.sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]));
+            } else if (key === 'role') {
+                // 投手・野手順（文字列比較）
+                sorted.sort((a, b) => a[14].localeCompare(b[14], 'ja'));
+            } else if (key === 'stats') {
+                // 打率/防御率順
+                // ※防御率は低い方が上、打率は高い方が上という処理が必要な場合は分岐
+                sorted.sort((a, b) => parseFloat(b[12]) - parseFloat(a[12]));
+            } else if (key === 'games') {
+                // 試合・登板数順（降順）
+                sorted.sort((a, b) => parseFloat(b[2]) - parseFloat(a[2]));
+            }
+
+            renderCards(sorted);
         }
 
         function showDetail(data) {
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
             const isPitcher = (data[14] === '投手');
-            
             detail.innerHTML = `
                 <div class="number">背番号 ${data[0]}</div>
                 <h2 style="color:#fff; font-size:28px; margin: 10px 0;">${data[1]}</h2>
-                <p style="color:#b6a269; font-size:14px; margin-bottom:15px;">${data[15]} | ${data[16]}</p>
-                
+                <p style="color:#b6a269; font-size:14px;">${data[15]} | ${data[16]}</p>
                 <div style="text-align:left; margin-top:10px;">
                     <div class="detail-item"><span>${isPitcher ? '登板数' : '試合数'}</span><span>${data[2]}</span></div>
                     <div class="detail-item"><span>${isPitcher ? '防御率' : '打率'}</span><span>${data[12]}</span></div>
                     <div class="detail-item"><span>${isPitcher ? '勝利' : '安打'}</span><span>${isPitcher ? data[3] : data[4]}</span></div>
-                    <div class="detail-item"><span>${isPitcher ? '奪三振' : '本塁打'}</span><span>${isPitcher ? data[9] : data[5]}</span></div>
                     <div class="detail-item"><span>${isPitcher ? 'WHIP' : 'OPS'}</span><span>${data[13]}</span></div>
-                    <div class="detail-item"><span>生年月日</span><span>${data[17]}</span></div>
                 </div>
             `;
             modal.style.display = 'flex';
         }
 
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
-        }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
         loadStats();
     </script>
