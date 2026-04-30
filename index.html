@@ -84,8 +84,7 @@
                 modal: '#000044'
             },
             SOFTBANK: {
-                // ↓ここをご自身の「ソフトバンク」スプレッドシートIDに書き換えてください
-                id: 'ここにソフトバンクのシートIDを入力', 
+                id: '1D55MmUmSxxvDf92UE_N0N3BTSrZOoR5qQxoXm_BL2_E', 
                 title: 'SOFTBANK PLAYER STATS',
                 bg: '#1a1a1a', 
                 accent: '#f5c700',
@@ -97,9 +96,12 @@
         let allPlayers = []; 
 
         async function switchTeam(teamKey) {
+            if (currentTeam === teamKey && allPlayers.length > 0) return;
             currentTeam = teamKey;
+            
             const config = TEAMS[teamKey];
             
+            // UI・カラー更新
             document.querySelectorAll('.team-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`tab-${teamKey.toLowerCase()}`).classList.add('active');
             document.getElementById('main-title').innerText = config.title;
@@ -108,25 +110,23 @@
             document.documentElement.style.setProperty('--team-accent', config.accent);
             document.documentElement.style.setProperty('--team-modal', config.modal);
 
+            // ソートリセット
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('default-sort').classList.add('active');
+
             await loadStats();
         }
 
         async function loadStats() {
             const container = document.getElementById('container');
-            container.innerHTML = '<p>読み込み中...</p>';
+            container.innerHTML = '<p>データを読み込み中...</p>';
+            allPlayers = []; // データを一度空にする（混ざり防止）
             
             const config = TEAMS[currentTeam];
-            // IDが入力されていない場合のチェック
-            if(config.id.includes('1D55MmUmSxxvDf92UE_N0N3BTSrZOoR5qQxoXm_BL2_E')) {
-                container.innerHTML = '<p>ソフトバンクのIDが設定されていません</p>';
-                return;
-            }
-
             const url = `https://docs.google.com/spreadsheets/d/${config.id}/gviz/tq?tqx=out:csv&sheet=シート1`;
 
             try {
                 const response = await fetch(url);
-                if (!response.ok) throw new Error();
                 const csvData = await response.text();
                 const rows = csvData.split(/\r?\n/).filter(row => row.trim() !== "").slice(1);
                 
@@ -136,7 +136,7 @@
 
                 renderCards(allPlayers);
             } catch (e) {
-                container.innerHTML = '読み込み失敗。スプレッドシートの「ウェブに公開」設定を確認してください。';
+                container.innerHTML = '読み込み失敗。スプレッドシートの「共有」と「ウェブに公開」設定を確認してください。';
             }
         }
 
@@ -161,7 +161,6 @@
             });
         }
 
-        // --- ソート・モーダル等の関数（変更なし） ---
         function sortData(key, btn) {
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -182,19 +181,19 @@
             const isPitcher = (data[14] === '投手');
             let statsHtml = isPitcher ? `
                 <div class="detail-grid">
-                    <div class="detail-item"><span>登板数</span><span>${data[2]}</span></div>
-                    <div class="detail-item"><span>防御率</span><span>${data[12]}</span></div>
                     <div class="detail-item"><span>勝利</span><span>${data[3]}</span></div>
                     <div class="detail-item"><span>敗戦</span><span>${data[4]}</span></div>
-                    <div class="detail-item"><span>セーブ/H</span><span>${data[6]}</span></div>
+                    <div class="detail-item"><span>ホールド</span><span>${data[5]}</span></div>
+                    <div class="detail-item"><span>セーブ</span><span>${data[6]}</span></div>
                     <div class="detail-item"><span>奪三振</span><span>${data[9]}</span></div>
+                    <div class="detail-item"><span>WHIP</span><span>${data[13]}</span></div>
                 </div>
             ` : `
                 <div class="detail-grid">
                     <div class="detail-item"><span>試合数</span><span>${data[2]}</span></div>
-                    <div class="detail-item"><span>打率</span><span>${data[12]}</span></div>
                     <div class="detail-item"><span>本塁打</span><span>${data[5]}</span></div>
                     <div class="detail-item"><span>打点</span><span>${data[6]}</span></div>
+                    <div class="detail-item"><span>盗塁</span><span>${data[9]}</span></div>
                     <div class="detail-item"><span>OPS</span><span>${data[13]}</span></div>
                 </div>
             `;
