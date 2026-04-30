@@ -5,22 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NPB名鑑 Pro</title>
     <style>
-        /* チームカラー変数を設定（JSで動的に変更します） */
+        /* チームカラー変数を設定（JSで動的に変更） */
         :root {
             --team-bg: #000033;
             --team-accent: #b6a269;
             --team-modal: #000044;
         }
 
-        body { background-color: var(--team-bg); font-family: 'Helvetica Neue', Arial, sans-serif; color: var(--team-accent); margin: 0; padding-bottom: 50px; transition: background-color 0.5s; }
+        body { background-color: var(--team-bg); font-family: 'Helvetica Neue', Arial, sans-serif; color: var(--team-accent); margin: 0; padding-bottom: 50px; transition: all 0.5s; }
         h1 { text-align: center; margin-top: 20px; letter-spacing: 2px; color: var(--team-accent); }
         
         /* チーム切り替えタブ */
-        .team-selector { display: flex; justify-content: center; background: rgba(0,0,0,0.3); padding: 10px 0; margin-bottom: 10px; }
+        .team-selector { display: flex; justify-content: center; background: rgba(0,0,0,0.4); padding: 10px 0; margin-bottom: 10px; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
         .team-tab { 
-            padding: 10px 25px; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; opacity: 0.6; transition: 0.3s;
+            padding: 10px 25px; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; opacity: 0.5; transition: 0.3s; color: #fff;
         }
-        .team-tab.active { opacity: 1; border-bottom: 3px solid var(--team-accent); color: #fff; }
+        .team-tab.active { opacity: 1; border-bottom: 3px solid var(--team-accent); color: var(--team-accent); }
 
         .sort-controls { display: flex; justify-content: center; gap: 8px; margin: 20px auto; flex-wrap: wrap; max-width: 95%; }
         .sort-btn {
@@ -52,7 +52,7 @@
         }
         .modal-content {
             background-color: var(--team-modal); border: 2px solid var(--team-accent); padding: 25px;
-            border-radius: 20px; width: 85%; max-width: 380px; text-align: center;
+            border-radius: 20px; width: 85%; max-width: 380px; text-align: center; color: #fff;
         }
         .close-btn {
             margin-top: 20px; background-color: var(--team-accent); color: #000;
@@ -60,7 +60,7 @@
         }
         .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .detail-item { 
-            display: flex; justify-content: space-between; border-bottom: 1px solid rgba(182, 162, 105, 0.2); 
+            display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); 
             padding: 8px 0; color: #fff; font-size: 14px;
         }
     </style>
@@ -95,17 +95,17 @@
     <script>
         const TEAMS = {
             ORIX: {
-                id: '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw',
+                id: '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw', // 元のオリックスID
                 title: 'ORIX PLAYER STATS',
                 bg: '#000033',
                 accent: '#b6a269',
                 modal: '#000044'
             },
             SOFTBANK: {
-                id: 'ここにソフトバンクのIDを入れてください', 
+                id: 'ここにソフトバンクのスプレッドシートIDを入力', // ソフトバンクのIDをここに入れる
                 title: 'SOFTBANK PLAYER STATS',
-                bg: '#333333', // ソフトバンク用背景（黒/グレー系）
-                accent: '#f5c700', // ソフトバンク用アクセント（イエロー）
+                bg: '#1a1a1a', 
+                accent: '#f5c700',
                 modal: '#222222'
             }
         };
@@ -117,17 +117,16 @@
             currentTeam = teamKey;
             const config = TEAMS[teamKey];
             
-            // UI更新
+            // UI・色の更新
             document.querySelectorAll('.team-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`tab-${teamKey.toLowerCase()}`).classList.add('active');
             document.getElementById('main-title').innerText = config.title;
             
-            // カラー更新
             document.documentElement.style.setProperty('--team-bg', config.bg);
             document.documentElement.style.setProperty('--team-accent', config.accent);
             document.documentElement.style.setProperty('--team-modal', config.modal);
 
-            // ソートボタンのリセット
+            // ソートリセット
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('default-sort').classList.add('active');
 
@@ -136,7 +135,7 @@
 
         async function loadStats() {
             const container = document.getElementById('container');
-            container.innerHTML = '<p id="loading">データを読み込み中...</p>';
+            container.innerHTML = '<p>読み込み中...</p>';
             
             const config = TEAMS[currentTeam];
             const url = `https://docs.google.com/spreadsheets/d/${config.id}/gviz/tq?tqx=out:csv&sheet=シート1`;
@@ -152,15 +151,13 @@
 
                 renderCards(allPlayers);
             } catch (e) {
-                container.innerHTML = '読み込み失敗。共有設定等を確認してください。';
+                container.innerHTML = '読み込み失敗。共有設定またはIDを確認してください。';
             }
         }
 
         function renderCards(dataList) {
             const container = document.getElementById('container');
             container.innerHTML = '';
-            if(dataList.length === 0) container.innerHTML = '<p>データがありません</p>';
-            
             dataList.forEach(cols => {
                 const isPitcher = (cols[14] === '投手');
                 const card = document.createElement('div');
@@ -184,10 +181,6 @@
             btn.classList.add('active');
 
             let displayList = [...allPlayers];
-            const sortByGames = (list) => {
-                return list.sort((a, b) => (parseFloat(b[2]) || 0) - (parseFloat(a[2]) || 0));
-            };
-
             if (key === 'number') {
                 displayList.sort((a, b) => {
                     const numA = a[0] === '00' ? -1 : (a[0] === '0' ? 0 : parseFloat(a[0]));
@@ -199,7 +192,11 @@
                 displayList.sort((a, b) => (parseFloat(b[12]) || 0) - (parseFloat(a[12]) || 0));
             } else if (key === 'era') {
                 displayList = allPlayers.filter(p => p[14] === '投手');
-                displayList.sort((a, b) => (parseFloat(a[12]) || 0) - (parseFloat(b[12]) || 0));
+                displayList.sort((a, b) => {
+                    const valA = parseFloat(a[12]) || 99;
+                    const valB = parseFloat(b[12]) || 99;
+                    return valA - valB;
+                });
             }
             renderCards(displayList);
         }
@@ -243,7 +240,7 @@
 
         function closeModal() { document.getElementById('modal').style.display = 'none'; }
         
-        // 初回起動
+        // 初回読み込み
         loadStats();
     </script>
 </body>
