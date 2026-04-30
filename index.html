@@ -95,8 +95,7 @@
                 modal: '#222222'
             },
             EAGLES: {
-                // 楽天のIDをこちらに入れてください。CSVから推測されるIDを設定しています。
-                id: '1Z3rP_y3r4N_eI3v_00_L_z99BvTq_MvE6T_D7yG9I-M', 
+                id: '1o5tO7aFL2tA_eWfQCPuhyatXC4oqQUOYc1C49DuQ_sU', 
                 title: 'EAGLES PLAYER STATS',
                 bg: '#870011', 
                 accent: '#EAAA00',
@@ -121,7 +120,6 @@
             document.documentElement.style.setProperty('--team-accent', config.accent);
             document.documentElement.style.setProperty('--team-modal', config.modal);
 
-            // ソートをリセット
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('default-sort').classList.add('active');
             currentSortMode = 'all';
@@ -135,7 +133,6 @@
             allPlayers = [];
             
             const config = TEAMS[currentTeam];
-            // IDがデフォルトのまま（楽天など）の場合は適切に書き換えてください
             const url = `https://docs.google.com/spreadsheets/d/${config.id}/gviz/tq?tqx=out:csv&sheet=シート1`;
 
             try {
@@ -149,7 +146,7 @@
 
                 renderCards(allPlayers);
             } catch (e) {
-                container.innerHTML = '読み込み失敗。スプレッドシートの「ウェブに公開」設定を確認してください。';
+                container.innerHTML = '読み込み失敗。共有設定を確認してください。';
             }
         }
 
