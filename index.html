@@ -3,48 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NPB PLAYER STATS Pro</title>
+    <title>NPB名鑑 Pro</title>
     <style>
-        /* オリックス：#000033 / ソフトバンク：#f5c700（黄色系）への切り替えも考慮 */
-        body { background-color: #030303; font-family: sans-serif; color: #b6a269; margin: 0; }
-        .nav-buttons { text-align: center; padding: 20px; background: #111; }
-        .nav-btn { 
-            padding: 10px 20px; margin: 5px; cursor: pointer; border: 2px solid #b6a269; 
-            background: transparent; color: #b6a269; font-weight: bold; border-radius: 20px;
+        /* チームカラー変数を設定（JSで動的に変更します） */
+        :root {
+            --team-bg: #000033;
+            --team-accent: #b6a269;
+            --team-modal: #000044;
         }
-        .nav-btn.active { background: #b6a269; color: #000; }
+
+        body { background-color: var(--team-bg); font-family: 'Helvetica Neue', Arial, sans-serif; color: var(--team-accent); margin: 0; padding-bottom: 50px; transition: background-color 0.5s; }
+        h1 { text-align: center; margin-top: 20px; letter-spacing: 2px; color: var(--team-accent); }
         
+        /* チーム切り替えタブ */
+        .team-selector { display: flex; justify-content: center; background: rgba(0,0,0,0.3); padding: 10px 0; margin-bottom: 10px; }
+        .team-tab { 
+            padding: 10px 25px; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; opacity: 0.6; transition: 0.3s;
+        }
+        .team-tab.active { opacity: 1; border-bottom: 3px solid var(--team-accent); color: #fff; }
+
+        .sort-controls { display: flex; justify-content: center; gap: 8px; margin: 20px auto; flex-wrap: wrap; max-width: 95%; }
+        .sort-btn {
+            background-color: transparent; border: 1px solid var(--team-accent); color: var(--team-accent);
+            padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 12px; transition: all 0.3s;
+        }
+        .sort-btn:hover, .sort-btn.active { background-color: var(--team-accent); color: #000; }
+
         .player-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; justify-content: center; }
-        .player-card { 
-            background-color: rgba(255, 255, 255, 0.05); 
-            border: 1px solid #b6a269; 
-            padding: 15px; width: 180px; border-radius: 8px; text-align: center; 
-            transition: transform 0.2s;
-        }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
-        .label { font-size: 11px; color: #b6a269; }
-        .stats { font-size: 18px; color: #fff; font-weight: bold; }
-        .name { font-size: 20px; margin: 5px 0; font-weight: bold; }
-        hr { border: 0; border-top: 1px solid #b6a269; opacity: 0.3; }
         
+        .player-card { 
+            background-color: rgba(255, 255, 255, 0.05); border: 1px solid var(--team-accent); 
+            padding: 15px; width: 160px; border-radius: 12px; text-align: center; 
+            cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .player-card:active { transform: scale(0.95); }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
+        .label { font-size: 11px; color: var(--team-accent); font-weight: bold; }
+        .stats { font-size: 19px; color: #fff; font-weight: bold; }
+        .name { font-size: 17px; margin: 5px 0; font-weight: bold; color: #fff; height: 2.5em; display: flex; align-items: center; justify-content: center; }
+        .number { font-size: 12px; color: var(--team-accent); }
+        hr { border: 0; border-top: 1px solid var(--team-accent); opacity: 0.3; margin: 10px 0; }
+
         #modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 1000;
+            background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center;
+            z-index: 1000; backdrop-filter: blur(5px);
         }
         .modal-content {
-            background-color: #111; border: 2px solid #b6a269; padding: 30px;
-            border-radius: 15px; width: 80%; max-width: 400px; text-align: center;
+            background-color: var(--team-modal); border: 2px solid var(--team-accent); padding: 25px;
+            border-radius: 20px; width: 85%; max-width: 380px; text-align: center;
+        }
+        .close-btn {
+            margin-top: 20px; background-color: var(--team-accent); color: #000;
+            border: none; padding: 10px 30px; border-radius: 25px; font-weight: bold; cursor: pointer;
+        }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .detail-item { 
+            display: flex; justify-content: space-between; border-bottom: 1px solid rgba(182, 162, 105, 0.2); 
+            padding: 8px 0; color: #fff; font-size: 14px;
         }
     </style>
 </head>
 <body>
 
-    <div class="nav-buttons">
-        <button class="nav-btn active" onclick="changeTeam('ORIX', this)">ORIX</button>
-        <button class="nav-btn" onclick="changeTeam('SOFTBANK', this)">SOFTBANK</button>
+    <div class="team-selector">
+        <div id="tab-orix" class="team-tab active" onclick="switchTeam('ORIX')">ORIX</div>
+        <div id="tab-softbank" class="team-tab" onclick="switchTeam('SOFTBANK')">SOFTBANK</div>
     </div>
 
-    <h1 id="team-title" style="text-align: center;">ORIX PLAYER STATS</h1>
+    <h1 id="main-title">ORIX PLAYER STATS</h1>
+
+    <div class="sort-controls">
+        <button id="default-sort" class="sort-btn active" onclick="sortData('all', this)">全員</button>
+        <button class="sort-btn" onclick="sortData('number', this)">背番号順</button>
+        <button class="sort-btn" onclick="sortData('avg', this)">打率順(野手)</button>
+        <button class="sort-btn" onclick="sortData('era', this)">防御率順(投手)</button>
+    </div>
     
     <div id="container" class="player-container">
         <p id="loading">データを読み込み中...</p>
@@ -53,85 +88,163 @@
     <div id="modal" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div id="modal-detail"></div>
-            <button style="margin-top:20px; padding:10px 20px;" onclick="closeModal()">閉じる</button>
+            <button class="close-btn" onclick="closeModal()">閉じる</button>
         </div>
     </div>
 
     <script>
-        const CONFIG = {
+        const TEAMS = {
             ORIX: {
                 id: '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw',
-                tab: 'シート1',
-                title: 'ORIX PLAYER STATS'
+                title: 'ORIX PLAYER STATS',
+                bg: '#000033',
+                accent: '#b6a269',
+                modal: '#000044'
             },
             SOFTBANK: {
-                id: 'ここにソフトバンクのスプレッドシートIDを入れてね',
-                tab: 'シート1',
-                title: 'SOFTBANK PLAYER STATS'
+                id: 'ここにソフトバンクのIDを入れてください', 
+                title: 'SOFTBANK PLAYER STATS',
+                bg: '#333333', // ソフトバンク用背景（黒/グレー系）
+                accent: '#f5c700', // ソフトバンク用アクセント（イエロー）
+                modal: '#222222'
             }
         };
 
-        async function loadStats(teamKey) {
-            const container = document.getElementById('container');
-            container.innerHTML = '<p>データを読み込み中...</p>';
+        let currentTeam = 'ORIX';
+        let allPlayers = []; 
+
+        async function switchTeam(teamKey) {
+            currentTeam = teamKey;
+            const config = TEAMS[teamKey];
             
-            const info = CONFIG[teamKey];
-            const url = `https://docs.google.com/spreadsheets/d/${info.id}/gviz/tq?tqx=out:csv&sheet=${info.tab}`;
+            // UI更新
+            document.querySelectorAll('.team-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${teamKey.toLowerCase()}`).classList.add('active');
+            document.getElementById('main-title').innerText = config.title;
+            
+            // カラー更新
+            document.documentElement.style.setProperty('--team-bg', config.bg);
+            document.documentElement.style.setProperty('--team-accent', config.accent);
+            document.documentElement.style.setProperty('--team-modal', config.modal);
+
+            // ソートボタンのリセット
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('default-sort').classList.add('active');
+
+            await loadStats();
+        }
+
+        async function loadStats() {
+            const container = document.getElementById('container');
+            container.innerHTML = '<p id="loading">データを読み込み中...</p>';
+            
+            const config = TEAMS[currentTeam];
+            const url = `https://docs.google.com/spreadsheets/d/${config.id}/gviz/tq?tqx=out:csv&sheet=シート1`;
 
             try {
                 const response = await fetch(url);
                 const csvData = await response.text();
-                const rows = csvData.split('\n').slice(1);
-                container.innerHTML = '';
+                const rows = csvData.split(/\r?\n/).filter(row => row.trim() !== "").slice(1);
+                
+                allPlayers = rows.map(row => {
+                    return row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, ''));
+                }).filter(cols => cols.length >= 15);
 
-                rows.forEach(row => {
-                    const cols = row.split(',').map(col => col.replace(/"/g, ''));
-                    if (cols.length < 2) return;
-
-                    const card = document.createElement('div');
-                    card.className = 'player-card';
-                    card.onclick = () => showDetail(cols);
-                    card.innerHTML = `
-                        <p style="margin:0; font-size:12px;">背番号 ${cols[0]}</p>
-                        <p class="name">${cols[1]}</p>
-                        <hr>
-                        <div class="stats-grid">
-                            <div><span class="label">打率</span><br><span class="stats">${cols[3]}</span></div>
-                            <div><span class="label">本塁打</span><br><span class="stats">${cols[4]}</span></div>
-                        </div>`;
-                    container.appendChild(card);
-                });
+                renderCards(allPlayers);
             } catch (e) {
-                container.innerHTML = '読み込み失敗。IDや共有設定を確認してね！';
+                container.innerHTML = '読み込み失敗。共有設定等を確認してください。';
             }
         }
 
-        function changeTeam(teamKey, btn) {
-            // ボタンのスタイル変更
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        function renderCards(dataList) {
+            const container = document.getElementById('container');
+            container.innerHTML = '';
+            if(dataList.length === 0) container.innerHTML = '<p>データがありません</p>';
             
-            // タイトル変更とデータ読み込み
-            document.getElementById('team-title').innerText = CONFIG[teamKey].title;
-            loadStats(teamKey);
+            dataList.forEach(cols => {
+                const isPitcher = (cols[14] === '投手');
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                card.onclick = () => showDetail(cols);
+                card.innerHTML = `
+                    <div class="number">No. ${cols[0]}</div>
+                    <div class="name">${cols[1]}</div>
+                    <hr>
+                    <div class="stats-grid">
+                        <div><span class="label">${isPitcher ? '登板' : '試合'}</span><br><span class="stats">${cols[2]}</span></div>
+                        <div><span class="label">${isPitcher ? '防御率' : '打率'}</span><br><span class="stats">${cols[12]}</span></div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function sortData(key, btn) {
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            let displayList = [...allPlayers];
+            const sortByGames = (list) => {
+                return list.sort((a, b) => (parseFloat(b[2]) || 0) - (parseFloat(a[2]) || 0));
+            };
+
+            if (key === 'number') {
+                displayList.sort((a, b) => {
+                    const numA = a[0] === '00' ? -1 : (a[0] === '0' ? 0 : parseFloat(a[0]));
+                    const numB = b[0] === '00' ? -1 : (b[0] === '0' ? 0 : parseFloat(b[0]));
+                    return numA - numB;
+                });
+            } else if (key === 'avg') {
+                displayList = allPlayers.filter(p => p[14] === '野手');
+                displayList.sort((a, b) => (parseFloat(b[12]) || 0) - (parseFloat(a[12]) || 0));
+            } else if (key === 'era') {
+                displayList = allPlayers.filter(p => p[14] === '投手');
+                displayList.sort((a, b) => (parseFloat(a[12]) || 0) - (parseFloat(b[12]) || 0));
+            }
+            renderCards(displayList);
         }
 
         function showDetail(data) {
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
+            const isPitcher = (data[14] === '投手');
+            
+            let statsHtml = isPitcher ? `
+                <div class="detail-grid">
+                    <div class="detail-item"><span>登板数</span><span>${data[2]}</span></div>
+                    <div class="detail-item"><span>防御率</span><span>${data[12]}</span></div>
+                    <div class="detail-item"><span>勝利</span><span>${data[3]}</span></div>
+                    <div class="detail-item"><span>敗戦</span><span>${data[4]}</span></div>
+                    <div class="detail-item"><span>ホールド</span><span>${data[5]}</span></div>
+                    <div class="detail-item"><span>セーブ</span><span>${data[6]}</span></div>
+                    <div class="detail-item"><span>奪三振</span><span>${data[9]}</span></div>
+                    <div class="detail-item"><span>WHIP</span><span>${data[13]}</span></div>
+                </div>
+            ` : `
+                <div class="detail-grid">
+                    <div class="detail-item"><span>試合数</span><span>${data[2]}</span></div>
+                    <div class="detail-item"><span>打率</span><span>${data[12]}</span></div>
+                    <div class="detail-item"><span>本塁打</span><span>${data[5]}</span></div>
+                    <div class="detail-item"><span>打点</span><span>${data[6]}</span></div>
+                    <div class="detail-item"><span>盗塁</span><span>${data[9]}</span></div>
+                    <div class="detail-item"><span>OPS</span><span>${data[13]}</span></div>
+                </div>
+            `;
+
             detail.innerHTML = `
-                <p>背番号 ${data[0]}</p>
-                <h2 style="color:#fff; font-size:32px;">${data[1]}</h2>
-                <div style="text-align:left; color:#fff; font-size:18px; line-height:2;">
-                    <p>打率：${data[3]}</p><p>本塁打：${data[4]}</p><p>OPS：${data[7]}</p>
-                </div>`;
+                <div class="number">背番号 ${data[0]}</div>
+                <h2 style="color:#fff; font-size:28px; margin: 10px 0;">${data[1]}</h2>
+                <p style="color:var(--team-accent); font-size:14px;">${data[15]} | ${data[16]}</p>
+                ${statsHtml}
+                <p style="color:#888; font-size:12px; margin-top:15px;">生年月日: ${data[17]}</p>
+            `;
             modal.style.display = 'flex';
         }
 
         function closeModal() { document.getElementById('modal').style.display = 'none'; }
-
-        // 初期読み込み
-        loadStats('ORIX');
+        
+        // 初回起動
+        loadStats();
     </script>
 </body>
 </html>
