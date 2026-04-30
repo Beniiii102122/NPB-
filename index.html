@@ -84,7 +84,7 @@
 
     <div class="sort-controls">
         <button id="default-sort" class="sort-btn active" onclick="sortData('number', this)">背番号順</button>
-        <button class="sort-btn" onclick="sortData('age', this)">年齢順(ベテラン)</button>
+        <button class="sort-btn" onclick="sortData('age', this)">年齢順</button>
         <button class="sort-btn" onclick="sortData('avg', this)">打率順</button>
         <button class="sort-btn" onclick="sortData('hr', this)">本塁打順</button>
         <button class="sort-btn" onclick="sortData('era', this)">防御率順</button>
@@ -115,6 +115,18 @@
         let currentSortMode = 'number';
         let searchQuery = "";
         let rosterFilter = "すべて";
+
+        function calculateAge(birthdayStr) {
+            if (!birthdayStr || birthdayStr === "0000/00/00") return "??";
+            const birthDate = new Date(birthdayStr);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            return age;
+        }
 
         async function switchTeam(teamKey) {
             if (currentTeam === teamKey && allPlayers.length > 0) return;
@@ -195,7 +207,7 @@
             if (currentSortMode === 'number') {
                 displayList.sort((a, b) => (parseFloat(a[0]) || 0) - (parseFloat(b[0]) || 0));
             } else if (currentSortMode === 'age') {
-                // 年齢が高い（誕生日が古い/文字列として昇順）順に修正
+                // 年齢が高い（誕生日が古い）順
                 displayList.sort((a, b) => {
                     const dateA = a[17] || "9999/99/99";
                     const dateB = b[17] || "9999/99/99";
@@ -246,6 +258,9 @@
                 } else if (currentSortMode === 'win') {
                     label2 = '勝利';
                     value2 = cols[3];
+                } else if (currentSortMode === 'age') {
+                    label2 = '年齢';
+                    value2 = calculateAge(cols[17]);
                 }
 
                 card.innerHTML = `
@@ -266,6 +281,7 @@
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
             const isPitcher = (data[14] === '投手');
+            const age = calculateAge(data[17]);
             
             let statsHtml = isPitcher ? `
                 <div class="detail-grid">
@@ -294,7 +310,7 @@
                 <h2 style="color:#fff; font-size:28px; margin: 10px 0;">${data[1]}</h2>
                 <p style="color:var(--team-accent); font-size:14px;">${data[15]} | ${data[16]}</p>
                 ${statsHtml}
-                <p style="color:#888; font-size:12px; margin-top:15px;">生年月日: ${data[17]}</p>
+                <p style="color:#ccc; font-size:13px; margin-top:15px;">生年月日: ${data[17]} (${age}歳)</p>
             `;
             modal.style.display = 'flex';
         }
