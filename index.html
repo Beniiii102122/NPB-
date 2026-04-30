@@ -97,6 +97,7 @@
 
         let currentTeam = 'ORIX';
         let allPlayers = []; 
+        let currentSortMode = 'all';
 
         async function switchTeam(teamKey) {
             if (currentTeam === teamKey && allPlayers.length > 0) return;
@@ -145,13 +146,26 @@
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(cols);
+
+                // 表示項目の動的切り替え
+                let label2 = isPitcher ? '防御率' : '打率';
+                let value2 = cols[12];
+
+                if (currentSortMode === 'hr') {
+                    label2 = '本塁打';
+                    value2 = cols[5];
+                } else if (currentSortMode === 'win') {
+                    label2 = '勝利';
+                    value2 = cols[3];
+                }
+
                 card.innerHTML = `
                     <div class="number">No. ${cols[0]}</div>
                     <div class="name">${cols[1]}</div>
                     <hr>
                     <div class="stats-grid">
                         <div><span class="label">${isPitcher ? '登板' : '試合'}</span><br><span class="stats">${cols[2]}</span></div>
-                        <div><span class="label">${isPitcher ? '防御率' : '打率'}</span><br><span class="stats">${cols[12]}</span></div>
+                        <div><span class="label">${label2}</span><br><span class="stats">${value2}</span></div>
                     </div>
                 `;
                 container.appendChild(card);
@@ -159,6 +173,7 @@
         }
 
         function sortData(key, btn) {
+            currentSortMode = key;
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             let displayList = [...allPlayers];
@@ -182,34 +197,27 @@
             const detail = document.getElementById('modal-detail');
             const isPitcher = (data[14] === '投手');
             
-            let statsHtml = '';
-            if (isPitcher) {
-                // 投手：登板(2), 防御率(12), 勝利(3), 敗戦(4), ホールド(5), セーブ(6), 奪三振(9), WHIP(13)
-                statsHtml = `
-                    <div class="detail-grid">
-                        <div class="detail-item"><span>登板数</span><span>${data[2]}</span></div>
-                        <div class="detail-item"><span>防御率</span><span>${data[12]}</span></div>
-                        <div class="detail-item"><span>勝利</span><span>${data[3]}</span></div>
-                        <div class="detail-item"><span>敗戦</span><span>${data[4]}</span></div>
-                        <div class="detail-item"><span>ホールド</span><span>${data[5]}</span></div>
-                        <div class="detail-item"><span>セーブ</span><span>${data[6]}</span></div>
-                        <div class="detail-item"><span>奪三振</span><span>${data[9]}</span></div>
-                        <div class="detail-item"><span>WHIP</span><span>${data[13]}</span></div>
-                    </div>
-                `;
-            } else {
-                // 野手：試合数(2), 打率(12), 本塁打(5), 打点(6), 盗塁(9), OPS(13)
-                statsHtml = `
-                    <div class="detail-grid">
-                        <div class="detail-item"><span>試合数</span><span>${data[2]}</span></div>
-                        <div class="detail-item"><span>打率</span><span>${data[12]}</span></div>
-                        <div class="detail-item"><span>本塁打</span><span>${data[5]}</span></div>
-                        <div class="detail-item"><span>打点</span><span>${data[6]}</span></div>
-                        <div class="detail-item"><span>盗塁</span><span>${data[9]}</span></div>
-                        <div class="detail-item"><span>OPS</span><span>${data[13]}</span></div>
-                    </div>
-                `;
-            }
+            let statsHtml = isPitcher ? `
+                <div class="detail-grid">
+                    <div class="detail-item"><span>登板数</span><span>${data[2]}</span></div>
+                    <div class="detail-item"><span>防御率</span><span>${data[12]}</span></div>
+                    <div class="detail-item"><span>勝利</span><span>${data[3]}</span></div>
+                    <div class="detail-item"><span>敗戦</span><span>${data[4]}</span></div>
+                    <div class="detail-item"><span>ホールド</span><span>${data[5]}</span></div>
+                    <div class="detail-item"><span>セーブ</span><span>${data[6]}</span></div>
+                    <div class="detail-item"><span>奪三振</span><span>${data[9]}</span></div>
+                    <div class="detail-item"><span>WHIP</span><span>${data[13]}</span></div>
+                </div>
+            ` : `
+                <div class="detail-grid">
+                    <div class="detail-item"><span>試合数</span><span>${data[2]}</span></div>
+                    <div class="detail-item"><span>打率</span><span>${data[12]}</span></div>
+                    <div class="detail-item"><span>本塁打</span><span>${data[5]}</span></div>
+                    <div class="detail-item"><span>打点</span><span>${data[6]}</span></div>
+                    <div class="detail-item"><span>盗塁</span><span>${data[9]}</span></div>
+                    <div class="detail-item"><span>OPS</span><span>${data[13]}</span></div>
+                </div>
+            `;
 
             detail.innerHTML = `
                 <div class="number">背番号 ${data[0]}</div>
