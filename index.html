@@ -84,7 +84,7 @@
 
     <div class="sort-controls">
         <button id="default-sort" class="sort-btn active" onclick="sortData('number', this)">背番号順</button>
-        <button class="sort-btn" onclick="sortData('age', this)">年齢順(若手)</button>
+        <button class="sort-btn" onclick="sortData('age', this)">年齢順(ベテラン)</button>
         <button class="sort-btn" onclick="sortData('avg', this)">打率順</button>
         <button class="sort-btn" onclick="sortData('hr', this)">本塁打順</button>
         <button class="sort-btn" onclick="sortData('era', this)">防御率順</button>
@@ -195,11 +195,11 @@
             if (currentSortMode === 'number') {
                 displayList.sort((a, b) => (parseFloat(a[0]) || 0) - (parseFloat(b[0]) || 0));
             } else if (currentSortMode === 'age') {
-                // 年齢が低い（誕生日が新しい）順
+                // 年齢が高い（誕生日が古い/文字列として昇順）順に修正
                 displayList.sort((a, b) => {
-                    const dateA = a[17] || "0000/00/00";
-                    const dateB = b[17] || "0000/00/00";
-                    return dateB.localeCompare(dateA);
+                    const dateA = a[17] || "9999/99/99";
+                    const dateB = b[17] || "9999/99/99";
+                    return dateA.localeCompare(dateB);
                 });
             } else if (currentSortMode === 'avg') {
                 displayList = displayList.filter(p => p[14] === '野手').sort((a, b) => (parseFloat(b[12]) || 0) - (parseFloat(a[12]) || 0));
