@@ -15,7 +15,7 @@
         h1 { text-align: center; margin-top: 20px; letter-spacing: 2px; color: var(--team-accent); }
         
         .team-selector { display: flex; justify-content: center; background: rgba(0,0,0,0.4); padding: 10px 0; margin-bottom: 10px; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
-        .team-tab { padding: 10px 25px; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; opacity: 0.5; transition: 0.3s; color: #fff; }
+        .team-tab { padding: 10px 15px; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; opacity: 0.5; transition: 0.3s; color: #fff; font-size: 13px; }
         .team-tab.active { opacity: 1; border-bottom: 3px solid var(--team-accent); color: var(--team-accent); }
 
         .sort-controls { display: flex; justify-content: center; gap: 8px; margin: 20px auto; flex-wrap: wrap; max-width: 95%; }
@@ -53,6 +53,7 @@
     <div class="team-selector">
         <div id="tab-orix" class="team-tab active" onclick="switchTeam('ORIX')">ORIX</div>
         <div id="tab-softbank" class="team-tab" onclick="switchTeam('SOFTBANK')">SOFTBANK</div>
+        <div id="tab-eagles" class="team-tab" onclick="switchTeam('EAGLES')">EAGLES</div>
     </div>
 
     <h1 id="main-title">ORIX PLAYER STATS</h1>
@@ -92,6 +93,14 @@
                 bg: '#1a1a1a', 
                 accent: '#f5c700',
                 modal: '#222222'
+            },
+            EAGLES: {
+                // 楽天のIDをこちらに入れてください。CSVから推測されるIDを設定しています。
+                id: '1Z3rP_y3r4N_eI3v_00_L_z99BvTq_MvE6T_D7yG9I-M', 
+                title: 'EAGLES PLAYER STATS',
+                bg: '#870011', 
+                accent: '#EAAA00',
+                modal: '#4c000a'
             }
         };
 
@@ -112,6 +121,11 @@
             document.documentElement.style.setProperty('--team-accent', config.accent);
             document.documentElement.style.setProperty('--team-modal', config.modal);
 
+            // ソートをリセット
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('default-sort').classList.add('active');
+            currentSortMode = 'all';
+
             await loadStats();
         }
 
@@ -121,6 +135,7 @@
             allPlayers = [];
             
             const config = TEAMS[currentTeam];
+            // IDがデフォルトのまま（楽天など）の場合は適切に書き換えてください
             const url = `https://docs.google.com/spreadsheets/d/${config.id}/gviz/tq?tqx=out:csv&sheet=シート1`;
 
             try {
@@ -134,7 +149,7 @@
 
                 renderCards(allPlayers);
             } catch (e) {
-                container.innerHTML = '読み込み失敗。共有設定を確認してください。';
+                container.innerHTML = '読み込み失敗。スプレッドシートの「ウェブに公開」設定を確認してください。';
             }
         }
 
@@ -147,7 +162,6 @@
                 card.className = 'player-card';
                 card.onclick = () => showDetail(cols);
 
-                // 表示項目の動的切り替え
                 let label2 = isPitcher ? '防御率' : '打率';
                 let value2 = cols[12];
 
