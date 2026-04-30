@@ -18,7 +18,20 @@
         .team-tab { padding: 10px 15px; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; opacity: 0.5; transition: 0.3s; color: #fff; font-size: 13px; }
         .team-tab.active { opacity: 1; border-bottom: 3px solid var(--team-accent); color: var(--team-accent); }
 
-        .sort-controls { display: flex; justify-content: center; gap: 8px; margin: 20px auto; flex-wrap: wrap; max-width: 95%; }
+        .search-container { display: flex; justify-content: center; margin: 10px auto; width: 90%; max-width: 400px; }
+        #player-search {
+            width: 100%; padding: 12px 20px; border-radius: 25px; border: 1px solid var(--team-accent);
+            background: rgba(255,255,255,0.1); color: #fff; font-size: 16px; outline: none;
+        }
+
+        .roster-selector { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
+        .roster-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff;
+            padding: 5px 15px; border-radius: 15px; cursor: pointer; font-size: 12px; transition: 0.3s;
+        }
+        .roster-btn.active { background: #fff; color: #000; border-color: #fff; }
+
+        .sort-controls { display: flex; justify-content: center; gap: 8px; margin: 15px auto; flex-wrap: wrap; max-width: 95%; }
         .sort-btn {
             background-color: transparent; border: 1px solid var(--team-accent); color: var(--team-accent);
             padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 12px; transition: all 0.3s;
@@ -29,9 +42,9 @@
         .player-card { 
             background-color: rgba(255, 255, 255, 0.05); border: 1px solid var(--team-accent); 
             padding: 15px; width: 160px; border-radius: 12px; text-align: center; 
-            cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative;
         }
-        .player-card:active { transform: scale(0.95); }
+        .roster-badge { position: absolute; top: 8px; right: 8px; font-size: 9px; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,0.2); color: #fff; }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
         .label { font-size: 11px; color: var(--team-accent); font-weight: bold; }
@@ -59,9 +72,19 @@
 
     <h1 id="main-title">ORIX PLAYER STATS</h1>
 
+    <div class="search-container">
+        <input type="text" id="player-search" placeholder="選手名で検索..." oninput="handleSearch()">
+    </div>
+
+    <div class="roster-selector">
+        <div class="roster-btn active" onclick="filterRoster('すべて', this)">すべて</div>
+        <div class="roster-btn" onclick="filterRoster('一軍', this)">一軍</div>
+        <div class="roster-btn" onclick="filterRoster('二軍', this)">二軍</div>
+    </div>
+
     <div class="sort-controls">
         <button id="default-sort" class="sort-btn active" onclick="sortData('number', this)">背番号順</button>
-        <button class="sort-btn" onclick="sortData('name', this)">五十音順</button>
+        <button class="sort-btn" onclick="sortData('age', this)">年齢順(若手)</button>
         <button class="sort-btn" onclick="sortData('avg', this)">打率順</button>
         <button class="sort-btn" onclick="sortData('hr', this)">本塁打順</button>
         <button class="sort-btn" onclick="sortData('era', this)">防御率順</button>
@@ -81,39 +104,17 @@
 
     <script>
         const TEAMS = {
-            ORIX: {
-                id: '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw',
-                title: 'ORIX PLAYER STATS',
-                bg: '#000033',
-                accent: '#b6a269',
-                modal: '#000044'
-            },
-            SOFTBANK: {
-                id: '1D55MmUmSxxvDf92UE_N0N3BTSrZOoR5qQxoXm_BL2_E', 
-                title: 'SOFTBANK PLAYER STATS',
-                bg: '#1a1a1a', 
-                accent: '#f5c700',
-                modal: '#222222'
-            },
-            EAGLES: {
-                id: '1o5tO7aFL2tA_eWfQCPuhyatXC4oqQUOYc1C49DuQ_sU', 
-                title: 'EAGLES PLAYER STATS',
-                bg: '#870011', 
-                accent: '#EAAA00',
-                modal: '#4c000a'
-            },
-            MARINES: {
-                id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', 
-                title: 'MARINES PLAYER STATS',
-                bg: '#222222', 
-                accent: '#ffffff',
-                modal: '#333333'
-            }
+            ORIX: { id: '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw', title: 'ORIX PLAYER STATS', bg: '#000033', accent: '#b6a269', modal: '#000044' },
+            SOFTBANK: { id: '1D55MmUmSxxvDf92UE_N0N3BTSrZOoR5qQxoXm_BL2_E', title: 'SOFTBANK PLAYER STATS', bg: '#1a1a1a', accent: '#f5c700', modal: '#222222' },
+            EAGLES: { id: '1o5tO7aFL2tA_eWfQCPuhyatXC4oqQUOYc1C49DuQ_sU', title: 'EAGLES PLAYER STATS', bg: '#870011', accent: '#EAAA00', modal: '#4c000a' },
+            MARINES: { id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', title: 'MARINES PLAYER STATS', bg: '#222222', accent: '#ffffff', modal: '#333333' }
         };
 
         let currentTeam = 'ORIX';
         let allPlayers = []; 
         let currentSortMode = 'number';
+        let searchQuery = "";
+        let rosterFilter = "すべて";
 
         async function switchTeam(teamKey) {
             if (currentTeam === teamKey && allPlayers.length > 0) return;
@@ -128,6 +129,12 @@
             document.documentElement.style.setProperty('--team-accent', config.accent);
             document.documentElement.style.setProperty('--team-modal', config.modal);
 
+            document.getElementById('player-search').value = "";
+            searchQuery = "";
+            rosterFilter = "すべて";
+            document.querySelectorAll('.roster-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.roster-btn').classList.add('active');
+
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('default-sort').classList.add('active');
             currentSortMode = 'number';
@@ -139,7 +146,6 @@
             const container = document.getElementById('container');
             container.innerHTML = '<p>データを読み込み中...</p>';
             allPlayers = [];
-            
             const config = TEAMS[currentTeam];
             const url = `https://docs.google.com/spreadsheets/d/${config.id}/gviz/tq?tqx=out:csv&sheet=シート1`;
 
@@ -147,20 +153,84 @@
                 const response = await fetch(url);
                 const csvData = await response.text();
                 const rows = csvData.split(/\r?\n/).filter(row => row.trim() !== "").slice(1);
-                
                 allPlayers = rows.map(row => {
                     return row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, ''));
                 }).filter(cols => cols.length >= 15);
-
-                sortData('number', document.getElementById('default-sort'));
+                applyFilterAndSort();
             } catch (e) {
                 container.innerHTML = '読み込み失敗。共有設定を確認してください。';
             }
         }
 
+        function handleSearch() {
+            searchQuery = document.getElementById('player-search').value.toLowerCase();
+            applyFilterAndSort();
+        }
+
+        function filterRoster(type, btn) {
+            rosterFilter = type;
+            document.querySelectorAll('.roster-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilterAndSort();
+        }
+
+        function sortData(key, btn) {
+            currentSortMode = key;
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilterAndSort();
+        }
+
+        function applyFilterAndSort() {
+            let displayList = [...allPlayers];
+
+            if (searchQuery) {
+                displayList = displayList.filter(p => p[1].includes(searchQuery));
+            }
+
+            if (rosterFilter !== "すべて") {
+                displayList = displayList.filter(p => p[16] === rosterFilter);
+            }
+
+            if (currentSortMode === 'number') {
+                displayList.sort((a, b) => (parseFloat(a[0]) || 0) - (parseFloat(b[0]) || 0));
+            } else if (currentSortMode === 'age') {
+                // 年齢が低い（誕生日が新しい）順
+                displayList.sort((a, b) => {
+                    const dateA = a[17] || "0000/00/00";
+                    const dateB = b[17] || "0000/00/00";
+                    return dateB.localeCompare(dateA);
+                });
+            } else if (currentSortMode === 'avg') {
+                displayList = displayList.filter(p => p[14] === '野手').sort((a, b) => (parseFloat(b[12]) || 0) - (parseFloat(a[12]) || 0));
+            } else if (currentSortMode === 'hr') {
+                displayList = displayList.filter(p => p[14] === '野手').sort((a, b) => (parseFloat(b[5]) || 0) - (parseFloat(a[5]) || 0));
+            } else if (currentSortMode === 'era') {
+                displayList = displayList.filter(p => p[14] === '投手').sort((a, b) => {
+                    let eraA = parseFloat(a[12]);
+                    let eraB = parseFloat(b[12]);
+                    let gamesA = parseFloat(a[2]) || 0;
+                    let gamesB = parseFloat(b[2]) || 0;
+                    let scoreA = (gamesA > 0) ? eraA : 999;
+                    let scoreB = (gamesB > 0) ? eraB : 999;
+                    return scoreA - scoreB;
+                });
+            } else if (currentSortMode === 'win') {
+                displayList = displayList.filter(p => p[14] === '投手').sort((a, b) => (parseFloat(b[3]) || 0) - (parseFloat(a[3]) || 0));
+            }
+
+            renderCards(displayList);
+        }
+
         function renderCards(dataList) {
             const container = document.getElementById('container');
             container.innerHTML = '';
+            
+            if (dataList.length === 0) {
+                container.innerHTML = '<p style="color:#888;">該当する選手はいません</p>';
+                return;
+            }
+
             dataList.forEach(cols => {
                 const isPitcher = (cols[14] === '投手');
                 const card = document.createElement('div');
@@ -179,6 +249,7 @@
                 }
 
                 card.innerHTML = `
+                    <div class="roster-badge">${cols[16]}</div>
                     <div class="number">No. ${cols[0]}</div>
                     <div class="name">${cols[1]}</div>
                     <hr>
@@ -189,36 +260,6 @@
                 `;
                 container.appendChild(card);
             });
-        }
-
-        function sortData(key, btn) {
-            currentSortMode = key;
-            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            let displayList = [...allPlayers];
-
-            if (key === 'number') {
-                displayList.sort((a, b) => (parseFloat(a[0]) || 0) - (parseFloat(b[0]) || 0));
-            } else if (key === 'name') {
-                displayList.sort((a, b) => a[1].localeCompare(b[1], 'ja'));
-            } else if (key === 'avg') {
-                displayList = allPlayers.filter(p => p[14] === '野手').sort((a, b) => (parseFloat(b[12]) || 0) - (parseFloat(a[12]) || 0));
-            } else if (key === 'hr') {
-                displayList = allPlayers.filter(p => p[14] === '野手').sort((a, b) => (parseFloat(b[5]) || 0) - (parseFloat(a[5]) || 0));
-            } else if (key === 'era') {
-                displayList = allPlayers.filter(p => p[14] === '投手').sort((a, b) => {
-                    let eraA = parseFloat(a[12]);
-                    let eraB = parseFloat(b[12]);
-                    let gamesA = parseFloat(a[2]) || 0;
-                    let gamesB = parseFloat(b[2]) || 0;
-                    let scoreA = (gamesA > 0) ? eraA : 999;
-                    let scoreB = (gamesB > 0) ? eraB : 999;
-                    return scoreA - scoreB;
-                });
-            } else if (key === 'win') {
-                displayList = allPlayers.filter(p => p[14] === '投手').sort((a, b) => (parseFloat(b[3]) || 0) - (parseFloat(a[3]) || 0));
-            }
-            renderCards(displayList);
         }
 
         function showDetail(data) {
@@ -249,7 +290,7 @@
             `;
 
             detail.innerHTML = `
-                <div class="number">背番号 ${data[0]}</div>
+                <div class="number">背番号 ${data[0]} [${data[16]}]</div>
                 <h2 style="color:#fff; font-size:28px; margin: 10px 0;">${data[1]}</h2>
                 <p style="color:var(--team-accent); font-size:14px;">${data[15]} | ${data[16]}</p>
                 ${statsHtml}
