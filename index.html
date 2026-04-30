@@ -44,7 +44,6 @@
             padding: 15px; width: 160px; border-radius: 12px; text-align: center; 
             cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative;
         }
-        .roster-badge { position: absolute; top: 8px; right: 8px; font-size: 9px; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,0.2); color: #fff; }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
         .label { font-size: 11px; color: var(--team-accent); font-weight: bold; }
@@ -207,7 +206,6 @@
             if (currentSortMode === 'number') {
                 displayList.sort((a, b) => (parseFloat(a[0]) || 0) - (parseFloat(b[0]) || 0));
             } else if (currentSortMode === 'age') {
-                // 年齢が高い（誕生日が古い）順
                 displayList.sort((a, b) => {
                     const dateA = a[17] || "9999/99/99";
                     const dateB = b[17] || "9999/99/99";
@@ -264,7 +262,6 @@
                 }
 
                 card.innerHTML = `
-                    <div class="roster-badge">${cols[16]}</div>
                     <div class="number">No. ${cols[0]}</div>
                     <div class="name">${cols[1]}</div>
                     <hr>
@@ -306,7 +303,7 @@
             `;
 
             detail.innerHTML = `
-                <div class="number">背番号 ${data[0]} [${data[16]}]</div>
+                <div class="number">背番号 ${data[0]}</div>
                 <h2 style="color:#fff; font-size:28px; margin: 10px 0;">${data[1]}</h2>
                 <p style="color:var(--team-accent); font-size:14px;">${data[15]} | ${data[16]}</p>
                 ${statsHtml}
