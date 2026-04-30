@@ -43,6 +43,7 @@
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
         .modal-content { background-color: var(--team-modal); border: 2px solid var(--team-accent); padding: 25px; border-radius: 20px; width: 85%; max-width: 380px; text-align: center; color: #fff; }
         .close-btn { margin-top: 20px; background-color: var(--team-accent); color: #000; border: none; padding: 10px 30px; border-radius: 25px; font-weight: bold; cursor: pointer; }
+        
         .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .detail-item { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 8px 0; color: #fff; font-size: 14px; }
     </style>
@@ -59,8 +60,10 @@
     <div class="sort-controls">
         <button id="default-sort" class="sort-btn active" onclick="sortData('all', this)">全員</button>
         <button class="sort-btn" onclick="sortData('number', this)">背番号順</button>
-        <button class="sort-btn" onclick="sortData('avg', this)">打率順(野手)</button>
-        <button class="sort-btn" onclick="sortData('era', this)">防御率順(投手)</button>
+        <button class="sort-btn" onclick="sortData('avg', this)">打率順</button>
+        <button class="sort-btn" onclick="sortData('hr', this)">本塁打順</button>
+        <button class="sort-btn" onclick="sortData('era', this)">防御率順</button>
+        <button class="sort-btn" onclick="sortData('win', this)">勝利順</button>
     </div>
     
     <div id="container" class="player-container">
@@ -98,10 +101,8 @@
         async function switchTeam(teamKey) {
             if (currentTeam === teamKey && allPlayers.length > 0) return;
             currentTeam = teamKey;
-            
             const config = TEAMS[teamKey];
             
-            // UI・カラー更新
             document.querySelectorAll('.team-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`tab-${teamKey.toLowerCase()}`).classList.add('active');
             document.getElementById('main-title').innerText = config.title;
@@ -110,17 +111,13 @@
             document.documentElement.style.setProperty('--team-accent', config.accent);
             document.documentElement.style.setProperty('--team-modal', config.modal);
 
-            // ソートリセット
-            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('default-sort').classList.add('active');
-
             await loadStats();
         }
 
         async function loadStats() {
             const container = document.getElementById('container');
             container.innerHTML = '<p>データを読み込み中...</p>';
-            allPlayers = []; // データを一度空にする（混ざり防止）
+            allPlayers = [];
             
             const config = TEAMS[currentTeam];
             const url = `https://docs.google.com/spreadsheets/d/${config.id}/gviz/tq?tqx=out:csv&sheet=シート1`;
@@ -136,7 +133,7 @@
 
                 renderCards(allPlayers);
             } catch (e) {
-                container.innerHTML = '読み込み失敗。スプレッドシートの「共有」と「ウェブに公開」設定を確認してください。';
+                container.innerHTML = '読み込み失敗。共有設定を確認してください。';
             }
         }
 
@@ -165,12 +162,17 @@
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             let displayList = [...allPlayers];
+
             if (key === 'number') {
                 displayList.sort((a, b) => (parseFloat(a[0]) || 0) - (parseFloat(b[0]) || 0));
             } else if (key === 'avg') {
                 displayList = allPlayers.filter(p => p[14] === '野手').sort((a, b) => (parseFloat(b[12]) || 0) - (parseFloat(a[12]) || 0));
+            } else if (key === 'hr') {
+                displayList = allPlayers.filter(p => p[14] === '野手').sort((a, b) => (parseFloat(b[5]) || 0) - (parseFloat(a[5]) || 0));
             } else if (key === 'era') {
                 displayList = allPlayers.filter(p => p[14] === '投手').sort((a, b) => (parseFloat(a[12]) || 99) - (parseFloat(b[12]) || 99));
+            } else if (key === 'win') {
+                displayList = allPlayers.filter(p => p[14] === '投手').sort((a, b) => (parseFloat(b[3]) || 0) - (parseFloat(a[3]) || 0));
             }
             renderCards(displayList);
         }
@@ -179,24 +181,36 @@
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
             const isPitcher = (data[14] === '投手');
-            let statsHtml = isPitcher ? `
-                <div class="detail-grid">
-                    <div class="detail-item"><span>勝利</span><span>${data[3]}</span></div>
-                    <div class="detail-item"><span>敗戦</span><span>${data[4]}</span></div>
-                    <div class="detail-item"><span>ホールド</span><span>${data[5]}</span></div>
-                    <div class="detail-item"><span>セーブ</span><span>${data[6]}</span></div>
-                    <div class="detail-item"><span>奪三振</span><span>${data[9]}</span></div>
-                    <div class="detail-item"><span>WHIP</span><span>${data[13]}</span></div>
-                </div>
-            ` : `
-                <div class="detail-grid">
-                    <div class="detail-item"><span>試合数</span><span>${data[2]}</span></div>
-                    <div class="detail-item"><span>本塁打</span><span>${data[5]}</span></div>
-                    <div class="detail-item"><span>打点</span><span>${data[6]}</span></div>
-                    <div class="detail-item"><span>盗塁</span><span>${data[9]}</span></div>
-                    <div class="detail-item"><span>OPS</span><span>${data[13]}</span></div>
-                </div>
-            `;
+            
+            let statsHtml = '';
+            if (isPitcher) {
+                // 投手：登板(2), 防御率(12), 勝利(3), 敗戦(4), ホールド(5), セーブ(6), 奪三振(9), WHIP(13)
+                statsHtml = `
+                    <div class="detail-grid">
+                        <div class="detail-item"><span>登板数</span><span>${data[2]}</span></div>
+                        <div class="detail-item"><span>防御率</span><span>${data[12]}</span></div>
+                        <div class="detail-item"><span>勝利</span><span>${data[3]}</span></div>
+                        <div class="detail-item"><span>敗戦</span><span>${data[4]}</span></div>
+                        <div class="detail-item"><span>ホールド</span><span>${data[5]}</span></div>
+                        <div class="detail-item"><span>セーブ</span><span>${data[6]}</span></div>
+                        <div class="detail-item"><span>奪三振</span><span>${data[9]}</span></div>
+                        <div class="detail-item"><span>WHIP</span><span>${data[13]}</span></div>
+                    </div>
+                `;
+            } else {
+                // 野手：試合数(2), 打率(12), 本塁打(5), 打点(6), 盗塁(9), OPS(13)
+                statsHtml = `
+                    <div class="detail-grid">
+                        <div class="detail-item"><span>試合数</span><span>${data[2]}</span></div>
+                        <div class="detail-item"><span>打率</span><span>${data[12]}</span></div>
+                        <div class="detail-item"><span>本塁打</span><span>${data[5]}</span></div>
+                        <div class="detail-item"><span>打点</span><span>${data[6]}</span></div>
+                        <div class="detail-item"><span>盗塁</span><span>${data[9]}</span></div>
+                        <div class="detail-item"><span>OPS</span><span>${data[13]}</span></div>
+                    </div>
+                `;
+            }
+
             detail.innerHTML = `
                 <div class="number">背番号 ${data[0]}</div>
                 <h2 style="color:#fff; font-size:28px; margin: 10px 0;">${data[1]}</h2>
