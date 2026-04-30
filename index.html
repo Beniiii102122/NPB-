@@ -54,12 +54,14 @@
         <div id="tab-orix" class="team-tab active" onclick="switchTeam('ORIX')">ORIX</div>
         <div id="tab-softbank" class="team-tab" onclick="switchTeam('SOFTBANK')">SOFTBANK</div>
         <div id="tab-eagles" class="team-tab" onclick="switchTeam('EAGLES')">EAGLES</div>
+        <div id="tab-marines" class="team-tab" onclick="switchTeam('MARINES')">MARINES</div>
     </div>
 
     <h1 id="main-title">ORIX PLAYER STATS</h1>
 
     <div class="sort-controls">
         <button id="default-sort" class="sort-btn active" onclick="sortData('number', this)">背番号順</button>
+        <button class="sort-btn" onclick="sortData('name', this)">五十音順</button>
         <button class="sort-btn" onclick="sortData('avg', this)">打率順</button>
         <button class="sort-btn" onclick="sortData('hr', this)">本塁打順</button>
         <button class="sort-btn" onclick="sortData('era', this)">防御率順</button>
@@ -99,6 +101,13 @@
                 bg: '#870011', 
                 accent: '#EAAA00',
                 modal: '#4c000a'
+            },
+            MARINES: {
+                id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', 
+                title: 'MARINES PLAYER STATS',
+                bg: '#222222', 
+                accent: '#ffffff',
+                modal: '#333333'
             }
         };
 
@@ -190,6 +199,8 @@
 
             if (key === 'number') {
                 displayList.sort((a, b) => (parseFloat(a[0]) || 0) - (parseFloat(b[0]) || 0));
+            } else if (key === 'name') {
+                displayList.sort((a, b) => a[1].localeCompare(b[1], 'ja'));
             } else if (key === 'avg') {
                 displayList = allPlayers.filter(p => p[14] === '野手').sort((a, b) => (parseFloat(b[12]) || 0) - (parseFloat(a[12]) || 0));
             } else if (key === 'hr') {
@@ -200,11 +211,8 @@
                     let eraB = parseFloat(b[12]);
                     let gamesA = parseFloat(a[2]) || 0;
                     let gamesB = parseFloat(b[2]) || 0;
-
-                    // 登板なしの場合は最下位にするための重み
                     let scoreA = (gamesA > 0) ? eraA : 999;
                     let scoreB = (gamesB > 0) ? eraB : 999;
-
                     return scoreA - scoreB;
                 });
             } else if (key === 'win') {
