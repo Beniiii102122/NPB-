@@ -6,16 +6,16 @@
     <title>NPB名鑑 Pro</title>
     <style>
         :root {
-            --team-bg: #000033;
-            --team-accent: #b6a269;
-            --team-modal: #000044;
+            --team-bg: #1a1a1a;
+            --team-accent: #f5c700;
+            --team-modal: #222222;
         }
 
         body { background-color: var(--team-bg); font-family: 'Helvetica Neue', Arial, sans-serif; color: var(--team-accent); margin: 0; padding-bottom: 50px; transition: all 0.5s; }
         h1 { text-align: center; margin-top: 20px; letter-spacing: 2px; color: var(--team-accent); }
         
-        .team-selector { display: flex; justify-content: center; background: rgba(0,0,0,0.4); padding: 10px 0; margin-bottom: 10px; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
-        .team-tab { padding: 10px 15px; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; opacity: 0.5; transition: 0.3s; color: #fff; font-size: 13px; }
+        .team-selector { display: flex; justify-content: center; background: rgba(0,0,0,0.4); padding: 10px 0; margin-bottom: 10px; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); flex-wrap: wrap; }
+        .team-tab { padding: 10px 15px; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; opacity: 0.5; transition: 0.3s; color: #fff; font-size: 12px; }
         .team-tab.active { opacity: 1; border-bottom: 3px solid var(--team-accent); color: var(--team-accent); }
 
         .search-container { display: flex; justify-content: center; margin: 10px auto; width: 90%; max-width: 400px; }
@@ -63,14 +63,15 @@
 <body>
 
     <div class="team-selector">
-        <div id="tab-orix" class="team-tab active" onclick="switchTeam('ORIX')">ORIX</div>
-        <div id="tab-softbank" class="team-tab" onclick="switchTeam('SOFTBANK')">SOFTBANK</div>
-        <div id="tab-eagles" class="team-tab" onclick="switchTeam('EAGLES')">EAGLES</div>
-        <div id="tab-marines" class="team-tab" onclick="switchTeam('MARINES')">MARINES</div>
-        <div id="tab-fighters" class="team-tab" onclick="switchTeam('FIGHTERS')">FIGHTERS</div>
+        <div id="tab-softbank" class="team-tab active" onclick="switchTeam('SOFTBANK')">福岡ソフトバンクホークス</div>
+        <div id="tab-fighters" class="team-tab" onclick="switchTeam('FIGHTERS')">北海道日本ハムファイターズ</div>
+        <div id="tab-orix" class="team-tab" onclick="switchTeam('ORIX')">オリックス・バファローズ</div>
+        <div id="tab-eagles" class="team-tab" onclick="switchTeam('EAGLES')">東北楽天ゴールデンイーグルス</div>
+        <div id="tab-lions" class="team-tab" onclick="switchTeam('LIONS')">埼玉西武ライオンズ</div>
+        <div id="tab-marines" class="team-tab" onclick="switchTeam('MARINES')">千葉ロッテマリーンズ</div>
     </div>
 
-    <h1 id="main-title">ORIX PLAYER STATS</h1>
+    <h1 id="main-title">福岡ソフトバンクホークス</h1>
 
     <div class="search-container">
         <input type="text" id="player-search" placeholder="選手名で検索..." oninput="handleSearch()">
@@ -104,14 +105,15 @@
 
     <script>
         const TEAMS = {
-            ORIX: { id: '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw', title: 'ORIX PLAYER STATS', bg: '#000033', accent: '#b6a269', modal: '#000044' },
-            SOFTBANK: { id: '1D55MmUmSxxvDf92UE_N0N3BTSrZOoR5qQxoXm_BL2_E', title: 'SOFTBANK PLAYER STATS', bg: '#1a1a1a', accent: '#f5c700', modal: '#222222' },
-            EAGLES: { id: '1o5tO7aFL2tA_eWfQCPuhyatXC4oqQUOYc1C49DuQ_sU', title: 'EAGLES PLAYER STATS', bg: '#870011', accent: '#EAAA00', modal: '#4c000a' },
-            MARINES: { id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', title: 'MARINES PLAYER STATS', bg: '#222222', accent: '#ffffff', modal: '#333333' },
-            FIGHTERS: { id: '14Nd-iWKpiJg7M0Ou2NG0bgARZHJY-JIdARiWCwVTmjM', title: 'FIGHTERS PLAYER STATS', bg: '#005491', accent: '#f3c759', modal: '#003e6b' }
+            SOFTBANK: { id: '1D55MmUmSxxvDf92UE_N0N3BTSrZOoR5qQxoXm_BL2_E', title: '福岡ソフトバンクホークス', bg: '#1a1a1a', accent: '#f5c700', modal: '#222222' },
+            FIGHTERS: { id: '14Nd-iWKpiJg7M0Ou2NG0bgARZHJY-JIdARiWCwVTmjM', title: '北海道日本ハムファイターズ', bg: '#005491', accent: '#f3c759', modal: '#003e6b' },
+            ORIX: { id: '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw', title: 'オリックス・バファローズ', bg: '#000033', accent: '#b6a269', modal: '#000044' },
+            EAGLES: { id: '1o5tO7aFL2tA_eWfQCPuhyatXC4oqQUOYc1C49DuQ_sU', title: '東北楽天ゴールデンイーグルス', bg: '#870011', accent: '#EAAA00', modal: '#4c000a' },
+            LIONS: { id: '1rU0KqHiGXvS3hAMp0snqepykftW4gnoEcqNAFcK9ZJw', title: '埼玉西武ライオンズ', bg: '#03192e', accent: '#ffffff', modal: '#0a2a47' },
+            MARINES: { id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', title: '千葉ロッテマリーンズ', bg: '#222222', accent: '#ffffff', modal: '#333333' }
         };
 
-        let currentTeam = 'ORIX';
+        let currentTeam = 'SOFTBANK';
         let allPlayers = []; 
         let currentSortMode = 'number';
         let searchQuery = "";
@@ -315,7 +317,9 @@
         }
 
         function closeModal() { document.getElementById('modal').style.display = 'none'; }
-        loadStats();
+        
+        // 1位のソフトバンクを初期表示
+        switchTeam('SOFTBANK');
     </script>
 </body>
 </html>
