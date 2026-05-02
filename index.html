@@ -29,7 +29,6 @@
             background: var(--team-bg); color: var(--team-accent); font-size: 13px; font-weight: bold; cursor: pointer; outline: none;
         }
 
-        /* 昇順・降順ボタン */
         .order-btn {
             padding: 8px 15px; border-radius: 20px; border: 1px solid var(--team-accent);
             background: rgba(255,255,255,0.1); color: var(--team-accent); font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.3s;
@@ -95,12 +94,8 @@
         <select id="sort-select" onchange="handleSort(this.value)">
             <option value="number">背番号</option>
             <option value="age">年齢</option>
-            <option value="avg">打率</option>
-            <option value="hr">本塁打</option>
-            <option value="era">防御率</option>
-            <option value="win">勝利数</option>
         </select>
-        <button id="order-toggle" class="order-btn" onclick="toggleOrder()">降順</button>
+        <button id="order-toggle" class="order-btn" onclick="toggleOrder()">昇順</button>
     </div>
 
     <div class="filter-section">
@@ -147,7 +142,7 @@
         let allPlayers = []; 
         let currentTeam = 'SOFTBANK';
         let currentSortMode = 'number';
-        let isAscending = true; // デフォルトは昇順
+        let isAscending = true; 
         let searchQuery = "";
         let rosterFilter = "すべて";
         let posFilter = "すべて";
@@ -230,10 +225,6 @@
                 let valA, valB;
                 if (currentSortMode === 'number') { valA = parseFloat(a[0]) || 0; valB = parseFloat(b[0]) || 0; }
                 else if (currentSortMode === 'age') { valA = a[17] || "9999/99/99"; valB = b[17] || "9999/99/99"; }
-                else if (currentSortMode === 'avg') { valA = parseFloat(a[12]) || 0; valB = parseFloat(b[12]) || 0; }
-                else if (currentSortMode === 'hr') { valA = parseFloat(a[5]) || 0; valB = parseFloat(b[5]) || 0; }
-                else if (currentSortMode === 'era') { valA = parseFloat(a[12]) || 999; valB = parseFloat(b[12]) || 999; }
-                else if (currentSortMode === 'win') { valA = parseFloat(a[3]) || 0; valB = parseFloat(b[3]) || 0; }
                 
                 if (valA < valB) return isAscending ? -1 : 1;
                 if (valA > valB) return isAscending ? 1 : -1;
