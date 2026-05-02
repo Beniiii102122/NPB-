@@ -119,7 +119,7 @@
     </div>
 
     <div class="footer-note">
-        ※投手の役割はスプレッドシートの「役割」列に基づきます。
+        ※ポジション判定ロジックを更新しました。
     </div>
 
     <div id="modal" onclick="closeModal()">
@@ -214,24 +214,16 @@
         function applyFilterAndSort() {
             let list = [...allPlayers];
             
-            // 検索フィルタ
             if (searchQuery) list = list.filter(p => p[1].includes(searchQuery));
-            
-            // 一軍・二軍フィルタ
             if (rosterFilter !== "すべて") list = list.filter(p => p[16] === rosterFilter);
             
-            // ポジション・役割フィルタ
+            // フィルタロジックの修正
             if (posFilter !== "すべて") {
-                if (posFilter === '先発' || posFilter === 'リリーフ') {
-                    // スプレッドシートの「役割」(14列目)でフィルタ
-                    list = list.filter(p => p[14] === posFilter);
-                } else {
-                    // スプレッドシートの「ポジション」(15列目)でフィルタ
-                    list = list.filter(p => p[15] === posFilter);
-                }
+                // ポジション（16列目＝インデックス15）で直接判定
+                // スプレッドシートの「先発」「リリーフ」「捕手」「内野手」「外野手」がここに入る
+                list = list.filter(p => p[15] === posFilter);
             }
             
-            // 並び替え
             list.sort((a, b) => {
                 let valA, valB;
                 if (currentSortMode === 'number') { valA = parseFloat(a[0]) || 0; valB = parseFloat(b[0]) || 0; }
@@ -249,7 +241,8 @@
             const container = document.getElementById('container');
             container.innerHTML = dataList.length === 0 ? '<p style="color:#888;">該当なし</p>' : '';
             dataList.forEach(cols => {
-                const isP = (cols[14] === '先発' || cols[14] === 'リリーフ');
+                // 15列目(インデックス14)が「投手」かどうかで表示切り替え
+                const isP = (cols[14] === '投手');
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(cols);
@@ -269,7 +262,7 @@
         function showDetail(data) {
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
-            const isP = (data[14] === '先発' || data[14] === 'リリーフ');
+            const isP = (data[14] === '投手');
             const stats = isP ? [
                 {l: '登板', v: data[2]}, {l: '防御率', v: data[12]},
                 {l: '勝利', v: data[3]}, {l: '敗戦', v: data[4]},
@@ -284,7 +277,7 @@
                 <div class="modal-header">
                     <div class="modal-num">背番号 ${data[0]}</div>
                     <div class="modal-name">${data[1]}</div>
-                    <div class="modal-sub">${data[14]} | ${data[16]}</div>
+                    <div class="modal-sub">${data[15]} | ${data[16]}</div>
                 </div>
                 <div class="detail-grid">${stats.map(s => `<div class="detail-item"><div class="detail-label">${s.l}</div><div class="detail-value">${s.v}</div></div>`).join('')}</div>
                 <div class="modal-footer">${data[17]} (${calculateAge(data[17])}歳)</div>
