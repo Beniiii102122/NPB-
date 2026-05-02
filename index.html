@@ -14,27 +14,25 @@
         body { background-color: var(--team-bg); font-family: 'Helvetica Neue', Arial, sans-serif; color: var(--team-accent); margin: 0; padding-bottom: 50px; transition: all 0.5s; }
         h1 { text-align: center; margin-top: 20px; margin-bottom: 20px; letter-spacing: 2px; color: var(--team-accent); }
 
-        /* チーム選択タブ */
         .team-selector { display: flex; justify-content: center; background: rgba(0,0,0,0.4); padding: 10px 0; margin-bottom: 10px; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); flex-wrap: wrap; }
         .team-tab { padding: 10px 15px; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; opacity: 0.5; transition: 0.3s; color: #fff; font-size: 12px; }
         .team-tab.active { opacity: 1; border-bottom: 3px solid var(--team-accent); color: var(--team-accent); }
 
-        /* 検索ボックス */
         .search-container { display: flex; justify-content: center; margin: 10px auto; width: 90%; max-width: 400px; }
         #player-search {
             width: 100%; padding: 12px 20px; border-radius: 25px; border: 1px solid var(--team-accent);
             background: rgba(255,255,255,0.1); color: #fff; font-size: 16px; outline: none;
         }
 
-        /* 絞り込み機能（一軍・二軍） */
-        .roster-selector { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
-        .roster-btn {
+        /* 絞り込みエリア */
+        .filter-section { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .filter-group { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .filter-btn {
             background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff;
-            padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 13px; transition: 0.3s;
+            padding: 6px 14px; border-radius: 15px; cursor: pointer; font-size: 12px; transition: 0.3s;
         }
-        .roster-btn.active { background: var(--team-accent); color: #000; border-color: var(--team-accent); font-weight: bold; }
+        .filter-btn.active { background: var(--team-accent); color: #000; border-color: var(--team-accent); font-weight: bold; }
 
-        /* 並び替えボタン */
         .sort-controls { display: flex; justify-content: center; gap: 8px; margin: 15px auto; flex-wrap: wrap; max-width: 95%; }
         .sort-btn {
             background-color: transparent; border: 1px solid var(--team-accent); color: var(--team-accent);
@@ -42,14 +40,12 @@
         }
         .sort-btn.active { background-color: var(--team-accent); color: #000; }
 
-        /* 選手カード */
         .player-container { display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; justify-content: center; }
         .player-card { 
             background-color: rgba(255, 255, 255, 0.05); border: 1px solid var(--team-accent); 
             padding: 15px; width: 160px; border-radius: 12px; text-align: center; 
             cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-        .player-card:active { transform: scale(0.95); }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
         .label { font-size: 11px; color: var(--team-accent); font-weight: bold; }
@@ -58,9 +54,8 @@
         .number { font-size: 12px; color: var(--team-accent); }
         hr { border: 0; border-top: 1px solid var(--team-accent); opacity: 0.3; margin: 10px 0; }
 
-        /* 詳細モーダル */
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(8px); }
-        .modal-content { background-color: var(--team-modal); border: 2px solid var(--team-accent); padding: 30px 20px; border-radius: 24px; width: 88%; max-width: 400px; text-align: center; color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-content { background-color: var(--team-modal); border: 2px solid var(--team-accent); padding: 30px 20px; border-radius: 24px; width: 88%; max-width: 400px; text-align: center; color: #fff; }
         
         .modal-header { margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; }
         .modal-num { font-size: 14px; color: var(--team-accent); font-weight: bold; margin-bottom: 4px; }
@@ -68,17 +63,13 @@
         .modal-sub { font-size: 14px; opacity: 0.7; margin-top: 5px; }
 
         .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
-        .detail-item { 
-            background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
+        .detail-item { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .detail-label { font-size: 10px; color: var(--team-accent); font-weight: bold; margin-bottom: 4px; }
         .detail-value { font-size: 22px; font-weight: bold; color: #fff; }
 
         .modal-footer { font-size: 12px; color: #aaa; margin-top: 15px; }
-        .close-btn { margin-top: 25px; background-color: var(--team-accent); color: #000; border: none; padding: 12px 50px; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        .close-btn { margin-top: 25px; background-color: var(--team-accent); color: #000; border: none; padding: 12px 50px; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: 16px; }
 
-        /* フッター */
         .footer-note {
             text-align: center; font-size: 10px; color: var(--team-accent); opacity: 0.8;
             margin: 40px auto 20px; padding: 15px 20px; line-height: 1.6; max-width: 90%;
@@ -103,10 +94,19 @@
         <input type="text" id="player-search" placeholder="選手名で検索..." oninput="handleSearch()">
     </div>
 
-    <div class="roster-selector">
-        <div class="roster-btn active" onclick="filterRoster('すべて', this)">すべて</div>
-        <div class="roster-btn" onclick="filterRoster('一軍', this)">一軍</div>
-        <div class="roster-btn" onclick="filterRoster('二軍', this)">二軍</div>
+    <div class="filter-section">
+        <div class="filter-group" id="roster-filters">
+            <div class="filter-btn active" onclick="setFilter('roster', 'すべて', this)">すべて</div>
+            <div class="filter-btn" onclick="setFilter('roster', '一軍', this)">一軍</div>
+            <div class="filter-btn" onclick="setFilter('roster', '二軍', this)">二軍</div>
+        </div>
+        <div class="filter-group" id="pos-filters">
+            <div class="filter-btn active" onclick="setFilter('pos', 'すべて', this)">全ポジ</div>
+            <div class="filter-btn" onclick="setFilter('pos', '投手', this)">投手</div>
+            <div class="filter-btn" onclick="setFilter('pos', '捕手', this)">捕手</div>
+            <div class="filter-btn" onclick="setFilter('pos', '内野手', this)">内野手</div>
+            <div class="filter-btn" onclick="setFilter('pos', '外野手', this)">外野手</div>
+        </div>
     </div>
 
     <div class="sort-controls">
@@ -149,6 +149,7 @@
         let currentSortMode = 'number';
         let searchQuery = "";
         let rosterFilter = "すべて";
+        let posFilter = "すべて";
 
         function calculateAge(birthdayStr) {
             if (!birthdayStr || birthdayStr === "0000/00/00") return "??";
@@ -170,12 +171,11 @@
             document.documentElement.style.setProperty('--team-accent', config.accent);
             document.documentElement.style.setProperty('--team-modal', config.modal);
             
-            // チーム切り替え時にフィルタと検索をリセット
+            // リセット
             document.getElementById('player-search').value = "";
-            searchQuery = "";
-            rosterFilter = "すべて";
-            document.querySelectorAll('.roster-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('.roster-btn').classList.add('active');
+            searchQuery = ""; rosterFilter = "すべて"; posFilter = "すべて";
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.filter-group').forEach(g => g.firstElementChild.classList.add('active'));
             
             await loadStats();
         }
@@ -183,7 +183,6 @@
         async function loadStats() {
             const container = document.getElementById('container');
             container.innerHTML = '<p>データを読み込み中...</p>';
-            allPlayers = [];
             const config = TEAMS[currentTeam];
             const url = `https://docs.google.com/spreadsheets/d/${config.id}/gviz/tq?tqx=out:csv&sheet=シート1`;
             try {
@@ -199,16 +198,15 @@
             }
         }
 
-        function handleSearch() { 
-            searchQuery = document.getElementById('player-search').value.toLowerCase(); 
-            applyFilterAndSort(); 
-        }
+        function handleSearch() { searchQuery = document.getElementById('player-search').value.toLowerCase(); applyFilterAndSort(); }
 
-        function filterRoster(type, btn) { 
-            rosterFilter = type; 
-            document.querySelectorAll('.roster-btn').forEach(b => b.classList.remove('active')); 
-            btn.classList.add('active'); 
-            applyFilterAndSort(); 
+        function setFilter(type, value, btn) {
+            if (type === 'roster') rosterFilter = value;
+            if (type === 'pos') posFilter = value;
+            
+            btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilterAndSort();
         }
 
         function sortData(key, btn) { 
@@ -221,13 +219,10 @@
         function applyFilterAndSort() {
             let displayList = [...allPlayers];
             
-            // 1. 検索フィルタ
             if (searchQuery) displayList = displayList.filter(p => p[1].includes(searchQuery));
-            
-            // 2. 軍構成フィルタ (16番目のカラムが「一軍」「二軍」)
             if (rosterFilter !== "すべて") displayList = displayList.filter(p => p[16] === rosterFilter);
+            if (posFilter !== "すべて") displayList = displayList.filter(p => p[15] === posFilter);
             
-            // 3. 並び替え
             if (currentSortMode === 'number') displayList.sort((a, b) => (parseFloat(a[0]) || 0) - (parseFloat(b[0]) || 0));
             else if (currentSortMode === 'age') displayList.sort((a, b) => (a[17] || "9999/99/99").localeCompare(b[17] || "9999/99/99"));
             else if (currentSortMode === 'avg') displayList = displayList.filter(p => p[14] === '野手').sort((a, b) => (parseFloat(b[12]) || 0) - (parseFloat(a[12]) || 0));
@@ -252,7 +247,6 @@
                 card.onclick = () => showDetail(cols);
                 let label2 = isPitcher ? '防御率' : '打率';
                 let value2 = cols[12];
-                
                 card.innerHTML = `
                     <div class="number">No. ${cols[0]}</div>
                     <div class="name">${cols[1]}</div>
@@ -270,7 +264,6 @@
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
             const isPitcher = (data[14] === '投手');
-            
             const stats = isPitcher ? [
                 {l: '登板', v: data[2]}, {l: '防御率', v: data[12]},
                 {l: '勝利', v: data[3]}, {l: '敗戦', v: data[4]},
@@ -281,9 +274,7 @@
                 {l: '本塁打', v: data[5]}, {l: '打点', v: data[6]},
                 {l: '盗塁', v: data[9]}, {l: 'OPS', v: data[13]}
             ];
-
             let gridHtml = stats.map(s => `<div class="detail-item"><span class="detail-label">${s.l}</span><span class="detail-value">${s.v}</span></div>`).join('');
-
             detail.innerHTML = `
                 <div class="modal-header">
                     <div class="modal-num">背番号 ${data[0]}</div>
