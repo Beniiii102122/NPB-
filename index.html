@@ -14,6 +14,7 @@
         body { background-color: var(--team-bg); font-family: 'Helvetica Neue', Arial, sans-serif; color: var(--team-accent); margin: 0; padding-bottom: 50px; transition: all 0.5s; }
         h1 { text-align: center; margin-top: 20px; margin-bottom: 5px; letter-spacing: 2px; color: var(--team-accent); }
         
+        /* 更新日時表示のスタイル */
         .last-update {
             text-align: center;
             font-size: 12px;
@@ -164,7 +165,7 @@
             document.getElementById(`tab-${teamKey.toLowerCase()}`).classList.add('active');
             document.getElementById('main-title').innerText = config.title;
             
-            // 保存済みの更新日時があれば表示、なければ取得中に
+            // 既にデータ取得済みならその時刻を表示、未取得なら「取得中」にする
             document.getElementById('update-time').innerText = config.lastUpdated ? `最終更新: ${config.lastUpdated}` : "最終更新: 取得中...";
 
             document.documentElement.style.setProperty('--team-bg', config.bg);
@@ -195,7 +196,7 @@
                 const response = await fetch(url);
                 const csvData = await response.text();
                 
-                // データを取得した現在時刻をこの球団の「最終保存日時」として記録
+                // データを取得した時刻を球団設定に保存
                 const now = new Date();
                 const timestamp = now.toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 config.lastUpdated = timestamp;
