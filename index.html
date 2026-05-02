@@ -119,7 +119,7 @@
     </div>
 
     <div class="footer-note">
-        ※投手の役割は主観が含まれます。成績データは目安としてご覧ください。
+        ※投手の役割はスプレッドシートの「役割」列に基づきます。
     </div>
 
     <div id="modal" onclick="closeModal()">
@@ -214,13 +214,24 @@
         function applyFilterAndSort() {
             let list = [...allPlayers];
             
+            // 検索フィルタ
             if (searchQuery) list = list.filter(p => p[1].includes(searchQuery));
+            
+            // 一軍・二軍フィルタ
             if (rosterFilter !== "すべて") list = list.filter(p => p[16] === rosterFilter);
+            
+            // ポジション・役割フィルタ
             if (posFilter !== "すべて") {
-                if (posFilter === '先発' || posFilter === 'リリーフ') list = list.filter(p => p[14] === posFilter);
-                else list = list.filter(p => p[15] === posFilter);
+                if (posFilter === '先発' || posFilter === 'リリーフ') {
+                    // スプレッドシートの「役割」(14列目)でフィルタ
+                    list = list.filter(p => p[14] === posFilter);
+                } else {
+                    // スプレッドシートの「ポジション」(15列目)でフィルタ
+                    list = list.filter(p => p[15] === posFilter);
+                }
             }
             
+            // 並び替え
             list.sort((a, b) => {
                 let valA, valB;
                 if (currentSortMode === 'number') { valA = parseFloat(a[0]) || 0; valB = parseFloat(b[0]) || 0; }
