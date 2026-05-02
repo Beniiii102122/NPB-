@@ -12,15 +12,7 @@
         }
 
         body { background-color: var(--team-bg); font-family: 'Helvetica Neue', Arial, sans-serif; color: var(--team-accent); margin: 0; padding-bottom: 50px; transition: all 0.5s; }
-        h1 { text-align: center; margin-top: 20px; margin-bottom: 5px; letter-spacing: 2px; color: var(--team-accent); }
-        
-        .last-update {
-            text-align: center;
-            font-size: 12px;
-            color: #fff;
-            opacity: 0.8;
-            margin-bottom: 20px;
-        }
+        h1 { text-align: center; margin-top: 20px; margin-bottom: 20px; letter-spacing: 2px; color: var(--team-accent); }
 
         .team-selector { display: flex; justify-content: center; background: rgba(0,0,0,0.4); padding: 10px 0; margin-bottom: 10px; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); flex-wrap: wrap; }
         .team-tab { padding: 10px 15px; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; opacity: 0.5; transition: 0.3s; color: #fff; font-size: 12px; }
@@ -89,7 +81,6 @@
     </div>
 
     <h1 id="main-title">福岡ソフトバンクホークス</h1>
-    <div id="update-time" class="last-update">最終更新：2024/05/26 12:25</div>
 
     <div class="search-container">
         <input type="text" id="player-search" placeholder="選手名で検索..." oninput="handleSearch()">
@@ -129,12 +120,12 @@
 
     <script>
         const TEAMS = {
-            SOFTBANK: { id: '1D55MmUmSxxvDf92UE_N0N3BTSrZOoR5qQxoXm_BL2_E', title: '福岡ソフトバンクホークス', bg: '#1a1a1a', accent: '#f5c700', modal: '#222222', lastUpdated: '2024/05/26 12:25' },
-            FIGHTERS: { id: '14Nd-iWKpiJg7M0Ou2NG0bgARZHJY-JIdARiWCwVTmjM', title: '北海道日本ハムファイターズ', bg: '#005491', accent: '#f3c759', modal: '#003e6b', lastUpdated: null },
-            ORIX: { id: '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw', title: 'オリックス・バファローズ', bg: '#000033', accent: '#b6a269', modal: '#000044', lastUpdated: null },
-            EAGLES: { id: '1o5tO7aFL2tA_eWfQCPuhyatXC4oqQUOYc1C49DuQ_sU', title: '東北楽天ゴールデンイーグルス', bg: '#870011', accent: '#EAAA00', modal: '#4c000a', lastUpdated: null },
-            LIONS: { id: '1rU0KqHiGXvS3hAMp0snqepykftW4gnoEcqNAFcK9ZJw', title: '埼玉西武ライオンズ', bg: '#03192e', accent: '#ffffff', modal: '#0a2a47', lastUpdated: null },
-            MARINES: { id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', title: '千葉ロッテマリーンズ', bg: '#222222', accent: '#ffffff', modal: '#333333', lastUpdated: null }
+            SOFTBANK: { id: '1D55MmUmSxxvDf92UE_N0N3BTSrZOoR5qQxoXm_BL2_E', title: '福岡ソフトバンクホークス', bg: '#1a1a1a', accent: '#f5c700', modal: '#222222' },
+            FIGHTERS: { id: '14Nd-iWKpiJg7M0Ou2NG0bgARZHJY-JIdARiWCwVTmjM', title: '北海道日本ハムファイターズ', bg: '#005491', accent: '#f3c759', modal: '#003e6b' },
+            ORIX: { id: '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw', title: 'オリックス・バファローズ', bg: '#000033', accent: '#b6a269', modal: '#000044' },
+            EAGLES: { id: '1o5tO7aFL2tA_eWfQCPuhyatXC4oqQUOYc1C49DuQ_sU', title: '東北楽天ゴールデンイーグルス', bg: '#870011', accent: '#EAAA00', modal: '#4c000a' },
+            LIONS: { id: '1rU0KqHiGXvS3hAMp0snqepykftW4gnoEcqNAFcK9ZJw', title: '埼玉西武ライオンズ', bg: '#03192e', accent: '#ffffff', modal: '#0a2a47' },
+            MARINES: { id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', title: '千葉ロッテマリーンズ', bg: '#222222', accent: '#ffffff', modal: '#333333' }
         };
 
         let currentTeam = 'SOFTBANK';
@@ -160,9 +151,6 @@
             document.querySelectorAll('.team-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`tab-${teamKey.toLowerCase()}`).classList.add('active');
             document.getElementById('main-title').innerText = config.title;
-            
-            // 各球団ごとの最終更新日時を表示
-            document.getElementById('update-time').innerText = config.lastUpdated ? `最終更新：${config.lastUpdated}` : "最終更新：取得中...";
 
             document.documentElement.style.setProperty('--team-bg', config.bg);
             document.documentElement.style.setProperty('--team-accent', config.accent);
@@ -191,17 +179,6 @@
             try {
                 const response = await fetch(url);
                 const csvData = await response.text();
-                
-                // 読み込み完了時の時刻を最終更新としてセット（画像に合わせたフォーマット）
-                const now = new Date();
-                const timestamp = now.getFullYear() + '/' + 
-                                  ('0' + (now.getMonth()+1)).slice(-2) + '/' + 
-                                  ('0' + now.getDate()).slice(-2) + ' ' + 
-                                  ('0' + now.getHours()).slice(-2) + ':' + 
-                                  ('0' + now.getMinutes()).slice(-2);
-                config.lastUpdated = timestamp;
-                document.getElementById('update-time').innerText = `最終更新：${timestamp}`;
-
                 const rows = csvData.split(/\r?\n/).filter(row => row.trim() !== "").slice(1);
                 allPlayers = rows.map(row => {
                     return row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, ''));
