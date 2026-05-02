@@ -18,19 +18,24 @@
         .team-tab { padding: 10px 15px; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; opacity: 0.5; transition: 0.3s; color: #fff; font-size: 12px; }
         .team-tab.active { opacity: 1; border-bottom: 3px solid var(--team-accent); color: var(--team-accent); }
 
-        .search-container { display: flex; justify-content: center; margin: 10px auto; width: 90%; max-width: 400px; gap: 10px; }
+        .search-container { display: flex; justify-content: center; margin: 10px auto; width: 95%; max-width: 500px; gap: 8px; flex-wrap: wrap; }
         #player-search {
-            flex: 1; padding: 10px 15px; border-radius: 20px; border: 1px solid var(--team-accent);
+            flex: 1; min-width: 150px; padding: 10px 15px; border-radius: 20px; border: 1px solid var(--team-accent);
             background: rgba(255,255,255,0.1); color: #fff; font-size: 14px; outline: none;
         }
 
-        /* プルダウン（ソート）のスタイル */
         #sort-select {
-            padding: 8px 12px; border-radius: 20px; border: 1px solid var(--team-accent);
+            padding: 8px 10px; border-radius: 20px; border: 1px solid var(--team-accent);
             background: var(--team-bg); color: var(--team-accent); font-size: 13px; font-weight: bold; cursor: pointer; outline: none;
         }
 
-        /* 絞り込みエリア */
+        /* 昇順・降順ボタン */
+        .order-btn {
+            padding: 8px 15px; border-radius: 20px; border: 1px solid var(--team-accent);
+            background: rgba(255,255,255,0.1); color: var(--team-accent); font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.3s;
+        }
+        .order-btn.active { background: var(--team-accent); color: #000; }
+
         .filter-section { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 15px; }
         .filter-group { display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; }
         .filter-btn {
@@ -42,14 +47,14 @@
         .player-container { display: flex; flex-wrap: wrap; gap: 12px; padding: 15px; justify-content: center; }
         .player-card { 
             background-color: rgba(255, 255, 255, 0.05); border: 1px solid var(--team-accent); 
-            padding: 15px; width: 150px; border-radius: 12px; text-align: center; 
+            padding: 15px; width: 145px; border-radius: 12px; text-align: center; 
             cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
         .label { font-size: 10px; color: var(--team-accent); font-weight: bold; }
         .stats { font-size: 18px; color: #fff; font-weight: bold; }
-        .name { font-size: 16px; margin: 5px 0; font-weight: bold; color: #fff; height: 2.5em; display: flex; align-items: center; justify-content: center; }
+        .name { font-size: 15px; margin: 5px 0; font-weight: bold; color: #fff; height: 2.5em; display: flex; align-items: center; justify-content: center; }
         .number { font-size: 11px; color: var(--team-accent); }
         hr { border: 0; border-top: 1px solid var(--team-accent); opacity: 0.3; margin: 10px 0; }
 
@@ -75,12 +80,12 @@
 <body>
 
     <div class="team-selector">
-        <div id="tab-softbank" class="team-tab active" onclick="switchTeam('SOFTBANK')">福岡ソフトバンクホークス</div>
-        <div id="tab-fighters" class="team-tab" onclick="switchTeam('FIGHTERS')">北海道日本ハムファイターズ</div>
-        <div id="tab-orix" class="team-tab" onclick="switchTeam('ORIX')">オリックス・バファローズ</div>
-        <div id="tab-eagles" class="team-tab" onclick="switchTeam('EAGLES')">東北楽天ゴールデンイーグルス</div>
-        <div id="tab-lions" class="team-tab" onclick="switchTeam('LIONS')">埼玉西武ライオンズ</div>
-        <div id="tab-marines" class="team-tab" onclick="switchTeam('MARINES')">千葉ロッテマリーンズ</div>
+        <div id="tab-softbank" class="team-tab active" onclick="switchTeam('SOFTBANK')">ソフトバンク</div>
+        <div id="tab-fighters" class="team-tab" onclick="switchTeam('FIGHTERS')">日本ハム</div>
+        <div id="tab-orix" class="team-tab" onclick="switchTeam('ORIX')">オリックス</div>
+        <div id="tab-eagles" class="team-tab" onclick="switchTeam('EAGLES')">楽天</div>
+        <div id="tab-lions" class="team-tab" onclick="switchTeam('LIONS')">西武</div>
+        <div id="tab-marines" class="team-tab" onclick="switchTeam('MARINES')">ロッテ</div>
     </div>
 
     <h1 id="main-title">福岡ソフトバンクホークス</h1>
@@ -88,13 +93,14 @@
     <div class="search-container">
         <input type="text" id="player-search" placeholder="選手名検索..." oninput="handleSearch()">
         <select id="sort-select" onchange="handleSort(this.value)">
-            <option value="number">背番号順</option>
-            <option value="age">年齢順</option>
-            <option value="avg">打率が高い順</option>
-            <option value="hr">本塁打順</option>
-            <option value="era">防御率が良い順</option>
-            <option value="win">勝利数順</option>
+            <option value="number">背番号</option>
+            <option value="age">年齢</option>
+            <option value="avg">打率</option>
+            <option value="hr">本塁打</option>
+            <option value="era">防御率</option>
+            <option value="win">勝利数</option>
         </select>
+        <button id="order-toggle" class="order-btn" onclick="toggleOrder()">降順</button>
     </div>
 
     <div class="filter-section">
@@ -118,8 +124,7 @@
     </div>
 
     <div class="footer-note">
-        ※投手の先発かリリーフかは作成主の主観が入ってるのでご了承ください。<br>
-        ※成績データは公式記録と異なる場合があります。
+        ※投手の役割は主観が含まれます。成績データは目安としてご覧ください。
     </div>
 
     <div id="modal" onclick="closeModal()">
@@ -139,9 +144,10 @@
             MARINES: { id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', title: '千葉ロッテマリーンズ', bg: '#222222', accent: '#ffffff', modal: '#333333' }
         };
 
-        let currentTeam = 'SOFTBANK';
         let allPlayers = []; 
+        let currentTeam = 'SOFTBANK';
         let currentSortMode = 'number';
+        let isAscending = true; // デフォルトは昇順
         let searchQuery = "";
         let rosterFilter = "すべて";
         let posFilter = "すべて";
@@ -165,9 +171,10 @@
             document.documentElement.style.setProperty('--team-accent', config.accent);
             document.documentElement.style.setProperty('--team-modal', config.modal);
             
-            // リセット
             document.getElementById('player-search').value = "";
             document.getElementById('sort-select').value = "number";
+            isAscending = true;
+            document.getElementById('order-toggle').innerText = "昇順";
             searchQuery = ""; currentSortMode = "number"; rosterFilter = "すべて"; posFilter = "すべて";
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.filter-group').forEach(g => g.firstElementChild.classList.add('active'));
@@ -194,6 +201,12 @@
 
         function handleSearch() { searchQuery = document.getElementById('player-search').value.toLowerCase(); applyFilterAndSort(); }
         function handleSort(val) { currentSortMode = val; applyFilterAndSort(); }
+        
+        function toggleOrder() {
+            isAscending = !isAscending;
+            document.getElementById('order-toggle').innerText = isAscending ? "昇順" : "降順";
+            applyFilterAndSort();
+        }
 
         function setFilter(type, value, btn) {
             if (type === 'roster') rosterFilter = value;
@@ -204,34 +217,37 @@
         }
 
         function applyFilterAndSort() {
-            let displayList = [...allPlayers];
+            let list = [...allPlayers];
             
-            if (searchQuery) displayList = displayList.filter(p => p[1].includes(searchQuery));
-            if (rosterFilter !== "すべて") displayList = displayList.filter(p => p[16] === rosterFilter);
-            
+            if (searchQuery) list = list.filter(p => p[1].includes(searchQuery));
+            if (rosterFilter !== "すべて") list = list.filter(p => p[16] === rosterFilter);
             if (posFilter !== "すべて") {
-                if (posFilter === '先発' || posFilter === 'リリーフ') {
-                    displayList = displayList.filter(p => p[14] === posFilter);
-                } else {
-                    displayList = displayList.filter(p => p[15] === posFilter);
-                }
+                if (posFilter === '先発' || posFilter === 'リリーフ') list = list.filter(p => p[14] === posFilter);
+                else list = list.filter(p => p[15] === posFilter);
             }
             
-            if (currentSortMode === 'number') displayList.sort((a, b) => (parseFloat(a[0]) || 0) - (parseFloat(b[0]) || 0));
-            else if (currentSortMode === 'age') displayList.sort((a, b) => (a[17] || "9999/99/99").localeCompare(b[17] || "9999/99/99"));
-            else if (currentSortMode === 'avg') displayList = displayList.filter(p => p[14] !== '先発' && p[14] !== 'リリーフ').sort((a, b) => (parseFloat(b[12]) || 0) - (parseFloat(a[12]) || 0));
-            else if (currentSortMode === 'hr') displayList = displayList.filter(p => p[14] !== '先発' && p[14] !== 'リリーフ').sort((a, b) => (parseFloat(b[5]) || 0) - (parseFloat(a[5]) || 0));
-            else if (currentSortMode === 'era') displayList = displayList.filter(p => p[14] === '先発' || p[14] === 'リリーフ').sort((a, b) => (parseFloat(a[12]) || 999) - (parseFloat(b[12]) || 999));
-            else if (currentSortMode === 'win') displayList = displayList.filter(p => p[14] === '先発' || p[14] === 'リリーフ').sort((a, b) => (parseFloat(b[3]) || 0) - (parseFloat(a[3]) || 0));
+            list.sort((a, b) => {
+                let valA, valB;
+                if (currentSortMode === 'number') { valA = parseFloat(a[0]) || 0; valB = parseFloat(b[0]) || 0; }
+                else if (currentSortMode === 'age') { valA = a[17] || "9999/99/99"; valB = b[17] || "9999/99/99"; }
+                else if (currentSortMode === 'avg') { valA = parseFloat(a[12]) || 0; valB = parseFloat(b[12]) || 0; }
+                else if (currentSortMode === 'hr') { valA = parseFloat(a[5]) || 0; valB = parseFloat(b[5]) || 0; }
+                else if (currentSortMode === 'era') { valA = parseFloat(a[12]) || 999; valB = parseFloat(b[12]) || 999; }
+                else if (currentSortMode === 'win') { valA = parseFloat(a[3]) || 0; valB = parseFloat(b[3]) || 0; }
+                
+                if (valA < valB) return isAscending ? -1 : 1;
+                if (valA > valB) return isAscending ? 1 : -1;
+                return 0;
+            });
             
-            renderCards(displayList);
+            renderCards(list);
         }
 
         function renderCards(dataList) {
             const container = document.getElementById('container');
             container.innerHTML = dataList.length === 0 ? '<p style="color:#888;">該当なし</p>' : '';
             dataList.forEach(cols => {
-                const isPitcher = (cols[14] === '先発' || cols[14] === 'リリーフ');
+                const isP = (cols[14] === '先発' || cols[14] === 'リリーフ');
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(cols);
@@ -240,8 +256,8 @@
                     <div class="name">${cols[1]}</div>
                     <hr>
                     <div class="stats-grid">
-                        <div><span class="label">${isPitcher ? '登板' : '試合'}</span><br><span class="stats">${cols[2]}</span></div>
-                        <div><span class="label">${isPitcher ? '防御率' : '打率'}</span><br><span class="stats">${cols[12]}</span></div>
+                        <div><span class="label">${isP ? '登板' : '試合'}</span><br><span class="stats">${cols[2]}</span></div>
+                        <div><span class="label">${isP ? '防御率' : '打率'}</span><br><span class="stats">${cols[12]}</span></div>
                     </div>
                 `;
                 container.appendChild(card);
