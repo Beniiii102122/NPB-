@@ -1,4 +1,4 @@
-　<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -72,8 +72,6 @@
 
         .modal-footer { font-size: 12px; color: #aaa; margin-top: 15px; }
         .close-btn { margin-top: 20px; background-color: var(--team-accent); color: #000; border: none; padding: 10px 40px; border-radius: 25px; font-weight: bold; cursor: pointer; }
-
-        .footer-note { text-align: center; font-size: 10px; color: var(--team-accent); opacity: 0.7; margin: 30px auto; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); width: 90%; line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -116,10 +114,6 @@
     
     <div id="container" class="player-container">
         <p>データを読み込み中...</p>
-    </div>
-
-    <div class="footer-note">
-        ※ポジション判定ロジックを更新しました。
     </div>
 
     <div id="modal" onclick="closeModal()">
@@ -217,10 +211,7 @@
             if (searchQuery) list = list.filter(p => p[1].includes(searchQuery));
             if (rosterFilter !== "すべて") list = list.filter(p => p[16] === rosterFilter);
             
-            // フィルタロジックの修正
             if (posFilter !== "すべて") {
-                // ポジション（16列目＝インデックス15）で直接判定
-                // スプレッドシートの「先発」「リリーフ」「捕手」「内野手」「外野手」がここに入る
                 list = list.filter(p => p[15] === posFilter);
             }
             
@@ -241,7 +232,6 @@
             const container = document.getElementById('container');
             container.innerHTML = dataList.length === 0 ? '<p style="color:#888;">該当なし</p>' : '';
             dataList.forEach(cols => {
-                // 15列目(インデックス14)が「投手」かどうかで表示切り替え
                 const isP = (cols[14] === '投手');
                 const card = document.createElement('div');
                 card.className = 'player-card';
