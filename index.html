@@ -81,7 +81,7 @@
             border: 1px solid var(--team-accent);
         }
 
-        /* --- メイン --- */
+        /* --- メインコンテンツ --- */
         .header-container { text-align: center; padding: 60px 0 10px 0; }
         .main-title { font-size: 24px; margin: 0; letter-spacing: 2px; color: #fff; font-weight: 900; }
         .sub-title { font-size: 14px; margin: 5px 0 0 0; letter-spacing: 2px; color: var(--team-accent); opacity: 0.9; }
@@ -90,13 +90,15 @@
         .search-container { display: flex; justify-content: center; margin: 10px auto; width: 95%; max-width: 500px; gap: 8px; }
         #player-search { flex: 1; padding: 10px 15px; border-radius: 20px; border: 1px solid var(--team-accent); background: rgba(255,255,255,0.1); color: #fff; outline: none; }
 
-        .player-container { display: flex; flex-wrap: wrap; gap: 12px; padding: 15px; justify-content: center; }
+        .player-container { display: flex; flex-wrap: wrap; gap: 12px; padding: 15px; justify-content: center; min-height: 200px; }
         .player-card { background-color: rgba(255, 255, 255, 0.05); border: 1px solid var(--team-accent); padding: 15px; width: 145px; border-radius: 12px; text-align: center; cursor: pointer; }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
         .label { font-size: 10px; color: var(--team-accent); font-weight: bold; }
         .stats { font-size: 18px; color: #fff; font-weight: bold; }
         .name { font-size: 15px; margin: 5px 0; font-weight: bold; color: #fff; height: 2.5em; display: flex; align-items: center; justify-content: center; }
+
+        .coming-soon { font-size: 18px; color: #fff; margin-top: 50px; text-align: center; width: 100%; font-weight: bold; }
 
         /* --- モーダル --- */
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(8px); }
@@ -129,6 +131,7 @@
 
         <div class="menu-item" onclick="toggleDropdown('ce-league')">セ・リーグ ▼</div>
         <div id="ce-league" class="dropdown-container">
+            <div style="color:#888; cursor:default; padding-left:40px; font-size:12px; padding-bottom:10px;">セ・リーグは今後公開予定です。</div>
             <div onclick="switchTeam('GIANTS')">巨人</div>
             <div onclick="switchTeam('HANSHIN')">阪神</div>
             <div onclick="switchTeam('BAYSTARS')">DeNA</div>
@@ -137,7 +140,7 @@
             <div onclick="switchTeam('DRAGONS')">中日</div>
         </div>
 
-        <a href="ここにGoogleフォームのURL" target="_blank">お問い合わせ</a>
+        <a href="https://forms.gle/PZdrWHx4sJ3gfjh19" target="_blank">お問い合わせ</a>
     </div>
 
     <div id="main">
@@ -171,12 +174,12 @@
             EAGLES: { id: '1o5tO7aFL2tA_eWfQCPuhyatXC4oqQUOYc1C49DuQ_sU', title: '東北楽天ゴールデンイーグルス', bg: '#870011', accent: '#EAAA00', modal: '#4c000a', league: 'パ・リーグ' },
             LIONS: { id: '1rU0KqHiGXvS3hAMp0snqepykftW4gnoEcqNAFcK9ZJw', title: '埼玉西武ライオンズ', bg: '#03192e', accent: '#ffffff', modal: '#0a2a47', league: 'パ・リーグ' },
             MARINES: { id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', title: '千葉ロッテマリーンズ', bg: '#222222', accent: '#ffffff', modal: '#333333', league: 'パ・リーグ' },
-            GIANTS: { id: 'ここに巨人のID', title: '読売ジャイアンツ', bg: '#ff6600', accent: '#ffffff', modal: '#333', league: 'セ・リーグ' },
-            HANSHIN: { id: 'ここに阪神のID', title: '阪神タイガース', bg: '#000', accent: '#ffe200', modal: '#333', league: 'セ・リーグ' },
-            BAYSTARS: { id: 'ここにDeNAのID', title: '横浜DeNAベイスターズ', bg: '#005596', accent: '#ffffff', modal: '#003e6b', league: 'セ・リーグ' },
-            CARP: { id: 'ここに広島のID', title: '広島東洋カープ', bg: '#ff0000', accent: '#ffffff', modal: '#800000', league: 'セ・リーグ' },
-            SWALLOWS: { id: 'ここにヤクルトのID', title: '東京ヤクルトスワローズ', bg: '#002d56', accent: '#97c24a', modal: '#001a33', league: 'セ・リーグ' },
-            DRAGONS: { id: 'ここに中日のID', title: '中日ドラゴンズ', bg: '#004a9e', accent: '#ffffff', modal: '#002d61', league: 'セ・リーグ' }
+            GIANTS: { id: '', title: '読売ジャイアンツ', bg: '#ff6600', accent: '#ffffff', modal: '#333', league: 'セ・リーグ' },
+            HANSHIN: { id: '', title: '阪神タイガース', bg: '#000', accent: '#ffe200', modal: '#333', league: 'セ・リーグ' },
+            BAYSTARS: { id: '', title: '横浜DeNAベイスターズ', bg: '#005596', accent: '#ffffff', modal: '#003e6b', league: 'セ・リーグ' },
+            CARP: { id: '', title: '広島東洋カープ', bg: '#ff0000', accent: '#ffffff', modal: '#800000', league: 'セ・リーグ' },
+            SWALLOWS: { id: '', title: '東京ヤクルトスワローズ', bg: '#002d56', accent: '#97c24a', modal: '#001a33', league: 'セ・リーグ' },
+            DRAGONS: { id: '', title: '中日ドラゴンズ', bg: '#004a9e', accent: '#ffffff', modal: '#002d61', league: 'セ・リーグ' }
         };
 
         let allPlayers = []; 
@@ -191,16 +194,19 @@
 
         async function switchTeam(teamKey) {
             const config = TEAMS[teamKey];
-            if(!config.id || config.id.includes('ここに')) {
-                alert('この球団のIDは未設定です。');
-                return;
-            }
             closeNav();
             document.querySelector('.sub-title').innerText = config.league;
             document.getElementById('team-name-display').innerText = config.title;
             document.documentElement.style.setProperty('--team-bg', config.bg);
             document.documentElement.style.setProperty('--team-accent', config.accent);
             document.documentElement.style.setProperty('--team-modal', config.modal);
+
+            const container = document.getElementById('container');
+            if(!config.id) {
+                allPlayers = [];
+                container.innerHTML = '<div class="coming-soon">セ・リーグは今後公開予定です。</div>';
+                return;
+            }
             await loadStats(config.id);
         }
 
@@ -220,12 +226,12 @@
         }
 
         function handleSearch() {
+            if (allPlayers.length === 0) return;
             const query = document.getElementById('player-search').value.toLowerCase();
             const filtered = allPlayers.filter(p => p[1].includes(query));
             renderCards(filtered);
         }
 
-        // --- カード一覧の描画（投手/野手で項目切り替え） ---
         function renderCards(dataList) {
             const container = document.getElementById('container');
             container.innerHTML = '';
@@ -235,7 +241,6 @@
                 card.className = 'player-card';
                 card.onclick = () => showDetail(cols);
                 
-                // 動的にラベルと値を設定
                 const label1 = isP ? '登板' : '試合';
                 const value1 = cols[2];
                 const label2 = isP ? '防御率' : '打率';
@@ -253,24 +258,27 @@
             });
         }
 
-        // --- 詳細画面の表示（投手/野手で項目切り替え） ---
         function showDetail(data) {
             const isP = (data[14] === '投手');
-            
-            // D列(data[3]) = 打数 / E列(data[4]) = 安打数
-            const dasu = data[3] || "0";
-            const anda = data[4] || "0";
-            const batDisplay = `${data[12]}(${dasu}-${anda})`;
-            
-            const stats = isP ? [
-                {l: '登板', v: data[2]}, {l: '防御率', v: data[12]},
-                {l: '勝利', v: data[3]}, {l: '敗戦', v: data[4]},
-                {l: 'セーブ', v: data[6]}, {l: '奪三振', v: data[9]}
-            ] : [
-                {l: '試合数', v: data[2]}, {l: '打率', v: batDisplay},
-                {l: '本塁打', v: data[5]}, {l: '打点', v: data[6]},
-                {l: '盗塁', v: data[9]}, {l: 'OPS', v: data[13]}
-            ];
+            let stats = [];
+
+            if (isP) {
+                stats = [
+                    {l: '登板', v: data[2]}, {l: '防御率', v: data[12]},
+                    {l: '勝利', v: data[3]}, {l: '敗戦', v: data[4]},
+                    {l: 'ホールド', v: data[5]}, {l: 'セーブ', v: data[6]},
+                    {l: '奪三振', v: data[9]}, {l: 'WHIP', v: data[13]}
+                ];
+            } else {
+                const dasu = data[3] || "0";
+                const anda = data[4] || "0";
+                const batDisplay = `${data[12]}(${dasu}-${anda})`;
+                stats = [
+                    {l: '試合数', v: data[2]}, {l: '打率', v: batDisplay},
+                    {l: '本塁打', v: data[5]}, {l: '打点', v: data[6]},
+                    {l: '盗塁', v: data[9]}, {l: 'OPS', v: data[13]}
+                ];
+            }
 
             document.getElementById('modal-detail').innerHTML = `
                 <div class="modal-header">
