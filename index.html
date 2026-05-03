@@ -52,7 +52,7 @@
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
         .label { font-size: 10px; color: var(--team-accent); font-weight: bold; }
-        .stats { font-size: 18px; color: #fff; font-weight: bold; }
+        .stats { font-size: 16px; color: #fff; font-weight: bold; }
         .name { font-size: 15px; margin: 5px 0; font-weight: bold; color: #fff; height: 2.5em; display: flex; align-items: center; justify-content: center; }
         .number { font-size: 11px; color: var(--team-accent); }
         hr { border: 0; border-top: 1px solid var(--team-accent); opacity: 0.3; margin: 10px 0; }
@@ -68,7 +68,7 @@
         .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
         .detail-item { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px; }
         .detail-label { font-size: 10px; color: var(--team-accent); font-weight: bold; margin-bottom: 4px; }
-        .detail-value { font-size: 20px; font-weight: bold; }
+        .detail-value { font-size: 18px; font-weight: bold; }
 
         .modal-footer { font-size: 12px; color: #aaa; margin-top: 15px; }
         .close-btn { margin-top: 20px; background-color: var(--team-accent); color: #000; border: none; padding: 10px 40px; border-radius: 25px; font-weight: bold; cursor: pointer; }
@@ -207,24 +207,18 @@
 
         function applyFilterAndSort() {
             let list = [...allPlayers];
-            
             if (searchQuery) list = list.filter(p => p[1].includes(searchQuery));
             if (rosterFilter !== "すべて") list = list.filter(p => p[16] === rosterFilter);
-            
-            if (posFilter !== "すべて") {
-                list = list.filter(p => p[15] === posFilter);
-            }
+            if (posFilter !== "すべて") list = list.filter(p => p[15] === posFilter);
             
             list.sort((a, b) => {
                 let valA, valB;
                 if (currentSortMode === 'number') { valA = parseFloat(a[0]) || 0; valB = parseFloat(b[0]) || 0; }
                 else if (currentSortMode === 'age') { valA = a[17] || "9999/99/99"; valB = b[17] || "9999/99/99"; }
-                
                 if (valA < valB) return isAscending ? -1 : 1;
                 if (valA > valB) return isAscending ? 1 : -1;
                 return 0;
             });
-            
             renderCards(list);
         }
 
@@ -233,6 +227,8 @@
             container.innerHTML = dataList.length === 0 ? '<p style="color:#888;">該当なし</p>' : '';
             dataList.forEach(cols => {
                 const isP = (cols[14] === '投手');
+                // 打率(12), 打数(10), 安打(11)
+                const batDisplay = `${cols[12]}(${cols[10]}-${cols[11]})`;
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(cols);
@@ -242,7 +238,7 @@
                     <hr>
                     <div class="stats-grid">
                         <div><span class="label">${isP ? '登板' : '試合'}</span><br><span class="stats">${cols[2]}</span></div>
-                        <div><span class="label">${isP ? '防御率' : '打率'}</span><br><span class="stats">${cols[12]}</span></div>
+                        <div><span class="label">${isP ? '防御率' : '打率'}</span><br><span class="stats">${isP ? cols[12] : batDisplay}</span></div>
                     </div>
                 `;
                 container.appendChild(card);
@@ -253,13 +249,15 @@
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
             const isP = (data[14] === '投手');
+            const batDisplay = `${data[12]}(${data[10]}-${data[11]})`;
+            
             const stats = isP ? [
                 {l: '登板', v: data[2]}, {l: '防御率', v: data[12]},
                 {l: '勝利', v: data[3]}, {l: '敗戦', v: data[4]},
                 {l: 'ホールド', v: data[5]}, {l: 'セーブ', v: data[6]},
                 {l: '奪三振', v: data[9]}, {l: 'WHIP', v: data[13]}
             ] : [
-                {l: '試合', v: data[2]}, {l: '打率', v: data[12]},
+                {l: '試合', v: data[2]}, {l: '打率', v: batDisplay},
                 {l: '本塁打', v: data[5]}, {l: '打点', v: data[6]},
                 {l: '盗塁', v: data[9]}, {l: 'OPS', v: data[13]}
             ];
