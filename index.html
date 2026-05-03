@@ -12,11 +12,24 @@
         }
 
         body { background-color: var(--team-bg); font-family: 'Helvetica Neue', Arial, sans-serif; color: var(--team-accent); margin: 0; padding-bottom: 50px; transition: all 0.5s; }
-        h1 { text-align: center; margin-top: 20px; margin-bottom: 10px; letter-spacing: 2px; color: var(--team-accent); }
+        
+        /* ヘッダーセクション */
+        .header-container { text-align: center; padding: 20px 0 10px 0; }
+        .main-title { font-size: 28px; margin: 0; letter-spacing: 4px; color: #fff; font-weight: 900; }
+        .sub-title { font-size: 14px; margin: 5px 0 0 0; letter-spacing: 2px; color: var(--team-accent); opacity: 0.9; }
+        #team-name-display { font-size: 18px; margin: 15px 0 5px 0; font-weight: bold; }
 
         .team-selector { display: flex; justify-content: center; background: rgba(0,0,0,0.4); padding: 10px 0; margin-bottom: 10px; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); flex-wrap: wrap; }
         .team-tab { padding: 10px 15px; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; opacity: 0.5; transition: 0.3s; color: #fff; font-size: 12px; }
         .team-tab.active { opacity: 1; border-bottom: 3px solid var(--team-accent); color: var(--team-accent); }
+
+        .contact-container { text-align: center; margin: 10px 0 20px 0; }
+        .contact-link-btn {
+            display: inline-block; padding: 8px 18px; background-color: transparent;
+            color: var(--team-accent); border: 1px solid var(--team-accent);
+            border-radius: 20px; text-decoration: none; font-size: 12px; font-weight: bold; transition: 0.3s;
+        }
+        .contact-link-btn:hover { background-color: var(--team-accent); color: #000; }
 
         .search-container { display: flex; justify-content: center; margin: 10px auto; width: 95%; max-width: 500px; gap: 8px; flex-wrap: wrap; }
         #player-search {
@@ -85,7 +98,17 @@
         <div id="tab-marines" class="team-tab" onclick="switchTeam('MARINES')">ロッテ</div>
     </div>
 
-    <h1 id="main-title">福岡ソフトバンクホークス</h1>
+    <div class="header-container">
+        <div class="main-title">ホーム</div>
+        <div class="sub-title">パ・リーグ</div>
+        <div id="team-name-display">福岡ソフトバンクホークス</div>
+    </div>
+
+    <div class="contact-container">
+        <a href="ここにGoogleフォームのURL" target="_blank" class="contact-link-btn">
+            📩 データの誤指摘・お問い合わせ
+        </a>
+    </div>
 
     <div class="search-container">
         <input type="text" id="player-search" placeholder="選手名検索..." oninput="handleSearch()">
@@ -155,7 +178,7 @@
             const config = TEAMS[teamKey];
             document.querySelectorAll('.team-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`tab-${teamKey.toLowerCase()}`).classList.add('active');
-            document.getElementById('main-title').innerText = config.title;
+            document.getElementById('team-name-display').innerText = config.title;
             document.documentElement.style.setProperty('--team-bg', config.bg);
             document.documentElement.style.setProperty('--team-accent', config.accent);
             document.documentElement.style.setProperty('--team-modal', config.modal);
@@ -247,10 +270,9 @@
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
             const isP = (data[14] === '投手');
-            
-            // モーダルの打率を「打率(打数-安打数)」にする
-            // data[12] = 打率, data[10] = 打数, data[11] = 安打数
-            const batDetailDisplay = `${data[12]}(${data[10]}-${data[11]})`;
+            const dasu = data[10] || "0";
+            const anda = data[11] || "0";
+            const batDetailDisplay = `${data[12]}(${dasu}-${anda})`;
             
             const stats = isP ? [
                 {l: '登板', v: data[2]}, {l: '防御率', v: data[12]},
