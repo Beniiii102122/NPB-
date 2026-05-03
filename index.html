@@ -52,7 +52,7 @@
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
         .label { font-size: 10px; color: var(--team-accent); font-weight: bold; }
-        .stats { font-size: 16px; color: #fff; font-weight: bold; }
+        .stats { font-size: 18px; color: #fff; font-weight: bold; }
         .name { font-size: 15px; margin: 5px 0; font-weight: bold; color: #fff; height: 2.5em; display: flex; align-items: center; justify-content: center; }
         .number { font-size: 11px; color: var(--team-accent); }
         hr { border: 0; border-top: 1px solid var(--team-accent); opacity: 0.3; margin: 10px 0; }
@@ -227,8 +227,6 @@
             container.innerHTML = dataList.length === 0 ? '<p style="color:#888;">該当なし</p>' : '';
             dataList.forEach(cols => {
                 const isP = (cols[14] === '投手');
-                // 打率(12), 打数(10), 安打(11)
-                const batDisplay = `${cols[12]}(${cols[10]}-${cols[11]})`;
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(cols);
@@ -238,7 +236,7 @@
                     <hr>
                     <div class="stats-grid">
                         <div><span class="label">${isP ? '登板' : '試合'}</span><br><span class="stats">${cols[2]}</span></div>
-                        <div><span class="label">${isP ? '防御率' : '打率'}</span><br><span class="stats">${isP ? cols[12] : batDisplay}</span></div>
+                        <div><span class="label">${isP ? '防御率' : '打率'}</span><br><span class="stats">${cols[12]}</span></div>
                     </div>
                 `;
                 container.appendChild(card);
@@ -249,7 +247,10 @@
             const modal = document.getElementById('modal');
             const detail = document.getElementById('modal-detail');
             const isP = (data[14] === '投手');
-            const batDisplay = `${data[12]}(${data[10]}-${data[11]})`;
+            
+            // モーダルの打率を「打率(打数-安打数)」にする
+            // data[12] = 打率, data[10] = 打数, data[11] = 安打数
+            const batDetailDisplay = `${data[12]}(${data[10]}-${data[11]})`;
             
             const stats = isP ? [
                 {l: '登板', v: data[2]}, {l: '防御率', v: data[12]},
@@ -257,7 +258,7 @@
                 {l: 'ホールド', v: data[5]}, {l: 'セーブ', v: data[6]},
                 {l: '奪三振', v: data[9]}, {l: 'WHIP', v: data[13]}
             ] : [
-                {l: '試合', v: data[2]}, {l: '打率', v: batDisplay},
+                {l: '試合', v: data[2]}, {l: '打率', v: batDetailDisplay},
                 {l: '本塁打', v: data[5]}, {l: '打点', v: data[6]},
                 {l: '盗塁', v: data[9]}, {l: 'OPS', v: data[13]}
             ];
