@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NPB名鑑 Pro</title>
+    <title>NPB 選手名鑑 Pro</title>
     <style>
         :root {
             --team-bg: #1a1a1a;
@@ -21,7 +21,7 @@
             transition: background-color 0.5s;
         }
 
-        /* --- サイドバーのスタイル --- */
+        /* --- サイドバー --- */
         .sidebar {
             height: 100%;
             width: 0;
@@ -48,9 +48,8 @@
         }
 
         .sidebar a:hover, .sidebar .menu-item:hover { color: var(--team-accent); }
-        .sidebar .closebtn { position: absolute; top: 0; right: 25px; font-size: 36px; margin-left: 50px; color: var(--team-accent); }
+        .sidebar .closebtn { position: absolute; top: 0; right: 25px; font-size: 36px; color: var(--team-accent); }
 
-        /* プルダウン（アコーディオン）の中身 */
         .dropdown-container {
             display: none;
             background-color: #222;
@@ -59,17 +58,14 @@
 
         .dropdown-container div {
             padding: 12px 12px 12px 40px;
-            text-decoration: none;
             font-size: 14px;
             color: #ccc;
-            display: block;
             cursor: pointer;
             transition: 0.2s;
         }
 
         .dropdown-container div:hover { color: var(--team-accent); background: #333; }
 
-        /* メニューを開くボタン */
         .openbtn {
             font-size: 20px;
             cursor: pointer;
@@ -85,14 +81,14 @@
             border: 1px solid var(--team-accent);
         }
 
-        /* --- メインコンテンツ --- */
+        /* --- メイン --- */
         .header-container { text-align: center; padding: 60px 0 10px 0; }
-        .main-title { font-size: 28px; margin: 0; letter-spacing: 4px; color: #fff; font-weight: 900; }
+        .main-title { font-size: 24px; margin: 0; letter-spacing: 2px; color: #fff; font-weight: 900; }
         .sub-title { font-size: 14px; margin: 5px 0 0 0; letter-spacing: 2px; color: var(--team-accent); opacity: 0.9; }
         #team-name-display { font-size: 18px; margin: 15px 0 5px 0; font-weight: bold; }
 
-        .search-container { display: flex; justify-content: center; margin: 10px auto; width: 95%; max-width: 500px; gap: 8px; flex-wrap: wrap; }
-        #player-search { flex: 1; min-width: 150px; padding: 10px 15px; border-radius: 20px; border: 1px solid var(--team-accent); background: rgba(255,255,255,0.1); color: #fff; outline: none; }
+        .search-container { display: flex; justify-content: center; margin: 10px auto; width: 95%; max-width: 500px; gap: 8px; }
+        #player-search { flex: 1; padding: 10px 15px; border-radius: 20px; border: 1px solid var(--team-accent); background: rgba(255,255,255,0.1); color: #fff; outline: none; }
 
         .player-container { display: flex; flex-wrap: wrap; gap: 12px; padding: 15px; justify-content: center; }
         .player-card { background-color: rgba(255, 255, 255, 0.05); border: 1px solid var(--team-accent); padding: 15px; width: 145px; border-radius: 12px; text-align: center; cursor: pointer; }
@@ -102,10 +98,14 @@
         .stats { font-size: 18px; color: #fff; font-weight: bold; }
         .name { font-size: 15px; margin: 5px 0; font-weight: bold; color: #fff; height: 2.5em; display: flex; align-items: center; justify-content: center; }
 
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 2000; }
+        /* --- モーダル --- */
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(8px); }
         .modal-content { background-color: var(--team-modal); border: 2px solid var(--team-accent); padding: 30px 20px; border-radius: 24px; width: 85%; max-width: 380px; text-align: center; color: #fff; }
+        .modal-header { border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px; }
         .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
         .detail-item { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px; }
+        .detail-label { font-size: 10px; color: var(--team-accent); font-weight: bold; margin-bottom: 4px; }
+        .detail-value { font-size: 18px; font-weight: bold; }
         .close-btn { background-color: var(--team-accent); color: #000; border: none; padding: 10px 40px; border-radius: 25px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
@@ -115,7 +115,7 @@
 
     <div id="mySidebar" class="sidebar">
         <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
-        <a onclick="location.reload()">ホーム</a>
+        <a onclick="location.reload()">NPB 選手名鑑</a>
         
         <div class="menu-item" onclick="toggleDropdown('pa-league')">パ・リーグ ▼</div>
         <div id="pa-league" class="dropdown-container">
@@ -142,7 +142,7 @@
 
     <div id="main">
         <div class="header-container">
-            <div class="main-title">ホーム</div>
+            <div class="main-title">NPB 選手名鑑</div>
             <div class="sub-title">パ・リーグ</div>
             <div id="team-name-display">福岡ソフトバンクホークス</div>
         </div>
@@ -152,7 +152,7 @@
         </div>
         
         <div id="container" class="player-container">
-            <p>球団を選択してください</p>
+            <p>読み込み中...</p>
         </div>
     </div>
 
@@ -171,7 +171,6 @@
             EAGLES: { id: '1o5tO7aFL2tA_eWfQCPuhyatXC4oqQUOYc1C49DuQ_sU', title: '東北楽天ゴールデンイーグルス', bg: '#870011', accent: '#EAAA00', modal: '#4c000a', league: 'パ・リーグ' },
             LIONS: { id: '1rU0KqHiGXvS3hAMp0snqepykftW4gnoEcqNAFcK9ZJw', title: '埼玉西武ライオンズ', bg: '#03192e', accent: '#ffffff', modal: '#0a2a47', league: 'パ・リーグ' },
             MARINES: { id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', title: '千葉ロッテマリーンズ', bg: '#222222', accent: '#ffffff', modal: '#333333', league: 'パ・リーグ' },
-            // セ・リーグ用ID（ここを実際のスプレッドシートIDに書き換えてください）
             GIANTS: { id: 'ここに巨人のID', title: '読売ジャイアンツ', bg: '#ff6600', accent: '#ffffff', modal: '#333', league: 'セ・リーグ' },
             HANSHIN: { id: 'ここに阪神のID', title: '阪神タイガース', bg: '#000', accent: '#ffe200', modal: '#333', league: 'セ・リーグ' },
             BAYSTARS: { id: 'ここにDeNAのID', title: '横浜DeNAベイスターズ', bg: '#005596', accent: '#ffffff', modal: '#003e6b', league: 'セ・リーグ' },
@@ -181,9 +180,7 @@
         };
 
         let allPlayers = []; 
-        let searchQuery = "";
 
-        // サイドバー制御
         function openNav() { document.getElementById("mySidebar").style.width = "var(--sidebar-width)"; }
         function closeNav() { document.getElementById("mySidebar").style.width = "0"; }
 
@@ -223,8 +220,8 @@
         }
 
         function handleSearch() {
-            searchQuery = document.getElementById('player-search').value.toLowerCase();
-            const filtered = allPlayers.filter(p => p[1].includes(searchQuery));
+            const query = document.getElementById('player-search').value.toLowerCase();
+            const filtered = allPlayers.filter(p => p[1].includes(query));
             renderCards(filtered);
         }
 
@@ -248,26 +245,46 @@
             });
         }
 
+        // --- ここが修正ポイント！詳細画面の表示処理 ---
         function showDetail(data) {
             const isP = (data[14] === '投手');
-            const batDisplay = `${data[12]}(${data[10]}-${data[11]})`;
-            const stats = isP ? 
-                `防御率: ${data[12]} / 勝利: ${data[3]} / 奪三振: ${data[9]}` : 
-                `打率: ${batDisplay} / 本塁打: ${data[5]} / 打点: ${data[6]}`;
             
+            // 11列目(data[10])が打数、12列目(data[11])が安打数
+            const dasu = data[10] || "0";
+            const anda = data[11] || "0";
+            const batDisplay = `${data[12]}(${dasu}-${anda})`;
+            
+            const stats = isP ? [
+                {l: '防御率', v: data[12]}, {l: '勝利', v: data[3]},
+                {l: '敗戦', v: data[4]}, {l: 'セーブ', v: data[6]},
+                {l: '奪三振', v: data[9]}, {l: 'WHIP', v: data[13]}
+            ] : [
+                {l: '打率', v: batDisplay}, {l: '本塁打', v: data[5]},
+                {l: '打点', v: data[6]}, {l: '試合数', v: data[2]},
+                {l: '盗塁', v: data[9]}, {l: 'OPS', v: data[13]}
+            ];
+
             document.getElementById('modal-detail').innerHTML = `
-                <h2 style="margin-top:0">${data[1]}</h2>
-                <p>${data[15]} | ${data[16]}</p>
-                <div class="detail-grid">
-                    <div class="detail-item">成績: ${stats}</div>
+                <div class="modal-header">
+                    <div style="font-size:14px; color:var(--team-accent)">No. ${data[0]}</div>
+                    <div style="font-size:28px; font-weight:bold;">${data[1]}</div>
+                    <div style="font-size:13px; opacity:0.7;">${data[15]} | ${data[16]}</div>
                 </div>
+                <div class="detail-grid">
+                    ${stats.map(s => `
+                        <div class="detail-item">
+                            <div class="detail-label">${s.l}</div>
+                            <div class="detail-value">${s.v}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="font-size:12px; color:#aaa; margin-top:10px;">${data[17]} 生まれ</div>
             `;
             document.getElementById('modal').style.display = 'flex';
         }
 
         function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
-        // 初期ロード
         switchTeam('SOFTBANK');
     </script>
 </body>
