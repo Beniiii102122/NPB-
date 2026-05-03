@@ -225,6 +225,7 @@
             renderCards(filtered);
         }
 
+        // --- カード一覧の描画（投手/野手で項目切り替え） ---
         function renderCards(dataList) {
             const container = document.getElementById('container');
             container.innerHTML = '';
@@ -233,34 +234,41 @@
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(cols);
+                
+                // 動的にラベルと値を設定
+                const label1 = isP ? '登板' : '試合';
+                const value1 = cols[2];
+                const label2 = isP ? '防御率' : '打率';
+                const value2 = cols[12];
+
                 card.innerHTML = `
                     <div style="font-size:11px; color:var(--team-accent)">No. ${cols[0]}</div>
                     <div class="name">${cols[1]}</div>
                     <div class="stats-grid">
-                        <div><span class="label">${isP ? '防御率' : '打率'}</span><br><span class="stats">${cols[12]}</span></div>
-                        <div><span class="label">${isP ? '勝利' : '本塁打'}</span><br><span class="stats">${isP ? cols[3] : cols[5]}</span></div>
+                        <div><span class="label">${label1}</span><br><span class="stats">${value1}</span></div>
+                        <div><span class="label">${label2}</span><br><span class="stats">${value2}</span></div>
                     </div>
                 `;
                 container.appendChild(card);
             });
         }
 
-        // --- ここが修正ポイント！詳細画面の表示処理 ---
+        // --- 詳細画面の表示（投手/野手で項目切り替え） ---
         function showDetail(data) {
             const isP = (data[14] === '投手');
             
-            // 11列目(data[10])が打数、12列目(data[11])が安打数
-            const dasu = data[10] || "0";
-            const anda = data[11] || "0";
+            // D列(data[3]) = 打数 / E列(data[4]) = 安打数
+            const dasu = data[3] || "0";
+            const anda = data[4] || "0";
             const batDisplay = `${data[12]}(${dasu}-${anda})`;
             
             const stats = isP ? [
-                {l: '防御率', v: data[12]}, {l: '勝利', v: data[3]},
-                {l: '敗戦', v: data[4]}, {l: 'セーブ', v: data[6]},
-                {l: '奪三振', v: data[9]}, {l: 'WHIP', v: data[13]}
+                {l: '登板', v: data[2]}, {l: '防御率', v: data[12]},
+                {l: '勝利', v: data[3]}, {l: '敗戦', v: data[4]},
+                {l: 'セーブ', v: data[6]}, {l: '奪三振', v: data[9]}
             ] : [
-                {l: '打率', v: batDisplay}, {l: '本塁打', v: data[5]},
-                {l: '打点', v: data[6]}, {l: '試合数', v: data[2]},
+                {l: '試合数', v: data[2]}, {l: '打率', v: batDisplay},
+                {l: '本塁打', v: data[5]}, {l: '打点', v: data[6]},
                 {l: '盗塁', v: data[9]}, {l: 'OPS', v: data[13]}
             ];
 
