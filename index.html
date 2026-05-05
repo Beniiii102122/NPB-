@@ -98,8 +98,6 @@
         .stats { font-size: 18px; color: #fff; font-weight: bold; }
         .name { font-size: 15px; margin: 5px 0; font-weight: bold; color: #fff; height: 2.5em; display: flex; align-items: center; justify-content: center; }
 
-        .coming-soon { font-size: 18px; color: #fff; margin-top: 50px; text-align: center; width: 100%; font-weight: bold; }
-
         /* --- モーダル --- */
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(8px); }
         .modal-content { background-color: var(--team-modal); border: 2px solid var(--team-accent); padding: 30px 20px; border-radius: 24px; width: 85%; max-width: 380px; text-align: center; color: #fff; }
@@ -131,13 +129,12 @@
 
         <div class="menu-item" onclick="toggleDropdown('ce-league')">セ・リーグ ▼</div>
         <div id="ce-league" class="dropdown-container">
-            <div style="color:#888; cursor:default; padding-left:40px; font-size:12px; padding-bottom:10px;">セ・リーグは今後公開予定です。</div>
-            <div onclick="switchTeam('GIANTS')">巨人</div>
             <div onclick="switchTeam('HANSHIN')">阪神</div>
             <div onclick="switchTeam('BAYSTARS')">DeNA</div>
+            <div onclick="switchTeam('GIANTS')">巨人</div>
+            <div onclick="switchTeam('DRAGONS')">中日</div>
             <div onclick="switchTeam('CARP')">広島</div>
             <div onclick="switchTeam('SWALLOWS')">ヤクルト</div>
-            <div onclick="switchTeam('DRAGONS')">中日</div>
         </div>
 
         <a href="https://forms.gle/PZdrWHx4sJ3gfjh19" target="_blank">お問い合わせ</a>
@@ -174,12 +171,12 @@
             EAGLES: { id: '1o5tO7aFL2tA_eWfQCPuhyatXC4oqQUOYc1C49DuQ_sU', title: '東北楽天ゴールデンイーグルス', bg: '#870011', accent: '#EAAA00', modal: '#4c000a', league: 'パ・リーグ' },
             LIONS: { id: '1rU0KqHiGXvS3hAMp0snqepykftW4gnoEcqNAFcK9ZJw', title: '埼玉西武ライオンズ', bg: '#03192e', accent: '#ffffff', modal: '#0a2a47', league: 'パ・リーグ' },
             MARINES: { id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', title: '千葉ロッテマリーンズ', bg: '#222222', accent: '#ffffff', modal: '#333333', league: 'パ・リーグ' },
-            GIANTS: { id: '', title: '読売ジャイアンツ', bg: '#ff6600', accent: '#ffffff', modal: '#333', league: 'セ・リーグ' },
-            HANSHIN: { id: '', title: '阪神タイガース', bg: '#000', accent: '#ffe200', modal: '#333', league: 'セ・リーグ' },
-            BAYSTARS: { id: '', title: '横浜DeNAベイスターズ', bg: '#005596', accent: '#ffffff', modal: '#003e6b', league: 'セ・リーグ' },
-            CARP: { id: '', title: '広島東洋カープ', bg: '#ff0000', accent: '#ffffff', modal: '#800000', league: 'セ・リーグ' },
-            SWALLOWS: { id: '', title: '東京ヤクルトスワローズ', bg: '#002d56', accent: '#97c24a', modal: '#001a33', league: 'セ・リーグ' },
-            DRAGONS: { id: '', title: '中日ドラゴンズ', bg: '#004a9e', accent: '#ffffff', modal: '#002d61', league: 'セ・リーグ' }
+            HANSHIN: { id: '1hZwkTDSa4AOUSlvFvgYB74hU78Uk6Tb3Wxdr6wKuPhs', title: '阪神タイガース', bg: '#000', accent: '#ffe200', modal: '#333', league: 'セ・リーグ' },
+            BAYSTARS: { id: '1EGfKQS7CPBxnqk7MN6MVoFc1naTvplPwMMlvO6ucXrs', title: '横浜DeNAベイスターズ', bg: '#005596', accent: '#ffffff', modal: '#003e6b', league: 'セ・リーグ' },
+            GIANTS: { id: '11fiRAjQKNG2widh8Hs9X5izk76CsBhkxC5GucEu3Gio', title: '読売ジャイアンツ', bg: '#ff6600', accent: '#ffffff', modal: '#333', league: 'セ・リーグ' },
+            DRAGONS: { id: '1jgeiLHIvsXpg-Lb-NS9EwQtsciqqusxMYqUZNDVt5MA', title: '中日ドラゴンズ', bg: '#004a9e', accent: '#ffffff', modal: '#002d61', league: 'セ・リーグ' },
+            CARP: { id: '1xp_n78P5IMw63fD9dtDF9tQhK9zgF5otK9fwLNPOW2s', title: '広島東洋カープ', bg: '#ff0000', accent: '#ffffff', modal: '#800000', league: 'セ・リーグ' },
+            SWALLOWS: { id: '1BYL-hAJNaSshpWfDYnYsk9GdUIT9nEEIGejLuFV4BxY', title: '東京ヤクルトスワローズ', bg: '#002d56', accent: '#97c24a', modal: '#001a33', league: 'セ・リーグ' }
         };
 
         let allPlayers = []; 
@@ -200,13 +197,6 @@
             document.documentElement.style.setProperty('--team-bg', config.bg);
             document.documentElement.style.setProperty('--team-accent', config.accent);
             document.documentElement.style.setProperty('--team-modal', config.modal);
-
-            const container = document.getElementById('container');
-            if(!config.id) {
-                allPlayers = [];
-                container.innerHTML = '<div class="coming-soon">セ・リーグは今後公開予定です。</div>';
-                return;
-            }
             await loadStats(config.id);
         }
 
