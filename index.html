@@ -119,20 +119,6 @@
         <div id="container" class="player-container"></div>
     </div>
 
-    <div id="modal" class="modal-overlay" onclick="closeModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div id="modal-detail"></div>
-            <button class="close-btn" onclick="closeModal()">閉じる</button>
-        </div>
-    </div>
-
-    <div id="fav-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 style="text-align:center; margin-top:0;">お気に入りチームを選択</h3>
-            <div id="fav-team-list" class="fav-grid"></div>
-        </div>
-    </div>
-
     <script>
         const TEAMS = {
             SOFTBANK: { id: '1D55MmUmSxxvDf92UE_N0N3BTSrZOoR5qQxoXm_BL2_E', name: 'ソフトバンク', title: '福岡ソフトバンクホークス', accent: '#ffcc00', league: 'pa' },
@@ -162,19 +148,11 @@
                 d.style.padding = '12px 40px'; d.style.color = '#ccc'; d.style.cursor = 'pointer'; d.innerText = t.name;
                 d.onclick = () => switchTeam(k);
                 if(t.league === 'pa') pa.appendChild(d); else ce.appendChild(d);
-
-                const b = document.createElement('div');
-                b.className = 'fav-btn'; b.innerText = t.name;
-                b.onclick = () => saveFavorite(k);
-                favList.appendChild(b);
             });
 
             const favTeam = localStorage.getItem('favTeam');
-            if (favTeam && TEAMS[favTeam]) { switchTeam(favTeam); } else { showFavPicker(); }
+            if (favTeam && TEAMS[favTeam]) { switchTeam(favTeam); } else { switchTeam('GIANTS'); }
         }
-
-        function showFavPicker() { closeNav(); document.getElementById('fav-modal').style.display = 'flex'; }
-        function saveFavorite(key) { localStorage.setItem('favTeam', key); document.getElementById('fav-modal').style.display = 'none'; switchTeam(key); }
 
         async function switchTeam(key) {
             const t = TEAMS[key];
@@ -189,12 +167,17 @@
                 const rows = text.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
                 allPlayers = rows.map(r => r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, '')));
                 
-                // タイムスタンプ(A列)から「月/日」だけを抽出するロジックを強化
+                // 【修正ポイント】日付の表示ロジックを刷新
                 if (allPlayers.length > 0) {
-                    const rawTs = allPlayers[0][0]; 
-                    // 数字/数字 のパターンだけを探し、余計な空白や00:00を無視
-                    const dateMatch = rawTs.match(/(\d{1,2}\/\d{1,2})/);
-                    document.getElementById('update-date-display').innerText = dateMatch ? `${dateMatch[0]} 試合終了時点` : "更新日不明";
+                    let rawTs = allPlayers[0][0]; // A列の値
+                    // スペースがある場合はその前まで（日付部分）を切り抜く
+                    let cleanDate = rawTs.split(" ")[0]; 
+                    // もし「/」が含まれていれば、さらに西暦部分(2024/)を削る
+                    if(cleanDate.includes('/')){
+                        const parts = cleanDate.split('/');
+                        if(parts.length >= 3) cleanDate = parts[1] + '/' + parts[2];
+                    }
+                    document.getElementById('update-date-display').innerText = cleanDate + " 試合終了時点";
                 }
 
                 render(allPlayers);
@@ -208,7 +191,6 @@
             data.forEach(p => {
                 const isP = p[14] === '投手';
                 const pos = p[15];
-
                 let l1, s1, l2, s2, l3, s3;
                 if (isP) {
                     l1 = '防御率'; s1 = p[12];
@@ -220,35 +202,17 @@
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(p);
-                card.innerHTML = `
-                    <div class="number-badge">${p[0]}</div>
-                    <div><div class="pos-badge">${pos}</div><div class="name">${p[1]}</div></div>
-                    <div class="stats-grid">
-                        <div><div class="label">${l1}</div><div class="stats">${s1}</div></div>
-                        <div><div class="label">${l2}</div><div class="stats">${s2}</div></div>
-                        <div><div class="label">${l3}</div><div class="stats">${s3}</div></div>
-                    </div>`;
+                card.innerHTML = `<div class="number-badge">${p[0]}</div><div><div class="pos-badge">${pos}</div><div class="name">${p[1]}</div></div><div class="stats-grid"><div><div class="label">${l1}</div><div class="stats">${s1}</div></div><div><div class="label">${l2}</div><div class="stats">${s2}</div></div><div><div class="label">${l3}</div><div class="stats">${s3}</div></div></div>`;
                 c.appendChild(card);
             });
         }
 
         function showDetail(d) {
             const isP = d[14] === '投手';
-            const age = d[11];
-            let items = isP ? [
-                {l:'防御率', v:d[12]}, {l:'登板数', v:d[2]}, {l:'勝利', v:d[3]}, {l:'敗戦', v:d[4]}, 
-                {l:'ホールド', v:d[5]}, {l:'セーブ', v:d[6]}, {l:'奪三振', v:d[9]}, {l:'WHIP', v:d[13]}
-            ] : [
-                {l:'打率', v:d[12]}, {l:'試合数', v:d[2]}, {l:'本塁打', v:d[5]}, 
-                {l:'打点', v:d[6]}, {l:'盗塁', v:d[9]}, {l:'OPS', v:d[13]}
-            ];
-            const statsHTML = items.map(i => `<div class="modal-item"><div class="label" style="font-size:10px;">${i.l}</div><div class="stats" style="font-size:18px;">${i.v}</div></div>`).join('');
-            
-            document.getElementById('modal-detail').innerHTML = `
-                <div style="font-size:12px;color:#888;">背番号 ${d[0]} | ${d[15]} | ${age}歳</div>
-                <div style="font-size:22px;font-weight:bold;margin-bottom:15px;border-bottom:2px solid var(--team-accent);padding-bottom:5px;">${d[1]}</div>
-                <div class="modal-grid">${statsHTML}</div>`;
-            document.getElementById('modal').style.display = 'flex';
+            let items = isP ? [{l:'防御率', v:d[12]}, {l:'登板', v:d[2]}, {l:'勝利', v:d[3]}, {l:'敗戦', v:d[4]}, {l:'H', v:d[5]}, {l:'S', v:d[6]}, {l:'奪三振', v:d[9]}, {l:'WHIP', v:d[13]}] 
+                            : [{l:'打率', v:d[12]}, {l:'試合', v:d[2]}, {l:'本塁打', v:d[5]}, {l:'打点', v:d[6]}, {l:'盗塁', v:d[9]}, {l:'OPS', v:d[13]}];
+            const statsHTML = items.map(i => `<div style="background:#f8f8f8;padding:10px;border-radius:4px;text-align:center;border:1px solid #eee;"><div style="font-size:10px;color:#999;">${i.l}</div><div style="font-size:18px;font-weight:bold;">${i.v}</div></div>`).join('');
+            document.body.insertAdjacentHTML('beforeend', `<div id="modal-temp" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;justify-content:center;align-items:center;z-index:2000;" onclick="this.remove()"><div style="background:#fff;padding:20px;border-radius:8px;width:85%;max-width:350px;" onclick="event.stopPropagation()"><div style="font-size:12px;color:#888;">#${d[0]} | ${d[15]}</div><div style="font-size:22px;font-weight:bold;margin-bottom:15px;border-bottom:2px solid var(--team-accent);">${d[1]}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">${statsHTML}</div><button style="width:100%;margin-top:20px;padding:12px;background:#333;color:#fff;border:none;border-radius:4px;" onclick="document.getElementById('modal-temp').remove()">閉じる</button></div></div>`);
         }
 
         function applyFilters() {
@@ -268,7 +232,6 @@
             const d = document.getElementById(id); 
             d.style.display = d.style.display === "block" ? "none" : "block"; 
         }
-        function closeModal() { document.getElementById('modal').style.display = 'none'; }
         init();
     </script>
 </body>
