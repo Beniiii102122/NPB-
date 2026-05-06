@@ -189,12 +189,12 @@
                 const rows = text.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
                 allPlayers = rows.map(r => r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, '')));
                 
-                // タイムスタンプ(A列)から日付(M/D)だけを抽出する
+                // タイムスタンプ(A列)から「月/日」だけを抽出するロジックを強化
                 if (allPlayers.length > 0) {
                     const rawTs = allPlayers[0][0]; 
-                    // 数字/数字 の形式のみを見つけて抽出
-                    const dateOnly = rawTs.match(/(\d+\/\d+)/);
-                    document.getElementById('update-date-display').innerText = dateOnly ? `${dateOnly[1]} 試合終了時点` : rawTs;
+                    // 数字/数字 のパターンだけを探し、余計な空白や00:00を無視
+                    const dateMatch = rawTs.match(/(\d{1,2}\/\d{1,2})/);
+                    document.getElementById('update-date-display').innerText = dateMatch ? `${dateMatch[0]} 試合終了時点` : "更新日不明";
                 }
 
                 render(allPlayers);
