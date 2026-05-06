@@ -87,7 +87,6 @@
         .sub-title { font-size: 14px; margin: 5px 0 0 0; letter-spacing: 2px; color: var(--team-accent); opacity: 0.9; }
         #team-name-display { font-size: 18px; margin: 15px 0 5px 0; font-weight: bold; }
 
-        /* 検索・絞り込みエリア */
         .filter-area {
             display: flex;
             flex-direction: column;
@@ -104,13 +103,14 @@
         .select-container { display: flex; width: 100%; gap: 8px; }
         .filter-select {
             flex: 1;
-            padding: 8px;
+            padding: 10px;
             border-radius: 10px;
             border: 1px solid var(--team-accent);
             background: #222;
             color: #fff;
-            font-size: 12px;
+            font-size: 13px;
             outline: none;
+            cursor: pointer;
         }
 
         .player-container { display: flex; flex-wrap: wrap; gap: 12px; padding: 15px; justify-content: center; min-height: 200px; }
@@ -176,12 +176,12 @@
             </div>
             <div class="select-container">
                 <select id="filter-role" class="filter-select" onchange="applyFilters()">
-                    <option value="">全ての役割</option>
+                    <option value="">全選手（役割）</option>
                     <option value="投手">投手</option>
                     <option value="野手">野手</option>
                 </select>
                 <select id="filter-squad" class="filter-select" onchange="applyFilters()">
-                    <option value="">全ての構成</option>
+                    <option value="">全選手（構成）</option>
                     <option value="一軍">一軍</option>
                     <option value="二軍">二軍</option>
                 </select>
@@ -235,7 +235,6 @@
             document.documentElement.style.setProperty('--team-accent', config.accent);
             document.documentElement.style.setProperty('--team-modal', config.modal);
             
-            // チーム切り替え時にフィルターをリセット
             document.getElementById('player-search').value = "";
             document.getElementById('filter-role').value = "";
             document.getElementById('filter-squad').value = "";
@@ -258,13 +257,11 @@
             } catch (e) { container.innerHTML = 'データの取得に失敗しました。'; }
         }
 
-        // 絞り込み実行関数
         function applyFilters() {
             if (allPlayers.length === 0) return;
-
             const nameQuery = document.getElementById('player-search').value.toLowerCase();
-            const roleFilter = document.getElementById('filter-role').value; // インデックス14
-            const squadFilter = document.getElementById('filter-squad').value; // インデックス16
+            const roleFilter = document.getElementById('filter-role').value;
+            const squadFilter = document.getElementById('filter-squad').value;
 
             const filtered = allPlayers.filter(p => {
                 const matchName = p[1].includes(nameQuery);
@@ -272,7 +269,6 @@
                 const matchSquad = squadFilter === "" || p[16] === squadFilter;
                 return matchName && matchRole && matchSquad;
             });
-
             renderCards(filtered);
         }
 
@@ -309,7 +305,6 @@
         function showDetail(data) {
             const isP = (data[14] === '投手');
             let stats = [];
-
             if (isP) {
                 stats = [
                     {l: '登板', v: data[2]}, {l: '防御率', v: data[12]},
@@ -327,7 +322,6 @@
                     {l: '盗塁', v: data[9]}, {l: 'OPS', v: data[13]}
                 ];
             }
-
             document.getElementById('modal-detail').innerHTML = `
                 <div class="modal-header">
                     <div style="font-size:14px; color:var(--team-accent)">No. ${data[0]}</div>
@@ -348,7 +342,6 @@
         }
 
         function closeModal() { document.getElementById('modal').style.display = 'none'; }
-
         switchTeam('SOFTBANK');
     </script>
 </body>
