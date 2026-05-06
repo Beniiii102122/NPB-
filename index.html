@@ -64,6 +64,7 @@
             font-size: 11px; font-weight: bold; min-width: 24px; height: 24px; line-height: 24px;
             border-radius: 12px; padding: 0 4px; box-sizing: border-box;
         }
+        /* 一軍・二軍バッジのみ残す */
         .roster-badge {
             position: absolute; top: 8px; right: 8px; font-size: 10px; font-weight: bold;
             padding: 2px 6px; border-radius: 4px;
@@ -249,21 +250,20 @@
 
         function showDetail(d) {
             const isP = d[14] === '投手';
-            // 詳細グリッドからは「登録」を削除
+            const age = d[11];
+            
+            // 詳細項目に「登板数/試合数」を表示するように設定
             let items = isP ? [
-                {l:'防御率', v:d[12]}, {l:'勝利', v:d[3]}, {l:'敗戦', v:d[4]}, 
-                {l:'ホールド', v:d[5]}, {l:'セーブ', v:d[6]}, {l:'奪三振', v:d[9]}, 
-                {l:'WHIP', v:d[13]}, {l:'登板数', v:d[2]}
+                {l:'防御率', v:d[12]}, {l:'登板数', v:d[2]}, {l:'勝利', v:d[3]}, {l:'敗戦', v:d[4]}, 
+                {l:'ホールド', v:d[5]}, {l:'セーブ', v:d[6]}, {l:'奪三振', v:d[9]}, {l:'WHIP', v:d[13]}
             ] : [
-                {l:'打率', v:d[12]}, {l:'本塁打', v:d[5]}, 
-                {l:'打点', v:d[6]}, {l:'盗塁', v:d[9]}, 
-                {l:'OPS', v:d[13]}, {l:'試合数', v:d[2]}
+                {l:'打率', v:d[12]}, {l:'試合数', v:d[2]}, {l:'本塁打', v:d[5]}, 
+                {l:'打点', v:d[6]}, {l:'盗塁', v:d[9]}, {l:'OPS', v:d[13]}
             ];
             const statsHTML = items.map(i => `<div class="modal-item"><div class="label" style="font-size:10px;">${i.l}</div><div class="stats" style="font-size:18px;">${i.v}</div></div>`).join('');
             
-            // ポジションの横に登録（一軍/二軍）を表示するように変更
             document.getElementById('modal-detail').innerHTML = `
-                <div style="font-size:12px;color:#888;">背番号 ${d[0]} | ${d[15]} | ${d[10]}</div>
+                <div style="font-size:12px;color:#888;">背番号 ${d[0]} | ${d[15]} | ${d[10]} | ${age}歳</div>
                 <div style="font-size:22px;font-weight:bold;margin-bottom:15px;border-bottom:2px solid var(--team-accent);padding-bottom:5px;">${d[1]}</div>
                 <div class="modal-grid">${statsHTML}</div>`;
             document.getElementById('modal').style.display = 'flex';
