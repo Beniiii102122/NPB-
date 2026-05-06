@@ -45,7 +45,6 @@
 
         .header-container { text-align: center; padding: 45px 0 5px 0; }
         #team-name-display { font-size: 20px; font-weight: bold; margin-bottom: 2px; }
-        /* 日付表示用スタイル */
         #update-date-display { font-size: 11px; color: #666; margin-bottom: 5px; }
 
         .filter-area { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 auto; width: 95%; max-width: 500px; }
@@ -198,16 +197,11 @@
             document.getElementById('container').innerHTML = '<p style="text-align:center; width:100%; margin-top:50px;">読み込み中...</p>';
             
             try {
-                // スプレッドシートからデータを取得
                 const res = await fetch(`https://docs.google.com/spreadsheets/d/${t.id}/gviz/tq?tqx=out:csv&sheet=シート1`);
                 const text = await res.text();
                 const rows = text.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
-                
-                // データパース
                 allPlayers = rows.map(r => r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, '')));
                 
-                // 日付取得: スプレッドシートの[Q1]セル（インデックス16）に日付があると想定
-                // 1行目のデータから取得（もし日付が全行にあるならallPlayers[0][16]など）
                 if (allPlayers.length > 0 && allPlayers[0][16]) {
                     document.getElementById('update-date-display').innerText = `${allPlayers[0][16]} 試合終了時点`;
                 } else {
@@ -255,16 +249,22 @@
 
         function showDetail(d) {
             const isP = d[14] === '投手';
+            const age = d[11]; // [11]番目の要素（L列）が年齢
+            
             let items = isP ? [
-                {l:'登録', v:d[10]}, {l:'防御率', v:d[12]}, {l:'勝利', v:d[3]}, {l:'敗戦', v:d[4]}, 
-                {l:'ホールド', v:d[5]}, {l:'セーブ', v:d[6]}, {l:'奪三振', v:d[9]}, {l:'WHIP', v:d[13]}
+                {l:'防御率', v:d[12]}, {l:'勝利', v:d[3]}, {l:'敗戦', v:d[4]}, 
+                {l:'ホールド', v:d[5]}, {l:'セーブ', v:d[6]}, {l:'奪三振', v:d[9]}, 
+                {l:'WHIP', v:d[13]}, {l:'登板数', v:d[2]}
             ] : [
-                {l:'登録', v:d[10]}, {l:'打率', v:d[12]}, {l:'本塁打', v:d[5]}, 
-                {l:'打点', v:d[6]}, {l:'盗塁', v:d[9]}, {l:'OPS', v:d[13]}
+                {l:'打率', v:d[12]}, {l:'本塁打', v:d[5]}, 
+                {l:'打点', v:d[6]}, {l:'盗塁', v:d[9]}, 
+                {l:'OPS', v:d[13]}, {l:'試合数', v:d[2]}
             ];
             const statsHTML = items.map(i => `<div class="modal-item"><div class="label" style="font-size:10px;">${i.l}</div><div class="stats" style="font-size:18px;">${i.v}</div></div>`).join('');
+            
+            // ヘッダーに年齢（満年齢）を追加
             document.getElementById('modal-detail').innerHTML = `
-                <div style="font-size:12px;color:#888;">背番号 ${d[0]} | ${d[15]}</div>
+                <div style="font-size:12px;color:#888;">背番号 ${d[0]} | ${d[15]} | ${d[10]} | ${age}歳</div>
                 <div style="font-size:22px;font-weight:bold;margin-bottom:15px;border-bottom:2px solid var(--team-accent);padding-bottom:5px;">${d[1]}</div>
                 <div class="modal-grid">${statsHTML}</div>`;
             document.getElementById('modal').style.display = 'flex';
