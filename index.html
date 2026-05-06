@@ -87,8 +87,31 @@
         .sub-title { font-size: 14px; margin: 5px 0 0 0; letter-spacing: 2px; color: var(--team-accent); opacity: 0.9; }
         #team-name-display { font-size: 18px; margin: 15px 0 5px 0; font-weight: bold; }
 
-        .search-container { display: flex; justify-content: center; margin: 10px auto; width: 95%; max-width: 500px; gap: 8px; }
+        /* 検索・絞り込みエリア */
+        .filter-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin: 10px auto;
+            width: 95%;
+            max-width: 500px;
+        }
+
+        .search-container { display: flex; width: 100%; gap: 8px; }
         #player-search { flex: 1; padding: 10px 15px; border-radius: 20px; border: 1px solid var(--team-accent); background: rgba(255,255,255,0.1); color: #fff; outline: none; }
+
+        .select-container { display: flex; width: 100%; gap: 8px; }
+        .filter-select {
+            flex: 1;
+            padding: 8px;
+            border-radius: 10px;
+            border: 1px solid var(--team-accent);
+            background: #222;
+            color: #fff;
+            font-size: 12px;
+            outline: none;
+        }
 
         .player-container { display: flex; flex-wrap: wrap; gap: 12px; padding: 15px; justify-content: center; min-height: 200px; }
         .player-card { background-color: rgba(255, 255, 255, 0.05); border: 1px solid var(--team-accent); padding: 15px; width: 145px; border-radius: 12px; text-align: center; cursor: pointer; }
@@ -147,8 +170,22 @@
             <div id="team-name-display">福岡ソフトバンクホークス</div>
         </div>
 
-        <div class="search-container">
-            <input type="text" id="player-search" placeholder="選手名検索..." oninput="handleSearch()">
+        <div class="filter-area">
+            <div class="search-container">
+                <input type="text" id="player-search" placeholder="名前で検索..." oninput="applyFilters()">
+            </div>
+            <div class="select-container">
+                <select id="filter-role" class="filter-select" onchange="applyFilters()">
+                    <option value="">全ての役割</option>
+                    <option value="投手">投手</option>
+                    <option value="野手">野手</option>
+                </select>
+                <select id="filter-squad" class="filter-select" onchange="applyFilters()">
+                    <option value="">全ての構成</option>
+                    <option value="一軍">一軍</option>
+                    <option value="二軍">二軍</option>
+                </select>
+            </div>
         </div>
         
         <div id="container" class="player-container">
@@ -197,6 +234,12 @@
             document.documentElement.style.setProperty('--team-bg', config.bg);
             document.documentElement.style.setProperty('--team-accent', config.accent);
             document.documentElement.style.setProperty('--team-modal', config.modal);
+            
+            // チーム切り替え時にフィルターをリセット
+            document.getElementById('player-search').value = "";
+            document.getElementById('filter-role').value = "";
+            document.getElementById('filter-squad').value = "";
+
             await loadStats(config.id);
         }
 
@@ -215,16 +258,31 @@
             } catch (e) { container.innerHTML = 'データの取得に失敗しました。'; }
         }
 
-        function handleSearch() {
+        // 絞り込み実行関数
+        function applyFilters() {
             if (allPlayers.length === 0) return;
-            const query = document.getElementById('player-search').value.toLowerCase();
-            const filtered = allPlayers.filter(p => p[1].includes(query));
+
+            const nameQuery = document.getElementById('player-search').value.toLowerCase();
+            const roleFilter = document.getElementById('filter-role').value; // インデックス14
+            const squadFilter = document.getElementById('filter-squad').value; // インデックス16
+
+            const filtered = allPlayers.filter(p => {
+                const matchName = p[1].includes(nameQuery);
+                const matchRole = roleFilter === "" || p[14] === roleFilter;
+                const matchSquad = squadFilter === "" || p[16] === squadFilter;
+                return matchName && matchRole && matchSquad;
+            });
+
             renderCards(filtered);
         }
 
         function renderCards(dataList) {
             const container = document.getElementById('container');
             container.innerHTML = '';
+            if(dataList.length === 0) {
+                container.innerHTML = '<p style="color:#888;">該当する選手はいません</p>';
+                return;
+            }
             dataList.forEach(cols => {
                 const isP = (cols[14] === '投手');
                 const card = document.createElement('div');
