@@ -136,7 +136,7 @@
     <script>
         const TEAMS = {
             SOFTBANK: { id: '1D55MmUmSxxvDf92UE_N0N3BTSrZOoR5qQxoXm_BL2_E', name: 'ソフトバンク', title: '福岡ソフトバンクホークス', accent: '#ffcc00', league: 'pa' },
-            FIGHTERS: { id: '14Nd-iWKpiJg7M0Ou2NG0bgARZHJY-JIdARiWCwVTmjM', name: '日本ハム', title: '北海道日本ハムファイターズ', accent: '#005491', league: 'pa' },
+            FIGHTERS: { id: '14 Nd-iWKpiJg7M0Ou2NG0bgARZHJY-JIdARiWCwVTmjM', name: '日本ハム', title: '北海道日本ハムファイターズ', accent: '#005491', league: 'pa' },
             ORIX: { id: '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw', name: 'オリックス', title: 'オリックス・バファローズ', accent: '#b6a269', league: 'pa' },
             MARINES: { id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', name: 'ロッテ', title: '千葉ロッテマリーンズ', accent: '#333', league: 'pa' },
             EAGLES: { id: '1o5tO7aFL2tA_eWfQCPuhyatXC4oqQUOYc1C49DuQ_sU', name: '楽天', title: '東北楽天ゴールデンイーグルス', accent: '#870011', league: 'pa' },
@@ -189,11 +189,12 @@
                 const rows = text.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
                 allPlayers = rows.map(r => r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, '')));
                 
-                // タイムスタンプ（A列）取得
+                // タイムスタンプ（A列）から日付(M/D)だけを抽出
                 if (allPlayers.length > 0) {
                     const rawTs = allPlayers[0][0]; 
-                    const tsMatch = rawTs.match(/(\d+\/\d+)\s+(\d+:\d+)/);
-                    document.getElementById('update-date-display').innerText = tsMatch ? `${tsMatch[1]} ${tsMatch[2]} 更新` : rawTs + " 更新";
+                    // 日付(数字/数字)の部分だけを見つけて取得
+                    const dateOnly = rawTs.match(/(\d+\/\d+)/);
+                    document.getElementById('update-date-display').innerText = dateOnly ? `${dateOnly[1]} 試合終了時点` : rawTs;
                 }
 
                 render(allPlayers);
