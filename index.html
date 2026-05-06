@@ -34,7 +34,6 @@
             padding: 15px 25px; text-decoration: none; font-size: 16px; color: #fff; display: block; border-bottom: 1px solid #444; cursor: pointer;
         }
         .sidebar .contact-item { border-top: 1px solid #555; background-color: #444; color: #ffcc00; margin-top: 10px; }
-        .sidebar .fav-item { border-top: 1px solid #555; color: #00d4ff; }
         .sidebar .closebtn { position: absolute; top: 10px; right: 20px; font-size: 30px; }
 
         .openbtn {
@@ -70,15 +69,6 @@
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; margin-top: auto; background: #f8f8f8; padding: 6px 0; border-radius: 4px; }
         .label { font-size: 9px; color: #999; margin-bottom: 2px; }
         .stats { font-size: 13px; font-weight: bold; color: #333; }
-
-        /* --- モーダル --- */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 2000; }
-        .modal-content { background: #fff; padding: 20px; border-radius: 8px; width: 85%; max-width: 350px; position: relative; }
-        .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
-        .modal-item { background: #f8f8f8; padding: 10px; border-radius: 4px; text-align: center; border: 1px solid #eee; }
-        .close-btn { background: #333; color: #fff; border: none; padding: 12px 0; width: 100%; cursor: pointer; margin-top: 20px; font-weight: bold; border-radius: 4px; }
-        .fav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .fav-btn { padding: 12px; border: 1px solid #ddd; background: #fff; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: center; }
     </style>
 </head>
 <body>
@@ -91,9 +81,7 @@
         <div id="pa-league" style="display:none; background:#222;"></div>
         <div class="menu-item" onclick="toggleDropdown('ce-league')">セ・リーグ ▼</div>
         <div id="ce-league" style="display:none; background:#222;"></div>
-        
-        <div class="menu-item fav-item" onclick="showFavPicker()">⭐ お気に入りチームを変更</div>
-        <a href="https://forms.gle/RGfn64BjbfXaVZe78" target="_blank" class="menu-item contact-item">✉ お問い合わせ・ご要望</a>
+        <a href="https://forms.gle/RGfn64BjbfXaVZe78" target="_blank" class="menu-item contact-item">✉ お問い合わせ</a>
     </div>
 
     <div id="main">
@@ -140,8 +128,6 @@
         function init() {
             const pa = document.getElementById('pa-league');
             const ce = document.getElementById('ce-league');
-            const favList = document.getElementById('fav-team-list');
-
             Object.keys(TEAMS).forEach(k => {
                 const t = TEAMS[k];
                 const d = document.createElement('div');
@@ -149,12 +135,12 @@
                 d.onclick = () => switchTeam(k);
                 if(t.league === 'pa') pa.appendChild(d); else ce.appendChild(d);
             });
-
-            const favTeam = localStorage.getItem('favTeam');
-            if (favTeam && TEAMS[favTeam]) { switchTeam(favTeam); } else { switchTeam('GIANTS'); }
+            const favTeam = localStorage.getItem('favTeam') || 'GIANTS';
+            switchTeam(favTeam);
         }
 
         async function switchTeam(key) {
+            localStorage.setItem('favTeam', key);
             const t = TEAMS[key];
             closeNav();
             document.getElementById('team-name-display').innerText = t.title;
@@ -167,23 +153,18 @@
                 const rows = text.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
                 allPlayers = rows.map(r => r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, '')));
                 
-                // 【修正ポイント】日付の表示ロジックを刷新
+                // 【超重要：修正ロジック】
                 if (allPlayers.length > 0) {
-                    let rawTs = allPlayers[0][0]; // A列の値
-                    // スペースがある場合はその前まで（日付部分）を切り抜く
-                    let cleanDate = rawTs.split(" ")[0]; 
-                    // もし「/」が含まれていれば、さらに西暦部分(2024/)を削る
-                    if(cleanDate.includes('/')){
-                        const parts = cleanDate.split('/');
-                        if(parts.length >= 3) cleanDate = parts[1] + '/' + parts[2];
-                    }
-                    document.getElementById('update-date-display').innerText = cleanDate + " 試合終了時点";
+                    const rawTs = allPlayers[0][0]; 
+                    // 正規表現で「月/日」のパターン（例：5/6 や 05/06）だけを厳密に探す
+                    // 後ろにどんな時間が付いていても無視します
+                    const match = rawTs.match(/(\d{1,2}\/\d{1,2})/);
+                    const dateString = match ? match[1] : "日付不明";
+                    document.getElementById('update-date-display').innerText = dateString + " 試合終了時点";
                 }
 
                 render(allPlayers);
-            } catch (e) { 
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         function render(data) {
@@ -212,7 +193,11 @@
             let items = isP ? [{l:'防御率', v:d[12]}, {l:'登板', v:d[2]}, {l:'勝利', v:d[3]}, {l:'敗戦', v:d[4]}, {l:'H', v:d[5]}, {l:'S', v:d[6]}, {l:'奪三振', v:d[9]}, {l:'WHIP', v:d[13]}] 
                             : [{l:'打率', v:d[12]}, {l:'試合', v:d[2]}, {l:'本塁打', v:d[5]}, {l:'打点', v:d[6]}, {l:'盗塁', v:d[9]}, {l:'OPS', v:d[13]}];
             const statsHTML = items.map(i => `<div style="background:#f8f8f8;padding:10px;border-radius:4px;text-align:center;border:1px solid #eee;"><div style="font-size:10px;color:#999;">${i.l}</div><div style="font-size:18px;font-weight:bold;">${i.v}</div></div>`).join('');
-            document.body.insertAdjacentHTML('beforeend', `<div id="modal-temp" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;justify-content:center;align-items:center;z-index:2000;" onclick="this.remove()"><div style="background:#fff;padding:20px;border-radius:8px;width:85%;max-width:350px;" onclick="event.stopPropagation()"><div style="font-size:12px;color:#888;">#${d[0]} | ${d[15]}</div><div style="font-size:22px;font-weight:bold;margin-bottom:15px;border-bottom:2px solid var(--team-accent);">${d[1]}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">${statsHTML}</div><button style="width:100%;margin-top:20px;padding:12px;background:#333;color:#fff;border:none;border-radius:4px;" onclick="document.getElementById('modal-temp').remove()">閉じる</button></div></div>`);
+            const modal = document.createElement('div');
+            modal.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;justify-content:center;align-items:center;z-index:2000;";
+            modal.onclick = () => modal.remove();
+            modal.innerHTML = `<div style="background:#fff;padding:20px;border-radius:8px;width:85%;max-width:350px;" onclick="event.stopPropagation()"><div style="font-size:12px;color:#888;">#${d[0]} | ${d[15]}</div><div style="font-size:22px;font-weight:bold;margin-bottom:15px;border-bottom:2px solid var(--team-accent);">${d[1]}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">${statsHTML}</div><button style="width:100%;margin-top:20px;padding:12px;background:#333;color:#fff;border:none;border-radius:4px;" onclick="this.closest('div').parentElement.remove()">閉じる</button></div>`;
+            document.body.appendChild(modal);
         }
 
         function applyFilters() {
