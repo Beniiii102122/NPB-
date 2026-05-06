@@ -33,7 +33,6 @@
         .sidebar a, .sidebar .menu-item {
             padding: 15px 25px; text-decoration: none; font-size: 16px; color: #fff; display: block; border-bottom: 1px solid #444; cursor: pointer;
         }
-        .sidebar .contact-item { border-top: 1px solid #555; background-color: #444; color: #ffcc00; margin-top: 10px; }
         .sidebar .closebtn { position: absolute; top: 10px; right: 20px; font-size: 30px; }
 
         .openbtn {
@@ -63,7 +62,6 @@
             font-size: 11px; font-weight: bold; min-width: 24px; height: 24px; line-height: 24px;
             border-radius: 12px; padding: 0 4px; box-sizing: border-box;
         }
-
         .pos-badge { display: inline-block; padding: 1px 7px; background: #eee; color: #666; font-size: 10px; margin-bottom: 2px; border-radius: 3px; }
         .name { font-size: 17px; margin: 12px 0; font-weight: bold; color: #000; line-height: 1.2; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; margin-top: auto; background: #f8f8f8; padding: 6px 0; border-radius: 4px; }
@@ -81,7 +79,6 @@
         <div id="pa-league" style="display:none; background:#222;"></div>
         <div class="menu-item" onclick="toggleDropdown('ce-league')">セ・リーグ ▼</div>
         <div id="ce-league" style="display:none; background:#222;"></div>
-        <a href="https://forms.gle/RGfn64BjbfXaVZe78" target="_blank" class="menu-item contact-item">✉ お問い合わせ</a>
     </div>
 
     <div id="main">
@@ -135,8 +132,7 @@
                 d.onclick = () => switchTeam(k);
                 if(t.league === 'pa') pa.appendChild(d); else ce.appendChild(d);
             });
-            const favTeam = localStorage.getItem('favTeam') || 'GIANTS';
-            switchTeam(favTeam);
+            switchTeam(localStorage.getItem('favTeam') || 'GIANTS');
         }
 
         async function switchTeam(key) {
@@ -153,16 +149,31 @@
                 const rows = text.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
                 allPlayers = rows.map(r => r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, '')));
                 
-                // 【超重要：修正ロジック】
+                // --- 【修正の決定打】日付表示ロジック ---
                 if (allPlayers.length > 0) {
-                    const rawTs = allPlayers[0][0]; 
-                    // 正規表現で「月/日」のパターン（例：5/6 や 05/06）だけを厳密に探す
-                    // 後ろにどんな時間が付いていても無視します
-                    const match = rawTs.match(/(\d{1,2}\/\d{1,2})/);
-                    const dateString = match ? match[1] : "日付不明";
-                    document.getElementById('update-date-display').innerText = dateString + " 試合終了時点";
-                }
+                    const rawVal = String(allPlayers[0][0]); 
+                    let dateStr = "";
 
+                    // パターン1: Date(2024,4,6,0,0,0) のような形式
+                    if (rawVal.includes("Date(")) {
+                        const nums = rawVal.match(/\d+/g);
+                        if (nums && nums.length >= 3) {
+                            // nums[1]は月(0-11)なので+1する
+                            dateStr = `${parseInt(nums[1]) + 1}/${nums[2]}`;
+                        }
+                    } 
+                    // パターン2: 2024/05/06 00:00:00 のような形式
+                    else if (rawVal.includes("/")) {
+                        const parts = rawVal.split(" ")[0].split("/");
+                        if (parts.length >= 3) {
+                            dateStr = `${parseInt(parts[1])}/${parseInt(parts[2])}`;
+                        } else {
+                            dateStr = rawVal.split(" ")[0];
+                        }
+                    }
+
+                    document.getElementById('update-date-display').innerText = (dateStr || "更新済み") + " 試合終了時点";
+                }
                 render(allPlayers);
             } catch (e) { console.error(e); }
         }
