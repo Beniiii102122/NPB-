@@ -43,13 +43,15 @@
             z-index: 1000; border-radius: 4px;
         }
 
-        .header-container { text-align: center; padding: 50px 0 10px 0; }
-        #team-name-display { font-size: 22px; font-weight: bold; }
+        .header-container { text-align: center; padding: 45px 0 5px 0; }
+        #team-name-display { font-size: 20px; font-weight: bold; margin-bottom: 2px; }
+        /* 日付表示用スタイル */
+        #update-date-display { font-size: 11px; color: #666; margin-bottom: 5px; }
 
         .filter-area { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 auto; width: 95%; max-width: 500px; }
         #player-search { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
         .select-container { display: flex; width: 100%; gap: 5px; }
-        .filter-select { padding: 8px; border: 1px solid #ccc; background: #fff; flex: 1; border-radius: 4px; }
+        .filter-select { padding: 8px; border: 1px solid #ccc; background: #fff; flex: 1; border-radius: 4px; font-size: 13px; }
 
         /* --- 選手カード --- */
         .player-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 15px 5px; justify-content: center; }
@@ -63,6 +65,13 @@
             font-size: 11px; font-weight: bold; min-width: 24px; height: 24px; line-height: 24px;
             border-radius: 12px; padding: 0 4px; box-sizing: border-box;
         }
+        .roster-badge {
+            position: absolute; top: 8px; right: 8px; font-size: 10px; font-weight: bold;
+            padding: 2px 6px; border-radius: 4px;
+        }
+        .roster-1 { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+        .roster-2 { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+
         .pos-badge { display: inline-block; padding: 1px 7px; background: #eee; color: #666; font-size: 10px; margin-bottom: 2px; border-radius: 3px; }
         .name { font-size: 17px; margin: 8px 0; font-weight: bold; color: #000; line-height: 1.2; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; margin-top: auto; background: #f8f8f8; padding: 6px 0; border-radius: 4px; }
@@ -98,10 +107,16 @@
         <div class="sticky-header">
             <div class="header-container">
                 <div id="team-name-display">読み込み中...</div>
+                <div id="update-date-display">成績更新日: --/--</div>
             </div>
             <div class="filter-area">
                 <input type="text" id="player-search" placeholder="選手名を検索..." oninput="applyFilters()">
                 <div class="select-container">
+                    <select id="filter-roster" class="filter-select" onchange="applyFilters()">
+                        <option value="">全支配下登録選手</option>
+                        <option value="一軍">一軍登録</option>
+                        <option value="二軍">二軍登録</option>
+                    </select>
                     <select id="filter-pos" class="filter-select" onchange="applyFilters()">
                         <option value="">すべての守備位置</option>
                         <option value="先発">先発</option>
@@ -131,7 +146,6 @@
     </div>
 
     <script>
-        // パ・リーグの順番を指定通り（ソフトバンク、日ハム、オリックス...）に並び替え
         const TEAMS = {
             SOFTBANK: { id: '1D55MmUmSxxvDf92UE_N0N3BTSrZOoR5qQxoXm_BL2_E', name: 'ソフトバンク', title: '福岡ソフトバンクホークス', accent: '#ffcc00', league: 'pa' },
             FIGHTERS: { id: '14Nd-iWKpiJg7M0Ou2NG0bgARZHJY-JIdARiWCwVTmjM', name: '日本ハム', title: '北海道日本ハムファイターズ', accent: '#005491', league: 'pa' },
@@ -169,11 +183,7 @@
             });
 
             const favTeam = localStorage.getItem('favTeam');
-            if (favTeam && TEAMS[favTeam]) {
-                switchTeam(favTeam);
-            } else {
-                showFavPicker();
-            }
+            if (favTeam && TEAMS[favTeam]) { switchTeam(favTeam); } else { showFavPicker(); }
         }
 
         function showFavPicker() { closeNav(); document.getElementById('fav-modal').style.display = 'flex'; }
@@ -183,15 +193,32 @@
             const t = TEAMS[key];
             closeNav();
             document.getElementById('team-name-display').innerText = t.title;
+            document.getElementById('update-date-display').innerText = '日付取得中...';
             document.documentElement.style.setProperty('--team-accent', t.accent);
             document.getElementById('container').innerHTML = '<p style="text-align:center; width:100%; margin-top:50px;">読み込み中...</p>';
+            
             try {
+                // スプレッドシートからデータを取得
                 const res = await fetch(`https://docs.google.com/spreadsheets/d/${t.id}/gviz/tq?tqx=out:csv&sheet=シート1`);
                 const text = await res.text();
                 const rows = text.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
+                
+                // データパース
                 allPlayers = rows.map(r => r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, '')));
+                
+                // 日付取得: スプレッドシートの[Q1]セル（インデックス16）に日付があると想定
+                // 1行目のデータから取得（もし日付が全行にあるならallPlayers[0][16]など）
+                if (allPlayers.length > 0 && allPlayers[0][16]) {
+                    document.getElementById('update-date-display').innerText = `${allPlayers[0][16]} 試合終了時点`;
+                } else {
+                    document.getElementById('update-date-display').innerText = '成績更新日: 不明';
+                }
+
                 render(allPlayers);
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                console.error(e);
+                document.getElementById('update-date-display').innerText = 'データ取得エラー';
+            }
         }
 
         function render(data) {
@@ -199,6 +226,9 @@
             data.forEach(p => {
                 const isP = p[14] === '投手';
                 const pos = p[15];
+                const roster = p[10];
+                const rosterClass = roster === '一軍' ? 'roster-1' : 'roster-2';
+
                 let l1, s1, l2, s2, l3, s3;
                 if (isP) {
                     l1 = '防御率'; s1 = p[12];
@@ -212,6 +242,7 @@
                 card.onclick = () => showDetail(p);
                 card.innerHTML = `
                     <div class="number-badge">${p[0]}</div>
+                    <div class="roster-badge ${rosterClass}">${roster}</div>
                     <div><div class="pos-badge">${pos}</div><div class="name">${p[1]}</div></div>
                     <div class="stats-grid">
                         <div><div class="label">${l1}</div><div class="stats">${s1}</div></div>
@@ -225,10 +256,10 @@
         function showDetail(d) {
             const isP = d[14] === '投手';
             let items = isP ? [
-                {l:'登板数', v:d[2]}, {l:'防御率', v:d[12]}, {l:'勝利', v:d[3]}, {l:'敗戦', v:d[4]}, 
+                {l:'登録', v:d[10]}, {l:'防御率', v:d[12]}, {l:'勝利', v:d[3]}, {l:'敗戦', v:d[4]}, 
                 {l:'ホールド', v:d[5]}, {l:'セーブ', v:d[6]}, {l:'奪三振', v:d[9]}, {l:'WHIP', v:d[13]}
             ] : [
-                {l:'試合数', v:d[2]}, {l:'打率', v:d[12]}, {l:'本塁打', v:d[5]}, 
+                {l:'登録', v:d[10]}, {l:'打率', v:d[12]}, {l:'本塁打', v:d[5]}, 
                 {l:'打点', v:d[6]}, {l:'盗塁', v:d[9]}, {l:'OPS', v:d[13]}
             ];
             const statsHTML = items.map(i => `<div class="modal-item"><div class="label" style="font-size:10px;">${i.l}</div><div class="stats" style="font-size:18px;">${i.v}</div></div>`).join('');
@@ -241,10 +272,23 @@
 
         function applyFilters() {
             const q = document.getElementById('player-search').value.toLowerCase();
-            const pos = document.getElementById('filter-pos').value;
+            const selectedPos = document.getElementById('filter-pos').value;
+            const selectedRoster = document.getElementById('filter-roster').value;
+            
             const filtered = allPlayers.filter(p => {
-                const matchPos = pos === "" || (pos === "リリーフ" ? (p[15].includes("中継") || p[15].includes("抑")) : p[15].includes(pos));
-                return p[1].includes(q) && matchPos;
+                const nameMatch = p[1].includes(q);
+                const rosterMatch = selectedRoster === "" || p[10] === selectedRoster;
+
+                let posMatch = false;
+                if (selectedPos === "") {
+                    posMatch = true;
+                } else if (selectedPos === "リリーフ") {
+                    posMatch = p[15].includes("中継") || p[15].includes("抑") || p[15].includes("リリーフ") || (p[14] === "投手" && !p[15].includes("先発"));
+                } else {
+                    posMatch = p[15].includes(selectedPos);
+                }
+                
+                return nameMatch && rosterMatch && posMatch;
             });
             render(filtered);
         }
