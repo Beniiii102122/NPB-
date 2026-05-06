@@ -62,8 +62,14 @@
         .search-container { display: flex; width: 100%; gap: 8px; }
         #player-search { flex: 1; padding: 12px 15px; border-radius: 25px; border: 1px solid var(--team-accent); background: rgba(255,255,255,0.1); color: #fff; outline: none; }
 
-        .select-container { display: flex; width: 100%; gap: 8px; }
-        .filter-select { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--team-accent); background: #222; color: #fff; font-size: 13px; cursor: pointer; }
+        .select-container { display: flex; width: 100%; gap: 5px; }
+        .filter-select { flex: 1; padding: 10px 2px; border-radius: 10px; border: 1px solid var(--team-accent); background: #222; color: #fff; font-size: 11px; cursor: pointer; }
+        
+        .fav-filter-btn { 
+            padding: 10px; border-radius: 10px; border: 1px solid var(--team-accent); 
+            background: #222; color: #fff; font-size: 12px; cursor: pointer; min-width: 45px;
+        }
+        .fav-filter-btn.active { background: var(--team-accent); color: #000; }
 
         /* --- 選手カード --- */
         .player-container { display: flex; flex-wrap: wrap; gap: 12px; padding: 20px 15px; justify-content: center; min-height: 300px; }
@@ -140,11 +146,14 @@
                     <input type="text" id="player-search" placeholder="名前で検索..." oninput="applyFilters()">
                 </div>
                 <div class="select-container">
-                    <select id="filter-role" class="filter-select" onchange="applyFilters()">
+                    <button id="fav-toggle" class="fav-filter-btn" onclick="toggleFavFilter()">★</button>
+                    <select id="filter-pos" class="filter-select" onchange="applyFilters()">
                         <option value="">全選手</option>
-                        <option value="投手">投手</option>
-                        <option value="野手">野手</option>
-                        <option value="FAV">お気に入り</option>
+                        <option value="先発">先発</option>
+                        <option value="リリーフ">リリーフ</option>
+                        <option value="捕手">捕手</option>
+                        <option value="内野手">内野手</option>
+                        <option value="外野手">外野手</option>
                     </select>
                     <select id="filter-squad" class="filter-select" onchange="applyFilters()">
                         <option value="">全選手</option>
@@ -176,7 +185,7 @@
             FIGHTERS: { id: '14Nd-iWKpiJg7M0Ou2NG0bgARZHJY-JIdARiWCwVTmjM', title: '北海道日本ハムファイターズ', bg: '#005491', accent: '#f3c759', modal: '#003e6b', league: 'パ・リーグ' },
             ORIX: { id: '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw', title: 'オリックス・バファローズ', bg: '#000033', accent: '#b6a269', modal: '#000044', league: 'パ・リーグ' },
             EAGLES: { id: '1o5tO7aFL2tA_eWfQCPuhyatXC4oqQUOYc1C49DuQ_sU', title: '東北楽天ゴールデンイーグルス', bg: '#870011', accent: '#EAAA00', modal: '#4c000a', league: 'パ・リーグ' },
-            LIONS: { id: '1rU0KqHiGXvS3hAMp0snqepykftW4gnoEcqNAFcK9ZJw', title: '埼玉西武ライオンズ', bg: '#03192e', accent: '#ffffff', modal: '#0a2a47', league: 'パ・リーグ' },
+            LIONS: { id: '1rU0KqHiGXvS3hAMp0snepykftW4gnoEcqNAFcK9ZJw', title: '埼玉西武ライオンズ', bg: '#03192e', accent: '#ffffff', modal: '#0a2a47', league: 'パ・リーグ' },
             MARINES: { id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', title: '千葉ロッテマリーンズ', bg: '#222222', accent: '#ffffff', modal: '#333333', league: 'パ・リーグ' },
             HANSHIN: { id: '1hZwkTDSa4AOUSlvFvgYB74hU78Uk6Tb3Wxdr6wKuPhs', title: '阪神タイガース', bg: '#000', accent: '#ffe200', modal: '#333', league: 'セ・リーグ' },
             BAYSTARS: { id: '1EGfKQS7CPBxnqk7MN6MVoFc1naTvplPwMMlvO6ucXrs', title: '横浜DeNAベイスターズ', bg: '#005596', accent: '#ffffff', modal: '#003e6b', league: 'セ・リーグ' },
@@ -188,6 +197,7 @@
 
         let allPlayers = [];
         let favorites = JSON.parse(localStorage.getItem('npb_favs')) || [];
+        let showOnlyFavs = false;
 
         function openNav() { document.getElementById("mySidebar").style.width = "var(--sidebar-width)"; }
         function closeNav() { document.getElementById("mySidebar").style.width = "0"; }
@@ -204,11 +214,9 @@
             document.documentElement.style.setProperty('--team-bg', config.bg);
             document.documentElement.style.setProperty('--team-accent', config.accent);
             document.documentElement.style.setProperty('--team-modal', config.modal);
-            
             document.getElementById('player-search').value = "";
-            document.getElementById('filter-role').value = "";
+            document.getElementById('filter-pos').value = "";
             document.getElementById('filter-squad').value = "";
-
             await loadStats(config.id);
         }
 
@@ -217,7 +225,6 @@
             const loader = document.getElementById('loader');
             container.innerHTML = '';
             loader.style.display = 'block';
-
             const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=シート1`;
             try {
                 const response = await fetch(url);
@@ -245,18 +252,37 @@
             applyFilters();
         }
 
+        function toggleFavFilter() {
+            showOnlyFavs = !showOnlyFavs;
+            document.getElementById('fav-toggle').classList.toggle('active', showOnlyFavs);
+            applyFilters();
+        }
+
         function applyFilters() {
             if (allPlayers.length === 0) return;
             const nameQuery = document.getElementById('player-search').value.toLowerCase();
-            const roleFilter = document.getElementById('filter-role').value;
+            const posFilter = document.getElementById('filter-pos').value;
             const squadFilter = document.getElementById('filter-squad').value;
 
             const filtered = allPlayers.filter(p => {
                 const isFav = favorites.includes(p[1]);
                 const matchName = p[1].includes(nameQuery);
-                const matchRole = (roleFilter === "FAV") ? isFav : (roleFilter === "" || p[14] === roleFilter);
                 const matchSquad = squadFilter === "" || p[16] === squadFilter;
-                return matchName && matchRole && matchSquad;
+                const matchFav = !showOnlyFavs || isFav;
+                
+                let matchPos = false;
+                const posStr = p[15];
+                if (posFilter === "") {
+                    matchPos = true;
+                } else if (posFilter === "先発") {
+                    matchPos = posStr.includes("先発");
+                } else if (posFilter === "リリーフ") {
+                    matchPos = posStr.includes("中継") || posStr.includes("抑") || posStr.includes("リリーフ");
+                } else {
+                    matchPos = posStr === posFilter;
+                }
+                
+                return matchName && matchPos && matchSquad && matchFav;
             });
             renderCards(filtered);
         }
@@ -274,7 +300,6 @@
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(cols);
-                
                 card.innerHTML = `
                     <div class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, '${cols[1]}')">★</div>
                     <div class="pos-badge">${cols[15]}</div>
@@ -306,7 +331,7 @@
                 <div style="border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-bottom:20px;">
                     <div style="font-size:14px; color:var(--team-accent)">No. ${data[0]} | ${data[15]}</div>
                     <div style="font-size:28px; font-weight:bold;">${data[1]}</div>
-                    <div style="font-size:13px; opacity:0.7; margin-top:5px;">${data[16]}構成 | ${data[17]} 生まれ</div>
+                    <div style="font-size:13px; opacity:0.7; margin-top:5px;">${data[16]} | ${data[17]} 生まれ</div>
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                     ${stats.map(s => `<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:10px;">
