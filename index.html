@@ -56,7 +56,7 @@
         .player-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 15px 5px; justify-content: center; }
         .player-card { 
             background: #fff; border: 1px solid #ddd; padding: 20px 5px 12px 5px; 
-            width: 160px; min-height: 165px; text-align: center; cursor: pointer; position: relative; border-radius: 6px;
+            width: 160px; min-height: 150px; text-align: center; cursor: pointer; position: relative; border-radius: 6px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between;
         }
         .number-badge {
@@ -64,15 +64,9 @@
             font-size: 11px; font-weight: bold; min-width: 24px; height: 24px; line-height: 24px;
             border-radius: 12px; padding: 0 4px; box-sizing: border-box;
         }
-        .roster-badge {
-            position: absolute; top: 8px; right: 8px; font-size: 10px; font-weight: bold;
-            padding: 2px 6px; border-radius: 4px;
-        }
-        .roster-1 { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
-        .roster-2 { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
 
         .pos-badge { display: inline-block; padding: 1px 7px; background: #eee; color: #666; font-size: 10px; margin-bottom: 2px; border-radius: 3px; }
-        .name { font-size: 17px; margin: 8px 0; font-weight: bold; color: #000; line-height: 1.2; }
+        .name { font-size: 17px; margin: 12px 0; font-weight: bold; color: #000; line-height: 1.2; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; margin-top: auto; background: #f8f8f8; padding: 6px 0; border-radius: 4px; }
         .label { font-size: 9px; color: #999; margin-bottom: 2px; }
         .stats { font-size: 13px; font-weight: bold; color: #333; }
@@ -111,13 +105,8 @@
             <div class="filter-area">
                 <input type="text" id="player-search" placeholder="選手名を検索..." oninput="applyFilters()">
                 <div class="select-container">
-                    <select id="filter-roster" class="filter-select" onchange="applyFilters()">
-                        <option value="">支配下登録選手</option>
-                        <option value="一軍">一軍登録</option>
-                        <option value="二軍">二軍登録</option>
-                    </select>
                     <select id="filter-pos" class="filter-select" onchange="applyFilters()">
-                        <option value="">守備位置</option>
+                        <option value="">すべての守備位置</option>
                         <option value="先発">先発</option>
                         <option value="リリーフ">リリーフ</option>
                         <option value="捕手">捕手</option>
@@ -200,19 +189,16 @@
                 const rows = text.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
                 allPlayers = rows.map(r => r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, '')));
                 
-                // --- タイムスタンプ（A列）から日付を自動取得 ---
+                // タイムスタンプ（A列）取得
                 if (allPlayers.length > 0) {
-                    const rawTs = allPlayers[0][0]; // 最初の選手のA列（タイムスタンプ）
-                    // タイムスタンプが「2024/05/06 12:00:00」の場合、見やすく整形
+                    const rawTs = allPlayers[0][0]; 
                     const tsMatch = rawTs.match(/(\d+\/\d+)\s+(\d+:\d+)/);
-                    const displayDate = tsMatch ? `${tsMatch[1]} ${tsMatch[2]} 更新` : rawTs + " 更新";
-                    document.getElementById('update-date-display').innerText = displayDate;
+                    document.getElementById('update-date-display').innerText = tsMatch ? `${tsMatch[1]} ${tsMatch[2]} 更新` : rawTs + " 更新";
                 }
 
                 render(allPlayers);
             } catch (e) { 
                 console.error(e);
-                document.getElementById('update-date-display').innerText = "データ取得エラー";
             }
         }
 
@@ -221,8 +207,6 @@
             data.forEach(p => {
                 const isP = p[14] === '投手';
                 const pos = p[15];
-                const roster = p[10];
-                const rosterClass = roster === '一軍' ? 'roster-1' : 'roster-2';
 
                 let l1, s1, l2, s2, l3, s3;
                 if (isP) {
@@ -237,7 +221,6 @@
                 card.onclick = () => showDetail(p);
                 card.innerHTML = `
                     <div class="number-badge">${p[0]}</div>
-                    <div class="roster-badge ${rosterClass}">${roster}</div>
                     <div><div class="pos-badge">${pos}</div><div class="name">${p[1]}</div></div>
                     <div class="stats-grid">
                         <div><div class="label">${l1}</div><div class="stats">${s1}</div></div>
@@ -261,7 +244,7 @@
             const statsHTML = items.map(i => `<div class="modal-item"><div class="label" style="font-size:10px;">${i.l}</div><div class="stats" style="font-size:18px;">${i.v}</div></div>`).join('');
             
             document.getElementById('modal-detail').innerHTML = `
-                <div style="font-size:12px;color:#888;">背番号 ${d[0]} | ${d[15]} | ${d[10]} | ${age}歳</div>
+                <div style="font-size:12px;color:#888;">背番号 ${d[0]} | ${d[15]} | ${age}歳</div>
                 <div style="font-size:22px;font-weight:bold;margin-bottom:15px;border-bottom:2px solid var(--team-accent);padding-bottom:5px;">${d[1]}</div>
                 <div class="modal-grid">${statsHTML}</div>`;
             document.getElementById('modal').style.display = 'flex';
@@ -270,12 +253,10 @@
         function applyFilters() {
             const q = document.getElementById('player-search').value.toLowerCase();
             const selectedPos = document.getElementById('filter-pos').value;
-            const selectedRoster = document.getElementById('filter-roster').value;
             const filtered = allPlayers.filter(p => {
                 const nameMatch = p[1].includes(q);
-                const rosterMatch = selectedRoster === "" || p[10] === selectedRoster;
                 let posMatch = selectedPos === "" ? true : (selectedPos === "リリーフ" ? (p[15].includes("中継") || p[15].includes("抑") || (p[14] === "投手" && !p[15].includes("先発"))) : p[15].includes(selectedPos));
-                return nameMatch && rosterMatch && posMatch;
+                return nameMatch && posMatch;
             });
             render(filtered);
         }
