@@ -64,7 +64,6 @@
             font-size: 11px; font-weight: bold; min-width: 24px; height: 24px; line-height: 24px;
             border-radius: 12px; padding: 0 4px; box-sizing: border-box;
         }
-        /* 一軍・二軍バッジのみ残す */
         .roster-badge {
             position: absolute; top: 8px; right: 8px; font-size: 10px; font-weight: bold;
             padding: 2px 6px; border-radius: 4px;
@@ -252,7 +251,6 @@
             const isP = d[14] === '投手';
             const age = d[11];
             
-            // 詳細項目に「登板数/試合数」を表示するように設定
             let items = isP ? [
                 {l:'防御率', v:d[12]}, {l:'登板数', v:d[2]}, {l:'勝利', v:d[3]}, {l:'敗戦', v:d[4]}, 
                 {l:'ホールド', v:d[5]}, {l:'セーブ', v:d[6]}, {l:'奪三振', v:d[9]}, {l:'WHIP', v:d[13]}
