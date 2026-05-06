@@ -3,106 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NPB 選手名鑑 Pro</title>
+    <title>NPB 選手名鑑 Pro - Premium</title>
     <style>
         :root {
-            --team-bg: #1a1a1a;
+            --team-bg: #121212;
             --team-accent: #f5c700;
-            --team-modal: #222222;
-            --sidebar-width: 250px;
+            --team-sub: #333333;
+            --team-grad: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+            --sidebar-width: 260px;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
 
         body { 
             background-color: var(--team-bg); 
-            font-family: 'Helvetica Neue', Arial, sans-serif; 
-            color: var(--team-accent); 
+            background-image: var(--team-grad);
+            background-attachment: fixed;
+            font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif; 
+            color: #ffffff; 
             margin: 0; 
             padding-bottom: 50px; 
-            transition: background-color 0.5s;
+            transition: all 0.5s ease;
+            line-height: 1.6;
         }
 
-        /* --- 固定ヘッダー --- */
+        /* --- 固定ヘッダー（高級感のある透過） --- */
         .sticky-header {
             position: sticky;
             top: 0;
             z-index: 900;
-            background-color: var(--team-bg);
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--glass-border);
         }
 
         /* --- サイドバー --- */
         .sidebar {
             height: 100%; width: 0; position: fixed; z-index: 1001; top: 0; left: 0;
-            background-color: #111; overflow-x: hidden; transition: 0.3s;
-            padding-top: 60px; border-right: 1px solid var(--team-accent);
+            background-color: rgba(0, 0, 0, 0.95); overflow-x: hidden; transition: 0.4s;
+            padding-top: 80px; border-right: 1px solid var(--team-accent);
         }
         .sidebar a, .sidebar .menu-item {
-            padding: 15px 25px; text-decoration: none; font-size: 18px; color: #fff;
-            display: block; transition: 0.3s; cursor: pointer; border-bottom: 1px solid #222;
+            padding: 18px 30px; text-decoration: none; font-size: 16px; color: #aaa;
+            display: block; transition: 0.3s; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05);
+            letter-spacing: 1px;
         }
-        .sidebar a:hover, .sidebar .menu-item:hover { color: var(--team-accent); }
-        .sidebar .closebtn { position: absolute; top: 0; right: 25px; font-size: 36px; color: var(--team-accent); }
-        .dropdown-container { display: none; background-color: #222; padding-left: 8px; }
-        .dropdown-container div { padding: 12px 12px 12px 40px; font-size: 14px; color: #ccc; cursor: pointer; }
+        .sidebar a:hover, .sidebar .menu-item:hover { color: var(--team-accent); background: rgba(255,255,255,0.05); }
+        .sidebar .closebtn { position: absolute; top: 20px; right: 25px; font-size: 30px; color: var(--team-accent); }
+        .dropdown-container { display: none; background: rgba(255,255,255,0.02); }
+        .dropdown-container div { padding: 12px 12px 12px 50px; font-size: 14px; color: #888; cursor: pointer; }
 
         .openbtn {
-            font-size: 20px; cursor: pointer; background-color: #111; color: white;
-            padding: 10px 15px; border: none; position: fixed; top: 15px; left: 15px;
-            z-index: 1000; border-radius: 5px; border: 1px solid var(--team-accent);
+            font-size: 22px; cursor: pointer; background: var(--glass); color: white;
+            padding: 12px 18px; border: none; position: fixed; top: 15px; left: 15px;
+            z-index: 1000; border-radius: 12px; border: 1px solid var(--glass-border);
+            backdrop-filter: blur(5px); transition: 0.3s;
         }
+        .openbtn:hover { background: rgba(255,255,255,0.1); border-color: var(--team-accent); }
 
         /* --- メインコンテンツ --- */
-        .header-container { text-align: center; padding: 60px 0 10px 0; }
-        .main-title { font-size: 22px; margin: 0; letter-spacing: 2px; color: #fff; font-weight: 900; }
-        .sub-title { font-size: 12px; margin: 5px 0 0 0; color: var(--team-accent); opacity: 0.8; }
-        #team-name-display { font-size: 18px; margin: 10px 0; font-weight: bold; }
+        .header-container { text-align: center; padding: 70px 0 15px 0; }
+        .main-title { font-size: 24px; margin: 0; letter-spacing: 4px; color: #fff; font-weight: 800; text-transform: uppercase; }
+        .sub-title { font-size: 11px; margin: 5px 0 0 0; color: var(--team-accent); letter-spacing: 2px; font-weight: bold; }
+        #team-name-display { font-size: 20px; margin: 12px 0; font-weight: 700; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 
-        .filter-area { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 auto; width: 95%; max-width: 500px; }
-        .search-container { display: flex; width: 100%; gap: 8px; }
-        #player-search { flex: 1; padding: 12px 15px; border-radius: 25px; border: 1px solid var(--team-accent); background: rgba(255,255,255,0.1); color: #fff; outline: none; }
-
-        .select-container { display: flex; width: 100%; gap: 5px; }
-        .filter-select { flex: 1; padding: 10px 2px; border-radius: 10px; border: 1px solid var(--team-accent); background: #222; color: #fff; font-size: 11px; cursor: pointer; }
-        
-        .fav-filter-btn { 
-            padding: 10px; border-radius: 10px; border: 1px solid var(--team-accent); 
-            background: #222; color: #fff; font-size: 12px; cursor: pointer; min-width: 45px;
+        .filter-area { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 0 auto; width: 92%; max-width: 550px; }
+        .search-container { display: flex; width: 100%; }
+        #player-search { 
+            flex: 1; padding: 14px 20px; border-radius: 14px; border: 1px solid var(--glass-border); 
+            background: rgba(255,255,255,0.05); color: #fff; outline: none; font-size: 15px;
+            transition: 0.3s;
         }
-        .fav-filter-btn.active { background: var(--team-accent); color: #000; }
+        #player-search:focus { border-color: var(--team-accent); background: rgba(255,255,255,0.08); box-shadow: 0 0 15px rgba(245, 199, 0, 0.1); }
 
-        /* --- 選手カード --- */
-        .player-container { display: flex; flex-wrap: wrap; gap: 12px; padding: 20px 15px; justify-content: center; min-height: 300px; }
+        .select-container { display: flex; width: 100%; gap: 8px; }
+        .filter-select, .fav-filter-btn { 
+            padding: 12px; border-radius: 12px; border: 1px solid var(--glass-border); 
+            background: rgba(255,255,255,0.05); color: #fff; font-size: 12px; cursor: pointer; transition: 0.3s;
+        }
+        .filter-select:hover, .fav-filter-btn:hover { background: rgba(255,255,255,0.1); }
+        .fav-filter-btn.active { background: var(--team-accent); color: #000; border-color: var(--team-accent); font-weight: bold; }
+
+        /* --- 選手カード（高級感のあるデザイン） --- */
+        .player-container { display: flex; flex-wrap: wrap; gap: 16px; padding: 30px 20px; justify-content: center; }
         .player-card { 
-            background-color: rgba(255, 255, 255, 0.05); border: 1px solid var(--team-accent); 
-            padding: 15px; width: 145px; border-radius: 15px; text-align: center; cursor: pointer; position: relative;
+            background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid var(--glass-border); 
+            padding: 20px 15px; width: 155px; border-radius: 20px; text-align: center; cursor: pointer; 
+            position: relative; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
-        .fav-btn { position: absolute; top: 8px; right: 8px; font-size: 20px; color: #555; transition: 0.2s; }
-        .fav-btn.active { color: #ffcc00; }
+        .player-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--team-accent);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.5), 0 0 15px rgba(245, 199, 0, 0.1);
+            background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%);
+        }
+        
+        .fav-btn { position: absolute; top: 12px; right: 12px; font-size: 18px; color: rgba(255,255,255,0.2); transition: 0.3s; }
+        .fav-btn.active { color: var(--team-accent); text-shadow: 0 0 10px var(--team-accent); }
         
         .pos-badge { 
-            display: inline-block; padding: 2px 8px; border-radius: 10px; background: var(--team-accent); 
-            color: #000; font-size: 9px; font-weight: bold; margin-bottom: 5px; 
+            display: inline-block; padding: 3px 10px; border-radius: 8px; background: rgba(255,255,255,0.1); 
+            color: var(--team-accent); font-size: 10px; font-weight: 800; margin-bottom: 8px; 
+            border: 1px solid rgba(255,255,255,0.05); text-transform: uppercase;
         }
 
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
-        .label { font-size: 10px; color: var(--team-accent); font-weight: bold; }
-        .stats { font-size: 18px; color: #fff; font-weight: bold; }
-        .name { font-size: 15px; margin: 5px 0; font-weight: bold; color: #fff; height: 2.4em; display: flex; align-items: center; justify-content: center; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px; }
+        .label { font-size: 9px; color: #888; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
+        .stats { font-size: 20px; color: #fff; font-weight: 700; font-family: 'Georgia', serif; }
+        .name { font-size: 16px; margin: 8px 0; font-weight: 700; color: #fff; height: 2.4em; display: flex; align-items: center; justify-content: center; letter-spacing: 0.5px; }
 
-        /* --- ローディング --- */
-        #loader { display: none; text-align: center; padding: 50px; }
-        .spinner {
-            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1);
-            border-top: 4px solid var(--team-accent); border-radius: 50%;
-            animation: spin 1s linear infinite; margin: 0 auto 15px;
+        /* --- モーダル（洗練されたダイアログ） --- */
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(10px); }
+        .modal-content { 
+            background: #1a1a1a; border: 1px solid var(--team-accent); padding: 40px 25px; border-radius: 30px; 
+            width: 88%; max-width: 400px; text-align: center; color: #fff; position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* --- モーダル --- */
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(8px); }
-        .modal-content { background-color: var(--team-modal); border: 2px solid var(--team-accent); padding: 30px 20px; border-radius: 24px; width: 85%; max-width: 380px; text-align: center; color: #fff; }
-        .close-btn { background-color: var(--team-accent); color: #000; border: none; padding: 10px 40px; border-radius: 25px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .close-btn { 
+            background: var(--team-accent); color: #000; border: none; padding: 14px 50px; 
+            border-radius: 15px; font-weight: 800; cursor: pointer; margin-top: 25px; transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(245, 199, 0, 0.3);
+        }
+        .close-btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(245, 199, 0, 0.5); }
     </style>
 </head>
 <body>
@@ -111,62 +137,61 @@
 
     <div id="mySidebar" class="sidebar">
         <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
-        <a onclick="location.reload()">NPB 選手名鑑</a>
-        <div class="menu-item" onclick="toggleDropdown('pa-league')">パ・リーグ ▼</div>
+        <a onclick="location.reload()">NPB PREMIUM名鑑</a>
+        <div class="menu-item" onclick="toggleDropdown('pa-league')">PACIFIC LEAGUE ▼</div>
         <div id="pa-league" class="dropdown-container">
-            <div onclick="switchTeam('SOFTBANK')">ソフトバンク</div>
-            <div onclick="switchTeam('FIGHTERS')">日本ハム</div>
+            <div onclick="switchTeam('SOFTBANK')">福岡ソフトバンク</div>
+            <div onclick="switchTeam('FIGHTERS')">北海道日本ハム</div>
             <div onclick="switchTeam('ORIX')">オリックス</div>
-            <div onclick="switchTeam('EAGLES')">楽天</div>
-            <div onclick="switchTeam('LIONS')">西武</div>
-            <div onclick="switchTeam('MARINES')">ロッテ</div>
+            <div onclick="switchTeam('EAGLES')">東北楽天</div>
+            <div onclick="switchTeam('LIONS')">埼玉西武</div>
+            <div onclick="switchTeam('MARINES')">千葉ロッテ</div>
         </div>
-        <div class="menu-item" onclick="toggleDropdown('ce-league')">セ・リーグ ▼</div>
+        <div class="menu-item" onclick="toggleDropdown('ce-league')">CENTRAL LEAGUE ▼</div>
         <div id="ce-league" class="dropdown-container">
-            <div onclick="switchTeam('HANSHIN')">阪神</div>
-            <div onclick="switchTeam('BAYSTARS')">DeNA</div>
-            <div onclick="switchTeam('GIANTS')">巨人</div>
-            <div onclick="switchTeam('DRAGONS')">中日</div>
-            <div onclick="switchTeam('CARP')">広島</div>
-            <div onclick="switchTeam('SWALLOWS')">ヤクルト</div>
+            <div onclick="switchTeam('HANSHIN')">阪神タイガース</div>
+            <div onclick="switchTeam('BAYSTARS')">横浜DeNA</div>
+            <div onclick="switchTeam('GIANTS')">読売ジャイアンツ</div>
+            <div onclick="switchTeam('DRAGONS')">中日ドラゴンズ</div>
+            <div onclick="switchTeam('CARP')">広島東洋カープ</div>
+            <div onclick="switchTeam('SWALLOWS')">東京ヤクルト</div>
         </div>
-        <a href="https://forms.gle/PZdrWHx4sJ3gfjh19" target="_blank">お問い合わせ</a>
+        <a href="https://forms.gle/PZdrWHx4sJ3gfjh19" target="_blank">Contact</a>
     </div>
 
     <div id="main">
         <div class="sticky-header">
             <div class="header-container">
-                <div class="main-title">NPB 選手名鑑 Pro</div>
-                <div class="sub-title">リーグ</div>
-                <div id="team-name-display">チームを選択してください</div>
+                <div class="main-title">NPB Player Directory</div>
+                <div class="sub-title">PREMIUM EDITION</div>
+                <div id="team-name-display">SELECT TEAM</div>
             </div>
 
             <div class="filter-area">
                 <div class="search-container">
-                    <input type="text" id="player-search" placeholder="名前で検索..." oninput="applyFilters()">
+                    <input type="text" id="player-search" placeholder="Search Player Name..." oninput="applyFilters()">
                 </div>
                 <div class="select-container">
                     <button id="fav-toggle" class="fav-filter-btn" onclick="toggleFavFilter()">★</button>
                     <select id="filter-pos" class="filter-select" onchange="applyFilters()">
-                        <option value="">全選手</option>
-                        <option value="先発">先発</option>
+                        <option value="">POSITION: ALL</option>
+                        <option value="先発">先発投手</option>
                         <option value="リリーフ">リリーフ</option>
                         <option value="捕手">捕手</option>
                         <option value="内野手">内野手</option>
                         <option value="外野手">外野手</option>
                     </select>
                     <select id="filter-squad" class="filter-select" onchange="applyFilters()">
-                        <option value="">全選手</option>
-                        <option value="一軍">一軍</option>
-                        <option value="二軍">二軍</option>
+                        <option value="">SQUAD: ALL</option>
+                        <option value="一軍">一軍 (1st)</option>
+                        <option value="二軍">二軍 (2nd)</option>
                     </select>
                 </div>
             </div>
         </div>
 
-        <div id="loader">
-            <div class="spinner"></div>
-            <p>データを読み込み中...</p>
+        <div id="loader" style="display:none; text-align:center; padding:100px;">
+            <div style="width:40px; height:40px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--team-accent); border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;"></div>
         </div>
         
         <div id="container" class="player-container"></div>
@@ -175,24 +200,24 @@
     <div id="modal" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div id="modal-detail"></div>
-            <button class="close-btn" onclick="closeModal()">閉じる</button>
+            <button class="close-btn" onclick="closeModal()">CLOSE</button>
         </div>
     </div>
 
     <script>
         const TEAMS = {
-            SOFTBANK: { id: '1D55MmUmSxxvDf92UE_N0N3BTSrZOoR5qQxoXm_BL2_E', title: '福岡ソフトバンクホークス', bg: '#1a1a1a', accent: '#f5c700', modal: '#222222', league: 'パ・リーグ' },
-            FIGHTERS: { id: '14Nd-iWKpiJg7M0Ou2NG0bgARZHJY-JIdARiWCwVTmjM', title: '北海道日本ハムファイターズ', bg: '#005491', accent: '#f3c759', modal: '#003e6b', league: 'パ・リーグ' },
-            ORIX: { id: '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw', title: 'オリックス・バファローズ', bg: '#000033', accent: '#b6a269', modal: '#000044', league: 'パ・リーグ' },
-            EAGLES: { id: '1o5tO7aFL2tA_eWfQCPuhyatXC4oqQUOYc1C49DuQ_sU', title: '東北楽天ゴールデンイーグルス', bg: '#870011', accent: '#EAAA00', modal: '#4c000a', league: 'パ・リーグ' },
-            LIONS: { id: '1rU0KqHiGXvS3hAMp0snepykftW4gnoEcqNAFcK9ZJw', title: '埼玉西武ライオンズ', bg: '#03192e', accent: '#ffffff', modal: '#0a2a47', league: 'パ・リーグ' },
-            MARINES: { id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', title: '千葉ロッテマリーンズ', bg: '#222222', accent: '#ffffff', modal: '#333333', league: 'パ・リーグ' },
-            HANSHIN: { id: '1hZwkTDSa4AOUSlvFvgYB74hU78Uk6Tb3Wxdr6wKuPhs', title: '阪神タイガース', bg: '#000', accent: '#ffe200', modal: '#333', league: 'セ・リーグ' },
-            BAYSTARS: { id: '1EGfKQS7CPBxnqk7MN6MVoFc1naTvplPwMMlvO6ucXrs', title: '横浜DeNAベイスターズ', bg: '#005596', accent: '#ffffff', modal: '#003e6b', league: 'セ・リーグ' },
-            GIANTS: { id: '11fiRAjQKNG2widh8Hs9X5izk76CsBhkxC5GucEu3Gio', title: '読売ジャイアンツ', bg: '#ff6600', accent: '#ffffff', modal: '#333', league: 'セ・リーグ' },
-            DRAGONS: { id: '1jgeiLHIvsXpg-Lb-NS9EwQtsciqqusxMYqUZNDVt5MA', title: '中日ドラゴンズ', bg: '#004a9e', accent: '#ffffff', modal: '#002d61', league: 'セ・リーグ' },
-            CARP: { id: '1xp_n78P5IMw63fD9dtDF9tQhK9zgF5otK9fwLNPOW2s', title: '広島東洋カープ', bg: '#ff0000', accent: '#ffffff', modal: '#800000', league: 'セ・リーグ' },
-            SWALLOWS: { id: '1BYL-hAJNaSshpWfDYnYsk9GdUIT9nEEIGejLuFV4BxY', title: '東京ヤクルトスワローズ', bg: '#002d56', accent: '#97c24a', modal: '#001a33', league: 'セ・リーグ' }
+            SOFTBANK: { id: '1D55MmUmSxxvDf92UE_N0N3BTSrZOoR5qQxoXm_BL2_E', title: 'Fukuoka SoftBank Hawks', bg: '#121212', accent: '#f5c700', grad: 'linear-gradient(135deg, #222 0%, #000 100%)', league: 'パ・リーグ' },
+            FIGHTERS: { id: '14Nd-iWKpiJg7M0Ou2NG0bgARZHJY-JIdARiWCwVTmjM', title: 'Hokkaido Nippon-Ham Fighters', bg: '#003e6b', accent: '#f3c759', grad: 'linear-gradient(135deg, #005491 0%, #001a33 100%)', league: 'パ・リーグ' },
+            ORIX: { id: '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw', title: 'Orix Buffaloes', bg: '#000022', accent: '#b6a269', grad: 'linear-gradient(135deg, #000033 0%, #000011 100%)', league: 'パ・リーグ' },
+            EAGLES: { id: '1o5tO7aFL2tA_eWfQCPuhyatXC4oqQUOYc1C49DuQ_sU', title: 'Tohoku Rakuten Golden Eagles', bg: '#4c000a', accent: '#EAAA00', grad: 'linear-gradient(135deg, #870011 0%, #300000 100%)', league: 'パ・リーグ' },
+            LIONS: { id: '1rU0KqHiGXvS3hAMp0snepykftW4gnoEcqNAFcK9ZJw', title: 'Saitama Seibu Lions', bg: '#03192e', accent: '#ffffff', grad: 'linear-gradient(135deg, #0a2a47 0%, #00050a 100%)', league: 'パ・リーグ' },
+            MARINES: { id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', title: 'Chiba Lotte Marines', bg: '#111', accent: '#ffffff', grad: 'linear-gradient(135deg, #333 0%, #000 100%)', league: 'パ・リーグ' },
+            HANSHIN: { id: '1hZwkTDSa4AOUSlvFvgYB74hU78Uk6Tb3Wxdr6wKuPhs', title: 'Hanshin Tigers', bg: '#000', accent: '#ffe200', grad: 'linear-gradient(135deg, #333 0%, #000 100%)', league: 'セ・リーグ' },
+            BAYSTARS: { id: '1EGfKQS7CPBxnqk7MN6MVoFc1naTvplPwMMlvO6ucXrs', title: 'Yokohama DeNA BayStars', bg: '#003e6b', accent: '#ffffff', grad: 'linear-gradient(135deg, #005596 0%, #002540 100%)', league: 'セ・リーグ' },
+            GIANTS: { id: '11fiRAjQKNG2widh8Hs9X5izk76CsBhkxC5GucEu3Gio', title: 'Yomiuri Giants', bg: '#1a1a1a', accent: '#ff6600', grad: 'linear-gradient(135deg, #333 0%, #000 100%)', league: 'セ・リーグ' },
+            DRAGONS: { id: '1jgeiLHIvsXpg-Lb-NS9EwQtsciqqusxMYqUZNDVt5MA', title: 'Chunichi Dragons', bg: '#002d61', accent: '#ffffff', grad: 'linear-gradient(135deg, #004a9e 0%, #001a33 100%)', league: 'セ・リーグ' },
+            CARP: { id: '1xp_n78P5IMw63fD9dtDF9tQhK9zgF5otK9fwLNPOW2s', title: 'Hiroshima Toyo Carp', bg: '#800000', accent: '#ffffff', grad: 'linear-gradient(135deg, #ff0000 0%, #500000 100%)', league: 'セ・リーグ' },
+            SWALLOWS: { id: '1BYL-hAJNaSshpWfDYnYsk9GdUIT9nEEIGejLuFV4BxY', title: 'Tokyo Yakult Swallows', bg: '#001a33', accent: '#97c24a', grad: 'linear-gradient(135deg, #002d56 0%, #000d1a 100%)', league: 'セ・リーグ' }
         };
 
         let allPlayers = [];
@@ -209,11 +234,12 @@
         async function switchTeam(teamKey) {
             const config = TEAMS[teamKey];
             closeNav();
-            document.querySelector('.sub-title').innerText = config.league;
-            document.getElementById('team-name-display').innerText = config.title;
+            document.querySelector('.sub-title').innerText = config.league.toUpperCase() + ' / PREMIUM';
+            document.getElementById('team-name-display').innerText = config.title.toUpperCase();
             document.documentElement.style.setProperty('--team-bg', config.bg);
             document.documentElement.style.setProperty('--team-accent', config.accent);
-            document.documentElement.style.setProperty('--team-modal', config.modal);
+            document.documentElement.style.setProperty('--team-grad', config.grad);
+            
             document.getElementById('player-search').value = "";
             document.getElementById('filter-pos').value = "";
             document.getElementById('filter-squad').value = "";
@@ -237,7 +263,7 @@
                 renderCards(allPlayers);
             } catch (e) { 
                 loader.style.display = 'none';
-                container.innerHTML = 'データの取得に失敗しました。'; 
+                container.innerHTML = 'DATA LOAD ERROR'; 
             }
         }
 
@@ -259,7 +285,6 @@
         }
 
         function applyFilters() {
-            if (allPlayers.length === 0) return;
             const nameQuery = document.getElementById('player-search').value.toLowerCase();
             const posFilter = document.getElementById('filter-pos').value;
             const squadFilter = document.getElementById('filter-squad').value;
@@ -281,7 +306,6 @@
                 } else {
                     matchPos = posStr === posFilter;
                 }
-                
                 return matchName && matchPos && matchSquad && matchFav;
             });
             renderCards(filtered);
@@ -290,10 +314,6 @@
         function renderCards(dataList) {
             const container = document.getElementById('container');
             container.innerHTML = '';
-            if(dataList.length === 0) {
-                container.innerHTML = '<p style="color:#888; padding:50px;">該当する選手はいません</p>';
-                return;
-            }
             dataList.forEach(cols => {
                 const isP = (cols[14] === '投手');
                 const isFav = favorites.includes(cols[1]);
@@ -303,11 +323,11 @@
                 card.innerHTML = `
                     <div class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, '${cols[1]}')">★</div>
                     <div class="pos-badge">${cols[15]}</div>
-                    <div style="font-size:10px; opacity:0.6;">No. ${cols[0]}</div>
+                    <div style="font-size:10px; color:#666; font-weight:800;"># ${cols[0]}</div>
                     <div class="name">${cols[1]}</div>
                     <div class="stats-grid">
-                        <div><span class="label">${isP ? '登板' : '試合'}</span><br><span class="stats">${cols[2]}</span></div>
-                        <div><span class="label">${isP ? '防御率' : '打率'}</span><br><span class="stats">${cols[12]}</span></div>
+                        <div><div class="label">${isP ? 'ERA' : 'AVG'}</div><div class="stats">${cols[12]}</div></div>
+                        <div><div class="label">${isP ? 'G' : 'HR'}</div><div class="stats">${isP ? cols[2] : cols[5]}</div></div>
                     </div>
                 `;
                 container.appendChild(card);
@@ -317,26 +337,26 @@
         function showDetail(data) {
             const isP = (data[14] === '投手');
             let stats = isP ? [
-                {l: '登板', v: data[2]}, {l: '防御率', v: data[12]},
-                {l: '勝利', v: data[3]}, {l: '敗戦', v: data[4]},
-                {l: 'ホールド', v: data[5]}, {l: 'セーブ', v: data[6]},
-                {l: '奪三振', v: data[9]}, {l: 'WHIP', v: data[13]}
+                {l: 'G', v: data[2]}, {l: 'ERA', v: data[12]},
+                {l: 'W', v: data[3]}, {l: 'L', v: data[4]},
+                {l: 'HLD', v: data[5]}, {l: 'SV', v: data[6]},
+                {l: 'SO', v: data[9]}, {l: 'WHIP', v: data[13]}
             ] : [
-                {l: '試合数', v: data[2]}, {l: '打率', v: `${data[12]}(${data[3]}-${data[4]})`},
-                {l: '本塁打', v: data[5]}, {l: '打点', v: data[6]},
-                {l: '盗塁', v: data[9]}, {l: 'OPS', v: data[13]}
+                {l: 'G', v: data[2]}, {l: 'AVG', v: data[12]},
+                {l: 'HR', v: data[5]}, {l: 'RBI', v: data[6]},
+                {l: 'SB', v: data[9]}, {l: 'OPS', v: data[13]}
             ];
 
             document.getElementById('modal-detail').innerHTML = `
-                <div style="border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-bottom:20px;">
-                    <div style="font-size:14px; color:var(--team-accent)">No. ${data[0]} | ${data[15]}</div>
-                    <div style="font-size:28px; font-weight:bold;">${data[1]}</div>
-                    <div style="font-size:13px; opacity:0.7; margin-top:5px;">${data[16]} | ${data[17]} 生まれ</div>
+                <div style="margin-bottom:30px;">
+                    <div style="font-size:12px; color:var(--team-accent); font-weight:800; letter-spacing:2px;"># ${data[0]} | ${data[15]}</div>
+                    <div style="font-size:32px; font-weight:800; margin:10px 0;">${data[1]}</div>
+                    <div style="font-size:12px; color:#888;">${data[16]} | ${data[17]}</div>
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    ${stats.map(s => `<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:10px;">
-                        <div style="font-size:10px; color:var(--team-accent); font-weight:bold;">${s.l}</div>
-                        <div style="font-size:18px; font-weight:bold;">${s.v}</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    ${stats.map(s => `<div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:15px; border:1px solid rgba(255,255,255,0.05);">
+                        <div style="font-size:10px; color:#666; font-weight:800; margin-bottom:5px;">${s.l}</div>
+                        <div style="font-size:22px; font-weight:700; color:var(--team-accent);">${s.v}</div>
                     </div>`).join('')}
                 </div>
             `;
@@ -346,5 +366,8 @@
         function closeModal() { document.getElementById('modal').style.display = 'none'; }
         switchTeam('SOFTBANK');
     </script>
+    <style>
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </body>
 </html>
