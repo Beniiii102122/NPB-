@@ -21,115 +21,82 @@
             transition: background-color 0.5s;
         }
 
+        /* --- 固定ヘッダー --- */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            background-color: var(--team-bg);
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
         /* --- サイドバー --- */
         .sidebar {
-            height: 100%;
-            width: 0;
-            position: fixed;
-            z-index: 1001;
-            top: 0;
-            left: 0;
-            background-color: #111;
-            overflow-x: hidden;
-            transition: 0.3s;
-            padding-top: 60px;
-            border-right: 1px solid var(--team-accent);
+            height: 100%; width: 0; position: fixed; z-index: 1001; top: 0; left: 0;
+            background-color: #111; overflow-x: hidden; transition: 0.3s;
+            padding-top: 60px; border-right: 1px solid var(--team-accent);
         }
-
         .sidebar a, .sidebar .menu-item {
-            padding: 15px 25px;
-            text-decoration: none;
-            font-size: 18px;
-            color: #fff;
-            display: block;
-            transition: 0.3s;
-            cursor: pointer;
-            border-bottom: 1px solid #222;
+            padding: 15px 25px; text-decoration: none; font-size: 18px; color: #fff;
+            display: block; transition: 0.3s; cursor: pointer; border-bottom: 1px solid #222;
         }
-
         .sidebar a:hover, .sidebar .menu-item:hover { color: var(--team-accent); }
         .sidebar .closebtn { position: absolute; top: 0; right: 25px; font-size: 36px; color: var(--team-accent); }
-
-        .dropdown-container {
-            display: none;
-            background-color: #222;
-            padding-left: 8px;
-        }
-
-        .dropdown-container div {
-            padding: 12px 12px 12px 40px;
-            font-size: 14px;
-            color: #ccc;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .dropdown-container div:hover { color: var(--team-accent); background: #333; }
+        .dropdown-container { display: none; background-color: #222; padding-left: 8px; }
+        .dropdown-container div { padding: 12px 12px 12px 40px; font-size: 14px; color: #ccc; cursor: pointer; }
 
         .openbtn {
-            font-size: 20px;
-            cursor: pointer;
-            background-color: #111;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            z-index: 1000;
-            border-radius: 5px;
-            border: 1px solid var(--team-accent);
+            font-size: 20px; cursor: pointer; background-color: #111; color: white;
+            padding: 10px 15px; border: none; position: fixed; top: 15px; left: 15px;
+            z-index: 1000; border-radius: 5px; border: 1px solid var(--team-accent);
         }
 
         /* --- メインコンテンツ --- */
         .header-container { text-align: center; padding: 60px 0 10px 0; }
-        .main-title { font-size: 24px; margin: 0; letter-spacing: 2px; color: #fff; font-weight: 900; }
-        .sub-title { font-size: 14px; margin: 5px 0 0 0; letter-spacing: 2px; color: var(--team-accent); opacity: 0.9; }
-        #team-name-display { font-size: 18px; margin: 15px 0 5px 0; font-weight: bold; }
+        .main-title { font-size: 22px; margin: 0; letter-spacing: 2px; color: #fff; font-weight: 900; }
+        .sub-title { font-size: 12px; margin: 5px 0 0 0; color: var(--team-accent); opacity: 0.8; }
+        #team-name-display { font-size: 18px; margin: 10px 0; font-weight: bold; }
 
-        .filter-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            margin: 10px auto;
-            width: 95%;
-            max-width: 500px;
-        }
-
+        .filter-area { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 auto; width: 95%; max-width: 500px; }
         .search-container { display: flex; width: 100%; gap: 8px; }
-        #player-search { flex: 1; padding: 10px 15px; border-radius: 20px; border: 1px solid var(--team-accent); background: rgba(255,255,255,0.1); color: #fff; outline: none; }
+        #player-search { flex: 1; padding: 12px 15px; border-radius: 25px; border: 1px solid var(--team-accent); background: rgba(255,255,255,0.1); color: #fff; outline: none; }
 
         .select-container { display: flex; width: 100%; gap: 8px; }
-        .filter-select {
-            flex: 1;
-            padding: 10px;
-            border-radius: 10px;
-            border: 1px solid var(--team-accent);
-            background: #222;
-            color: #fff;
-            font-size: 13px;
-            outline: none;
-            cursor: pointer;
-        }
+        .filter-select { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--team-accent); background: #222; color: #fff; font-size: 13px; cursor: pointer; }
 
-        .player-container { display: flex; flex-wrap: wrap; gap: 12px; padding: 15px; justify-content: center; min-height: 200px; }
-        .player-card { background-color: rgba(255, 255, 255, 0.05); border: 1px solid var(--team-accent); padding: 15px; width: 145px; border-radius: 12px; text-align: center; cursor: pointer; }
+        /* --- 選手カード --- */
+        .player-container { display: flex; flex-wrap: wrap; gap: 12px; padding: 20px 15px; justify-content: center; min-height: 300px; }
+        .player-card { 
+            background-color: rgba(255, 255, 255, 0.05); border: 1px solid var(--team-accent); 
+            padding: 15px; width: 145px; border-radius: 15px; text-align: center; cursor: pointer; position: relative;
+        }
+        .fav-btn { position: absolute; top: 8px; right: 8px; font-size: 20px; color: #555; transition: 0.2s; }
+        .fav-btn.active { color: #ffcc00; }
+        
+        .pos-badge { 
+            display: inline-block; padding: 2px 8px; border-radius: 10px; background: var(--team-accent); 
+            color: #000; font-size: 9px; font-weight: bold; margin-bottom: 5px; 
+        }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
         .label { font-size: 10px; color: var(--team-accent); font-weight: bold; }
         .stats { font-size: 18px; color: #fff; font-weight: bold; }
-        .name { font-size: 15px; margin: 5px 0; font-weight: bold; color: #fff; height: 2.5em; display: flex; align-items: center; justify-content: center; }
+        .name { font-size: 15px; margin: 5px 0; font-weight: bold; color: #fff; height: 2.4em; display: flex; align-items: center; justify-content: center; }
+
+        /* --- ローディング --- */
+        #loader { display: none; text-align: center; padding: 50px; }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1);
+            border-top: 4px solid var(--team-accent); border-radius: 50%;
+            animation: spin 1s linear infinite; margin: 0 auto 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* --- モーダル --- */
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(8px); }
         .modal-content { background-color: var(--team-modal); border: 2px solid var(--team-accent); padding: 30px 20px; border-radius: 24px; width: 85%; max-width: 380px; text-align: center; color: #fff; }
-        .modal-header { border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px; }
-        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
-        .detail-item { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px; }
-        .detail-label { font-size: 10px; color: var(--team-accent); font-weight: bold; margin-bottom: 4px; }
-        .detail-value { font-size: 18px; font-weight: bold; }
-        .close-btn { background-color: var(--team-accent); color: #000; border: none; padding: 10px 40px; border-radius: 25px; font-weight: bold; cursor: pointer; }
+        .close-btn { background-color: var(--team-accent); color: #000; border: none; padding: 10px 40px; border-radius: 25px; font-weight: bold; cursor: pointer; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -139,7 +106,6 @@
     <div id="mySidebar" class="sidebar">
         <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
         <a onclick="location.reload()">NPB 選手名鑑</a>
-        
         <div class="menu-item" onclick="toggleDropdown('pa-league')">パ・リーグ ▼</div>
         <div id="pa-league" class="dropdown-container">
             <div onclick="switchTeam('SOFTBANK')">ソフトバンク</div>
@@ -149,7 +115,6 @@
             <div onclick="switchTeam('LIONS')">西武</div>
             <div onclick="switchTeam('MARINES')">ロッテ</div>
         </div>
-
         <div class="menu-item" onclick="toggleDropdown('ce-league')">セ・リーグ ▼</div>
         <div id="ce-league" class="dropdown-container">
             <div onclick="switchTeam('HANSHIN')">阪神</div>
@@ -159,38 +124,43 @@
             <div onclick="switchTeam('CARP')">広島</div>
             <div onclick="switchTeam('SWALLOWS')">ヤクルト</div>
         </div>
-
         <a href="https://forms.gle/PZdrWHx4sJ3gfjh19" target="_blank">お問い合わせ</a>
     </div>
 
     <div id="main">
-        <div class="header-container">
-            <div class="main-title">NPB 選手名鑑</div>
-            <div class="sub-title">パ・リーグ</div>
-            <div id="team-name-display">福岡ソフトバンクホークス</div>
+        <div class="sticky-header">
+            <div class="header-container">
+                <div class="main-title">NPB 選手名鑑 Pro</div>
+                <div class="sub-title">リーグ</div>
+                <div id="team-name-display">チームを選択してください</div>
+            </div>
+
+            <div class="filter-area">
+                <div class="search-container">
+                    <input type="text" id="player-search" placeholder="名前で検索..." oninput="applyFilters()">
+                </div>
+                <div class="select-container">
+                    <select id="filter-role" class="filter-select" onchange="applyFilters()">
+                        <option value="">全選手</option>
+                        <option value="投手">投手</option>
+                        <option value="野手">野手</option>
+                        <option value="FAV">お気に入り</option>
+                    </select>
+                    <select id="filter-squad" class="filter-select" onchange="applyFilters()">
+                        <option value="">全選手</option>
+                        <option value="一軍">一軍</option>
+                        <option value="二軍">二軍</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
-        <div class="filter-area">
-            <div class="search-container">
-                <input type="text" id="player-search" placeholder="名前で検索..." oninput="applyFilters()">
-            </div>
-            <div class="select-container">
-                <select id="filter-role" class="filter-select" onchange="applyFilters()">
-                    <option value="">全選手（役割）</option>
-                    <option value="投手">投手</option>
-                    <option value="野手">野手</option>
-                </select>
-                <select id="filter-squad" class="filter-select" onchange="applyFilters()">
-                    <option value="">全選手（構成）</option>
-                    <option value="一軍">一軍</option>
-                    <option value="二軍">二軍</option>
-                </select>
-            </div>
+        <div id="loader">
+            <div class="spinner"></div>
+            <p>データを読み込み中...</p>
         </div>
         
-        <div id="container" class="player-container">
-            <p>読み込み中...</p>
-        </div>
+        <div id="container" class="player-container"></div>
     </div>
 
     <div id="modal" onclick="closeModal()">
@@ -216,11 +186,11 @@
             SWALLOWS: { id: '1BYL-hAJNaSshpWfDYnYsk9GdUIT9nEEIGejLuFV4BxY', title: '東京ヤクルトスワローズ', bg: '#002d56', accent: '#97c24a', modal: '#001a33', league: 'セ・リーグ' }
         };
 
-        let allPlayers = []; 
+        let allPlayers = [];
+        let favorites = JSON.parse(localStorage.getItem('npb_favs')) || [];
 
         function openNav() { document.getElementById("mySidebar").style.width = "var(--sidebar-width)"; }
         function closeNav() { document.getElementById("mySidebar").style.width = "0"; }
-
         function toggleDropdown(id) {
             const dropdown = document.getElementById(id);
             dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
@@ -244,7 +214,10 @@
 
         async function loadStats(sheetId) {
             const container = document.getElementById('container');
-            container.innerHTML = '<p>読み込み中...</p>';
+            const loader = document.getElementById('loader');
+            container.innerHTML = '';
+            loader.style.display = 'block';
+
             const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=シート1`;
             try {
                 const response = await fetch(url);
@@ -253,8 +226,23 @@
                 allPlayers = rows.map(row => {
                     return row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, ''));
                 });
+                loader.style.display = 'none';
                 renderCards(allPlayers);
-            } catch (e) { container.innerHTML = 'データの取得に失敗しました。'; }
+            } catch (e) { 
+                loader.style.display = 'none';
+                container.innerHTML = 'データの取得に失敗しました。'; 
+            }
+        }
+
+        function toggleFavorite(e, playerName) {
+            e.stopPropagation();
+            if (favorites.includes(playerName)) {
+                favorites = favorites.filter(n => n !== playerName);
+            } else {
+                favorites.push(playerName);
+            }
+            localStorage.setItem('npb_favs', JSON.stringify(favorites));
+            applyFilters();
         }
 
         function applyFilters() {
@@ -264,8 +252,9 @@
             const squadFilter = document.getElementById('filter-squad').value;
 
             const filtered = allPlayers.filter(p => {
+                const isFav = favorites.includes(p[1]);
                 const matchName = p[1].includes(nameQuery);
-                const matchRole = roleFilter === "" || p[14] === roleFilter;
+                const matchRole = (roleFilter === "FAV") ? isFav : (roleFilter === "" || p[14] === roleFilter);
                 const matchSquad = squadFilter === "" || p[16] === squadFilter;
                 return matchName && matchRole && matchSquad;
             });
@@ -276,26 +265,24 @@
             const container = document.getElementById('container');
             container.innerHTML = '';
             if(dataList.length === 0) {
-                container.innerHTML = '<p style="color:#888;">該当する選手はいません</p>';
+                container.innerHTML = '<p style="color:#888; padding:50px;">該当する選手はいません</p>';
                 return;
             }
             dataList.forEach(cols => {
                 const isP = (cols[14] === '投手');
+                const isFav = favorites.includes(cols[1]);
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(cols);
                 
-                const label1 = isP ? '登板' : '試合';
-                const value1 = cols[2];
-                const label2 = isP ? '防御率' : '打率';
-                const value2 = cols[12];
-
                 card.innerHTML = `
-                    <div style="font-size:11px; color:var(--team-accent)">No. ${cols[0]}</div>
+                    <div class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, '${cols[1]}')">★</div>
+                    <div class="pos-badge">${cols[15]}</div>
+                    <div style="font-size:10px; opacity:0.6;">No. ${cols[0]}</div>
                     <div class="name">${cols[1]}</div>
                     <div class="stats-grid">
-                        <div><span class="label">${label1}</span><br><span class="stats">${value1}</span></div>
-                        <div><span class="label">${label2}</span><br><span class="stats">${value2}</span></div>
+                        <div><span class="label">${isP ? '登板' : '試合'}</span><br><span class="stats">${cols[2]}</span></div>
+                        <div><span class="label">${isP ? '防御率' : '打率'}</span><br><span class="stats">${cols[12]}</span></div>
                     </div>
                 `;
                 container.appendChild(card);
@@ -304,39 +291,29 @@
 
         function showDetail(data) {
             const isP = (data[14] === '投手');
-            let stats = [];
-            if (isP) {
-                stats = [
-                    {l: '登板', v: data[2]}, {l: '防御率', v: data[12]},
-                    {l: '勝利', v: data[3]}, {l: '敗戦', v: data[4]},
-                    {l: 'ホールド', v: data[5]}, {l: 'セーブ', v: data[6]},
-                    {l: '奪三振', v: data[9]}, {l: 'WHIP', v: data[13]}
-                ];
-            } else {
-                const dasu = data[3] || "0";
-                const anda = data[4] || "0";
-                const batDisplay = `${data[12]}(${dasu}-${anda})`;
-                stats = [
-                    {l: '試合数', v: data[2]}, {l: '打率', v: batDisplay},
-                    {l: '本塁打', v: data[5]}, {l: '打点', v: data[6]},
-                    {l: '盗塁', v: data[9]}, {l: 'OPS', v: data[13]}
-                ];
-            }
+            let stats = isP ? [
+                {l: '登板', v: data[2]}, {l: '防御率', v: data[12]},
+                {l: '勝利', v: data[3]}, {l: '敗戦', v: data[4]},
+                {l: 'ホールド', v: data[5]}, {l: 'セーブ', v: data[6]},
+                {l: '奪三振', v: data[9]}, {l: 'WHIP', v: data[13]}
+            ] : [
+                {l: '試合数', v: data[2]}, {l: '打率', v: `${data[12]}(${data[3]}-${data[4]})`},
+                {l: '本塁打', v: data[5]}, {l: '打点', v: data[6]},
+                {l: '盗塁', v: data[9]}, {l: 'OPS', v: data[13]}
+            ];
+
             document.getElementById('modal-detail').innerHTML = `
-                <div class="modal-header">
-                    <div style="font-size:14px; color:var(--team-accent)">No. ${data[0]}</div>
+                <div style="border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-bottom:20px;">
+                    <div style="font-size:14px; color:var(--team-accent)">No. ${data[0]} | ${data[15]}</div>
                     <div style="font-size:28px; font-weight:bold;">${data[1]}</div>
-                    <div style="font-size:13px; opacity:0.7;">${data[15]} | ${data[16]}</div>
+                    <div style="font-size:13px; opacity:0.7; margin-top:5px;">${data[16]}構成 | ${data[17]} 生まれ</div>
                 </div>
-                <div class="detail-grid">
-                    ${stats.map(s => `
-                        <div class="detail-item">
-                            <div class="detail-label">${s.l}</div>
-                            <div class="detail-value">${s.v}</div>
-                        </div>
-                    `).join('')}
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    ${stats.map(s => `<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:10px;">
+                        <div style="font-size:10px; color:var(--team-accent); font-weight:bold;">${s.l}</div>
+                        <div style="font-size:18px; font-weight:bold;">${s.v}</div>
+                    </div>`).join('')}
                 </div>
-                <div style="font-size:12px; color:#aaa; margin-top:10px;">${data[17]} 生まれ</div>
             `;
             document.getElementById('modal').style.display = 'flex';
         }
