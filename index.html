@@ -49,18 +49,16 @@
         .select-container { display: flex; width: 100%; gap: 5px; }
         .filter-select { padding: 8px; border: 1px solid #ccc; background: #fff; flex: 1; border-radius: 4px; }
 
-        /* --- 選手カード (縦長に調整) --- */
-        .player-container { display: flex; flex-wrap: wrap; gap: 12px; padding: 20px 10px; justify-content: center; }
+        /* --- 選手カード (絶妙な縦長感に調整) --- */
+        .player-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 15px 5px; justify-content: center; }
         .player-card { 
             background: #fff; border: 1px solid #ddd; 
-            padding: 25px 5px 20px 5px; /* 上下のパディングを増やして縦長に */
-            width: 155px; 
-            min-height: 180px; /* 高さを確保 */
+            padding: 20px 5px 12px 5px; /* 上下の余白を少し詰めました */
+            width: 160px; 
+            min-height: 165px; /* 190pxから165pxに短縮 */
             text-align: center; cursor: pointer; position: relative; border-radius: 6px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between; /* 要素を上下に分散 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; justify-content: space-between;
         }
         
         .number-badge {
@@ -71,16 +69,15 @@
             border-radius: 12px; padding: 0 4px; box-sizing: border-box;
         }
 
-        .pos-badge { display: inline-block; padding: 2px 8px; background: #eee; color: #666; font-size: 10px; margin-bottom: 5px; border-radius: 3px; }
-        .name { font-size: 18px; margin: 10px 0; font-weight: bold; color: #000; line-height: 1.2; }
+        .pos-badge { display: inline-block; padding: 1px 7px; background: #eee; color: #666; font-size: 10px; margin-bottom: 2px; border-radius: 3px; }
+        .name { font-size: 17px; margin: 8px 0; font-weight: bold; color: #000; line-height: 1.2; }
         
         .stats-grid { 
-            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; 
-            margin-top: auto; /* 下部に固定 */
-            background: #f9f9f9; padding: 8px 0; border-radius: 4px;
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; 
+            margin-top: auto; background: #f8f8f8; padding: 6px 0; border-radius: 4px;
         }
-        .label { font-size: 9px; color: #999; margin-bottom: 3px; }
-        .stats { font-size: 14px; font-weight: bold; color: #333; }
+        .label { font-size: 9px; color: #999; margin-bottom: 2px; }
+        .stats { font-size: 13px; font-weight: bold; color: #333; }
 
         /* --- モーダル --- */
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 2000; }
@@ -135,7 +132,7 @@
         const TEAMS = {
             ORIX: { id: '1dAaf-rsBz87908KYebqehlK4yG2lUrvCEZWDWVAnXUw', name: 'オリックス', title: 'オリックス・バファローズ', accent: '#b6a269', league: 'pa' },
             SOFTBANK: { id: '1D55MmUmSxxvDf92UE_N0N3BTSrZOoR5qQxoXm_BL2_E', name: 'ソフトバンク', title: '福岡ソフトバンクホークス', accent: '#ffcc00', league: 'pa' },
-            FIGHTERS: { id: '14Nd-iWKpiJg7M0Ou2NG0bgARZHJY-JIdARiWCwVTmjM', name: '日本ハム', title: '北海道日本ハムファイズ', accent: '#005491', league: 'pa' },
+            FIGHTERS: { id: '14Nd-iWKpiJg7M0Ou2NG0bgARZHJY-JIdARiWCwVTmjM', name: '日本ハム', title: '北海道日本ハムファイターズ', accent: '#005491', league: 'pa' },
             EAGLES: { id: '1o5tO7aFL2tA_eWfQCPuhyatXC4oqQUOYc1C49DuQ_sU', name: '楽天', title: '東北楽天ゴールデンイーグルス', accent: '#870011', league: 'pa' },
             LIONS: { id: '1rU0KqHiGXvS3hAMp0snepykftW4gnoEcqNAFcK9ZJw', name: '西武', title: '埼玉西武ライオンズ', accent: '#03192e', league: 'pa' },
             MARINES: { id: '1knxzRo7DNJO2FMXH09rhif4Shb06wEj80FF0whPoAuc', name: 'ロッテ', title: '千葉ロッテマリーンズ', accent: '#333', league: 'pa' },
@@ -219,7 +216,8 @@
             if (isP) {
                 items = [
                     {l:'登板数', v:d[2]}, {l:'防御率', v:d[12]}, {l:'勝利', v:d[3]}, 
-                    {l:'敗戦', v:d[4]}, {l:'ホールド', v:d[5]}, {l:'セーブ', v:d[6]}, {l:'WHIP', v:d[13]}
+                    {l:'敗戦', v:d[4]}, {l:'ホールド', v:d[5]}, {l:'セーブ', v:d[6]}, 
+                    {l:'奪三振', v:d[9]}, {l:'WHIP', v:d[13]}
                 ];
             } else {
                 items = [
@@ -236,7 +234,7 @@
 
             document.getElementById('modal-detail').innerHTML = `
                 <div style="font-size:12px;color:#888;margin-bottom:2px;">背番号 ${d[0]} | ${d[15]}</div>
-                <div style="font-size:24px;font-weight:bold;margin-bottom:15px;border-bottom:2px solid var(--team-accent);padding-bottom:5px;">${d[1]}</div>
+                <div style="font-size:22px;font-weight:bold;margin-bottom:15px;border-bottom:2px solid var(--team-accent);padding-bottom:5px;">${d[1]}</div>
                 <div class="modal-grid">${statsHTML}</div>
             `;
             document.getElementById('modal').style.display = 'flex';
