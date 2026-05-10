@@ -19,6 +19,16 @@
             padding-bottom: 50px; 
         }
 
+        /* --- メンテナンス表示 --- */
+        #maintenance-screen {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 9999;
+            flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 20px;
+        }
+        #maintenance-screen h1 { color: #d32f2f; margin-bottom: 10px; }
+
         /* --- ヘッダー --- */
         .sticky-header {
             position: sticky; top: 0; z-index: 900;
@@ -47,8 +57,7 @@
 
         .filter-area { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 auto; width: 95%; max-width: 500px; }
         #player-search { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
-        .select-container { display: flex; width: 100%; gap: 5px; }
-        .filter-select { padding: 8px; border: 1px solid #ccc; background: #fff; flex: 1; border-radius: 4px; font-size: 13px; }
+        .filter-select { padding: 8px; border: 1px solid #ccc; background: #fff; width: 100%; border-radius: 4px; font-size: 13px; }
 
         /* --- 選手カード --- */
         .player-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 15px 5px; justify-content: center; }
@@ -71,6 +80,12 @@
 </head>
 <body>
 
+    <div id="maintenance-screen">
+        <h1>定期メンテナンス中</h1>
+        <p>毎週月曜 13:00 〜 23:00 はデータ更新のため<br>メンテナンスを実施しております。</p>
+        <div style="font-size: 40px; margin-top: 20px;">⏳⚾</div>
+    </div>
+
     <button class="openbtn" onclick="openNav()">☰ メニュー</button>
 
     <div id="mySidebar" class="sidebar">
@@ -89,22 +104,33 @@
             </div>
             <div class="filter-area">
                 <input type="text" id="player-search" placeholder="選手名を検索..." oninput="applyFilters()">
-                <div class="select-container">
-                    <select id="filter-pos" class="filter-select" onchange="applyFilters()">
-                        <option value="">すべての守備位置</option>
-                        <option value="先発">先発</option>
-                        <option value="リリーフ">リリーフ</option>
-                        <option value="捕手">捕手</option>
-                        <option value="内野手">内野手</option>
-                        <option value="外野手">外野手</option>
-                    </select>
-                </div>
+                <select id="filter-pos" class="filter-select" onchange="applyFilters()">
+                    <option value="">すべての守備位置</option>
+                    <option value="先発">先発</option>
+                    <option value="リリーフ">リリーフ</option>
+                    <option value="捕手">捕手</option>
+                    <option value="内野手">内野手</option>
+                    <option value="外野手">外野手</option>
+                </select>
             </div>
         </div>
         <div id="container" class="player-container"></div>
     </div>
 
     <script>
+        // --- メンテナンス自動判定ロジック ---
+        function checkMaintenance() {
+            const now = new Date();
+            const day = now.getDay(); // 0:日, 1:月, 2:火...
+            const hour = now.getHours();
+
+            // 月曜日(1) かつ 13時以降 かつ 23時未満
+            if (day === 1 && hour >= 13 && hour < 23) {
+                return true;
+            }
+            return false;
+        }
+
         const TEAMS = {
             SOFTBANK: { id: '1D55MmUmSxxvDf92UE_N0N3BTSrZOoR5qQxoXm_BL2_E', name: 'ソフトバンク', title: '福岡ソフトバンクホークス', accent: '#ffcc00', league: 'pa' },
             FIGHTERS: { id: '14Nd-iWKpiJg7M0Ou2NG0bgARZHJY-JIdARiWCwVTmjM', name: '日本ハム', title: '北海道日本ハムファイターズ', accent: '#005491', league: 'pa' },
@@ -123,6 +149,14 @@
         let allPlayers = [];
 
         function init() {
+            // メンテナンスチェック実行
+            if (checkMaintenance()) {
+                document.getElementById('maintenance-screen').style.display = 'flex';
+                document.getElementById('main').style.display = 'none';
+                document.querySelector('.openbtn').style.display = 'none';
+                return;
+            }
+
             const pa = document.getElementById('pa-league');
             const ce = document.getElementById('ce-league');
             Object.keys(TEAMS).forEach(k => {
@@ -149,29 +183,17 @@
                 const rows = text.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
                 allPlayers = rows.map(r => r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, '')));
                 
-                // --- 【修正の決定打】日付表示ロジック ---
                 if (allPlayers.length > 0) {
                     const rawVal = String(allPlayers[0][0]); 
                     let dateStr = "";
-
-                    // パターン1: Date(2024,4,6,0,0,0) のような形式
                     if (rawVal.includes("Date(")) {
                         const nums = rawVal.match(/\d+/g);
-                        if (nums && nums.length >= 3) {
-                            // nums[1]は月(0-11)なので+1する
-                            dateStr = `${parseInt(nums[1]) + 1}/${nums[2]}`;
-                        }
-                    } 
-                    // パターン2: 2024/05/06 00:00:00 のような形式
-                    else if (rawVal.includes("/")) {
+                        if (nums && nums.length >= 3) dateStr = `${parseInt(nums[1]) + 1}/${nums[2]}`;
+                    } else if (rawVal.includes("/")) {
                         const parts = rawVal.split(" ")[0].split("/");
-                        if (parts.length >= 3) {
-                            dateStr = `${parseInt(parts[1])}/${parseInt(parts[2])}`;
-                        } else {
-                            dateStr = rawVal.split(" ")[0];
-                        }
+                        if (parts.length >= 3) dateStr = `${parseInt(parts[1])}/${parseInt(parts[2])}`;
+                        else dateStr = rawVal.split(" ")[0];
                     }
-
                     document.getElementById('update-date-display').innerText = (dateStr || "更新済み") + " 試合終了時点";
                 }
                 render(allPlayers);
