@@ -33,7 +33,6 @@
 
         .sticky-header { position: sticky; top: 0; z-index: 900; background: #fff; padding-bottom: 10px; border-bottom: 2px solid var(--team-accent); }
         
-        /* サイドバー */
         .sidebar { height: 100%; width: 0; position: fixed; z-index: 1001; top: 0; left: 0; background-color: #333; overflow-x: hidden; transition: 0.3s; padding-top: 60px; }
         .sidebar a, .sidebar .menu-item { padding: 15px 25px; text-decoration: none; font-size: 16px; color: #fff; display: block; border-bottom: 1px solid #444; cursor: pointer; }
         .sidebar .contact-item { border-top: 1px solid #555; background-color: #444; color: #ffcc00 !important; margin-top: 10px; font-weight: bold; }
@@ -43,18 +42,15 @@
         #team-name-display { font-size: 20px; font-weight: bold; margin-bottom: 2px; }
         #update-date-display { font-size: 11px; color: #666; margin-bottom: 5px; }
         
-        /* フィルターエリア */
         .filter-area { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 auto; width: 95%; max-width: 500px; }
         #player-search { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
-        .select-row { display: flex; width: 100%; gap: 5px; }
-        .filter-select { padding: 8px; border: 1px solid #ccc; background: #fff; flex: 1; border-radius: 4px; font-size: 13px; }
+        .filter-select { padding: 10px; border: 1px solid #ccc; background: #fff; width: 100%; border-radius: 4px; font-size: 15px; }
 
-        /* 選手カード */
         .player-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 15px 5px; justify-content: center; }
-        .player-card { background: #fff; border: 1px solid #ddd; padding: 20px 5px 12px 5px; width: 160px; min-height: 150px; text-align: center; cursor: pointer; position: relative; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; }
+        .player-card { background: #fff; border: 1px solid #ddd; padding: 25px 5px 12px 5px; width: 160px; min-height: 140px; text-align: center; cursor: pointer; position: relative; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; }
         .number-badge { position: absolute; top: 8px; left: 8px; background: var(--team-accent); color: #fff; font-size: 11px; font-weight: bold; min-width: 24px; height: 24px; line-height: 24px; border-radius: 12px; padding: 0 4px; box-sizing: border-box; }
-        .pos-badge { display: inline-block; padding: 1px 7px; background: #eee; color: #666; font-size: 10px; margin-bottom: 2px; border-radius: 3px; }
-        .name { font-size: 17px; margin: 12px 0; font-weight: bold; color: #000; line-height: 1.2; }
+        
+        .name { font-size: 18px; margin: 15px 0; font-weight: bold; color: #000; line-height: 1.2; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; margin-top: auto; background: #f8f8f8; padding: 6px 0; border-radius: 4px; }
         .label { font-size: 9px; color: #999; margin-bottom: 2px; }
         .stats { font-size: 13px; font-weight: bold; color: #333; }
@@ -88,21 +84,13 @@
                 </div>
                 <div class="filter-area">
                     <input type="text" id="player-search" placeholder="選手名を検索..." oninput="applyFilters()">
-                    <div class="select-row">
-                        <select id="filter-type" class="filter-select" onchange="applyFilters()">
-                            <option value="">すべての選手</option>
-                            <option value="投手">投手</option>
-                            <option value="野手">野手</option>
-                        </select>
-                        <select id="filter-pos" class="filter-select" onchange="applyFilters()">
-                            <option value="">すべての守備位置</option>
-                            <option value="先発">先発</option>
-                            <option value="リリーフ">リリーフ</option>
-                            <option value="捕手">捕手</option>
-                            <option value="内野手">内野手</option>
-                            <option value="外野手">外野手</option>
-                        </select>
-                    </div>
+                    <select id="filter-pos" class="filter-select" onchange="applyFilters()">
+                        <option value="">すべての選手</option>
+                        <option value="投手">投手</option>
+                        <option value="捕手">捕手</option>
+                        <option value="内野手">内野手</option>
+                        <option value="外野手">外野手</option>
+                    </select>
                 </div>
             </div>
             <div id="container" class="player-container"></div>
@@ -191,8 +179,10 @@
         function render(data) {
             const c = document.getElementById('container'); c.innerHTML = '';
             data.forEach(p => {
-                const isP = p[14] === '投手';
-                const pos = p[15];
+                const pos = p[14]; // ポジション列
+                const isP = pos.includes('投手') || pos.includes('先発') || pos.includes('中継') || pos.includes('抑え');
+                
+                // M列(p[12])とN列(p[13])はスプレッドシート側で作成した文字列をそのまま使う
                 let l1, s1, l2, s2, l3, s3;
                 if (isP) {
                     l1 = '防御率'; s1 = p[12];
@@ -204,40 +194,46 @@
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(p);
-                card.innerHTML = `<div class="number-badge">${p[0]}</div><div><div class="pos-badge">${pos}</div><div class="name">${p[1]}</div></div><div class="stats-grid"><div><div class="label">${l1}</div><div class="stats">${s1}</div></div><div><div class="label">${l2}</div><div class="stats">${s2}</div></div><div><div class="label">${l3}</div><div class="stats">${s3}</div></div></div>`;
+                card.innerHTML = `<div class="number-badge">${p[0]}</div><div class="name">${p[1]}</div><div class="stats-grid"><div><div class="label">${l1}</div><div class="stats">${s1}</div></div><div><div class="label">${l2}</div><div class="stats">${s2}</div></div><div><div class="label">${l3}</div><div class="stats">${s3}</div></div></div>`;
                 c.appendChild(card);
             });
         }
 
         function showDetail(d) {
-            const isP = d[14] === '投手';
+            const pos = d[14];
+            const isP = pos.includes('投手') || pos.includes('先発') || pos.includes('中継') || pos.includes('抑え');
+            
+            // モダールの詳細項目
             let items = isP ? [{l:'防御率', v:d[12]}, {l:'登板', v:d[2]}, {l:'勝利', v:d[3]}, {l:'敗戦', v:d[4]}, {l:'H', v:d[5]}, {l:'S', v:d[6]}, {l:'奪三振', v:d[9]}, {l:'WHIP', v:d[13]}] 
                             : [{l:'打率', v:d[12]}, {l:'試合', v:d[2]}, {l:'本塁打', v:d[5]}, {l:'打点', v:d[6]}, {l:'盗塁', v:d[9]}, {l:'OPS', v:d[13]}];
             const statsHTML = items.map(i => `<div style="background:#f8f8f8;padding:10px;border-radius:4px;text-align:center;border:1px solid #eee;"><div style="font-size:10px;color:#999;">${i.l}</div><div style="font-size:18px;font-weight:bold;">${i.v}</div></div>`).join('');
             const modal = document.createElement('div');
             modal.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;justify-content:center;align-items:center;z-index:2000;";
             modal.onclick = () => modal.remove();
-            modal.innerHTML = `<div style="background:#fff;padding:20px;border-radius:8px;width:85%;max-width:350px;" onclick="event.stopPropagation()"><div style="font-size:12px;color:#888;">#${d[0]} | ${d[15]}</div><div style="font-size:22px;font-weight:bold;margin-bottom:15px;border-bottom:2px solid var(--team-accent);">${d[1]}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">${statsHTML}</div><button style="width:100%;margin-top:20px;padding:12px;background:#333;color:#fff;border:none;border-radius:4px;" onclick="this.closest('div').parentElement.remove()">閉じる</button></div>`;
+            modal.innerHTML = `<div style="background:#fff;padding:20px;border-radius:8px;width:85%;max-width:350px;" onclick="event.stopPropagation()"><div style="font-size:12px;color:#888;">#${d[0]} | ${d[14]}</div><div style="font-size:22px;font-weight:bold;margin-bottom:15px;border-bottom:2px solid var(--team-accent);">${d[1]}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">${statsHTML}</div><button style="width:100%;margin-top:20px;padding:12px;background:#333;color:#fff;border:none;border-radius:4px;" onclick="this.closest('div').parentElement.remove()">閉じる</button></div>`;
             document.body.appendChild(modal);
         }
 
         function applyFilters() {
             const q = document.getElementById('player-search').value.toLowerCase();
-            const selectedType = document.getElementById('filter-type').value; // 投手・野手
-            const selectedPos = document.getElementById('filter-pos').value;   // 守備位置
+            const selectedPos = document.getElementById('filter-pos').value;
 
             const filtered = allPlayers.filter(p => {
                 const nameMatch = p[1].includes(q);
-                
-                // 投手・野手の判定 (p[14]を利用)
-                let typeMatch = true;
-                if (selectedType === "投手") typeMatch = (p[14] === "投手");
-                if (selectedType === "野手") typeMatch = (p[14] === "野手");
+                let posMatch = true;
+                const posStr = p[14];
 
-                // 守備位置の判定
-                let posMatch = selectedPos === "" ? true : (selectedPos === "リリーフ" ? (p[15].includes("中継") || p[15].includes("抑") || (p[14] === "投手" && !p[15].includes("先発"))) : p[15].includes(selectedPos));
-                
-                return nameMatch && typeMatch && posMatch;
+                if (selectedPos === "投手") {
+                    posMatch = posStr.includes("投手") || posStr.includes("先発") || posStr.includes("中継") || posStr.includes("抑え");
+                } else if (selectedPos === "捕手") {
+                    posMatch = posStr.includes("捕手");
+                } else if (selectedPos === "内野手") {
+                    posMatch = posStr.includes("内野");
+                } else if (selectedPos === "外野手") {
+                    posMatch = posStr.includes("外野");
+                }
+
+                return nameMatch && posMatch;
             });
             render(filtered);
         }
