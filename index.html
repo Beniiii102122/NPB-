@@ -47,10 +47,11 @@
         .filter-select { padding: 10px; border: 1px solid #ccc; background: #fff; width: 100%; border-radius: 4px; font-size: 15px; }
 
         .player-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 15px 5px; justify-content: center; }
-        .player-card { background: #fff; border: 1px solid #ddd; padding: 25px 5px 12px 5px; width: 160px; min-height: 140px; text-align: center; cursor: pointer; position: relative; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; }
+        .player-card { background: #fff; border: 1px solid #ddd; padding: 25px 5px 12px 5px; width: 160px; min-height: 155px; text-align: center; cursor: pointer; position: relative; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; }
         .number-badge { position: absolute; top: 8px; left: 8px; background: var(--team-accent); color: #fff; font-size: 11px; font-weight: bold; min-width: 24px; height: 24px; line-height: 24px; border-radius: 12px; padding: 0 4px; box-sizing: border-box; }
         
-        .name { font-size: 18px; margin: 15px 0; font-weight: bold; color: #000; line-height: 1.2; }
+        .name { font-size: 18px; margin: 15px 0 2px 0; font-weight: bold; color: #000; line-height: 1.2; }
+        .birth-date { font-size: 10px; color: #777; margin-bottom: 12px; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; margin-top: auto; background: #f8f8f8; padding: 6px 0; border-radius: 4px; }
         .label { font-size: 9px; color: #999; margin-bottom: 2px; }
         .stats { font-size: 13px; font-weight: bold; color: #333; }
@@ -180,37 +181,54 @@
             const c = document.getElementById('container'); c.innerHTML = '';
             data.forEach(p => {
                 const pos = p[14]; // ポジション列
+                const birth = p[16] ? p[16] : '----/--/--'; // 生年月日列
                 const isP = pos.includes('投手') || pos.includes('先発') || pos.includes('中継') || pos.includes('抑え');
                 
-                // M列(p[12])とN列(p[13])はスプレッドシート側で作成した文字列をそのまま使う
                 let l1, s1, l2, s2, l3, s3;
                 if (isP) {
                     l1 = '防御率'; s1 = p[12];
-                    if (pos.includes('先発')) { l2 = '勝利'; s2 = p[3]; l3 = '敗戦'; s3 = p[4]; } 
-                    else { l2 = 'ホールド'; s2 = p[5]; l3 = 'セーブ'; s3 = p[6]; }
+                    l2 = '勝利';   s2 = p[3];
+                    l3 = '敗戦';   s3 = p[4];
                 } else {
-                    l1 = '打率'; s1 = p[12]; l2 = '本塁打'; s2 = p[5]; l3 = '打点'; s3 = p[6];
+                    l1 = '打率';   s1 = p[12]; 
+                    l2 = '本塁打'; s2 = p[5]; 
+                    l3 = '打点';   s3 = p[6];
                 }
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(p);
-                card.innerHTML = `<div class="number-badge">${p[0]}</div><div class="name">${p[1]}</div><div class="stats-grid"><div><div class="label">${l1}</div><div class="stats">${s1}</div></div><div><div class="label">${l2}</div><div class="stats">${s2}</div></div><div><div class="label">${l3}</div><div class="stats">${s3}</div></div></div>`;
+                card.innerHTML = `
+                    <div class="number-badge">${p[0]}</div>
+                    <div class="name">${p[1]}</div>
+                    <div class="birth-date">${birth}</div>
+                    <div class="stats-grid">
+                        <div><div class="label">${l1}</div><div class="stats">${s1}</div></div>
+                        <div><div class="label">${l2}</div><div class="stats">${s2}</div></div>
+                        <div><div class="label">${l3}</div><div class="stats">${s3}</div></div>
+                    </div>`;
                 c.appendChild(card);
             });
         }
 
         function showDetail(d) {
             const pos = d[14];
+            const birth = d[16] ? d[16] : '----/--/--';
             const isP = pos.includes('投手') || pos.includes('先発') || pos.includes('中継') || pos.includes('抑え');
             
-            // モダールの詳細項目
             let items = isP ? [{l:'防御率', v:d[12]}, {l:'登板', v:d[2]}, {l:'勝利', v:d[3]}, {l:'敗戦', v:d[4]}, {l:'H', v:d[5]}, {l:'S', v:d[6]}, {l:'奪三振', v:d[9]}, {l:'WHIP', v:d[13]}] 
                             : [{l:'打率', v:d[12]}, {l:'試合', v:d[2]}, {l:'本塁打', v:d[5]}, {l:'打点', v:d[6]}, {l:'盗塁', v:d[9]}, {l:'OPS', v:d[13]}];
             const statsHTML = items.map(i => `<div style="background:#f8f8f8;padding:10px;border-radius:4px;text-align:center;border:1px solid #eee;"><div style="font-size:10px;color:#999;">${i.l}</div><div style="font-size:18px;font-weight:bold;">${i.v}</div></div>`).join('');
             const modal = document.createElement('div');
             modal.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;justify-content:center;align-items:center;z-index:2000;";
             modal.onclick = () => modal.remove();
-            modal.innerHTML = `<div style="background:#fff;padding:20px;border-radius:8px;width:85%;max-width:350px;" onclick="event.stopPropagation()"><div style="font-size:12px;color:#888;">#${d[0]} | ${d[14]}</div><div style="font-size:22px;font-weight:bold;margin-bottom:15px;border-bottom:2px solid var(--team-accent);">${d[1]}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">${statsHTML}</div><button style="width:100%;margin-top:20px;padding:12px;background:#333;color:#fff;border:none;border-radius:4px;" onclick="this.closest('div').parentElement.remove()">閉じる</button></div>`;
+            modal.innerHTML = `
+                <div style="background:#fff;padding:20px;border-radius:8px;width:85%;max-width:350px;" onclick="event.stopPropagation()">
+                    <div style="font-size:12px;color:#888;">#${d[0]} | ${d[14]}</div>
+                    <div style="font-size:22px;font-weight:bold;margin-bottom:2px;border-bottom:2px solid var(--team-accent);">${d[1]}</div>
+                    <div style="font-size:12px;color:#666;margin-bottom:15px;">生年月日: ${birth}</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">${statsHTML}</div>
+                    <button style="width:100%;margin-top:20px;padding:12px;background:#333;color:#fff;border:none;border-radius:4px;" onclick="this.closest('div').parentElement.remove()">閉じる</button>
+                </div>`;
             document.body.appendChild(modal);
         }
 
