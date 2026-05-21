@@ -38,9 +38,10 @@
         .sidebar .contact-item { border-top: 1px solid #555; background-color: #444; color: #ffcc00 !important; margin-top: 10px; font-weight: bold; }
 
         .openbtn { font-size: 16px; cursor: pointer; background: #333; color: white; padding: 8px 12px; border: none; position: fixed; top: 10px; left: 10px; z-index: 1000; border-radius: 4px; }
-        .header-container { text-align: center; padding: 45px 0 5px 0; }
-        #team-name-display { font-size: 20px; font-weight: bold; margin-bottom: 2px; }
-        #update-date-display { font-size: 11px; color: #666; margin-bottom: 5px; }
+        
+        /* 【調整】時間表示が消えたため、チーム名周りの余白をすっきりさせました */
+        .header-container { text-align: center; padding: 45px 0 10px 0; }
+        #team-name-display { font-size: 20px; font-weight: bold; }
         
         .filter-area { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 auto; width: 95%; max-width: 500px; }
         #player-search { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
@@ -48,8 +49,13 @@
 
         .player-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 15px 5px; justify-content: center; }
         .player-card { background: #fff; border: 1px solid #ddd; padding: 25px 5px 12px 5px; width: 160px; min-height: 155px; text-align: center; cursor: pointer; position: relative; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; }
+        
         .number-badge { position: absolute; top: 8px; left: 8px; background: var(--team-accent); color: #fff; font-size: 11px; font-weight: bold; min-width: 24px; height: 24px; line-height: 24px; border-radius: 12px; padding: 0 4px; box-sizing: border-box; }
         
+        .army-badge { position: absolute; top: 8px; right: 8px; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; line-height: 1.2; }
+        .army-1f { background: #e3f2fd; color: #0d47a1; border: 1px solid #bbdefb; }
+        .army-2f { background: #f5f5f5; color: #616161; border: 1px solid #e0e0e0; }
+
         .name { font-size: 18px; margin: 15px 0 2px 0; font-weight: bold; color: #000; line-height: 1.2; }
         .birth-date { font-size: 10px; color: #777; margin-bottom: 12px; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; margin-top: auto; background: #f8f8f8; padding: 6px 0; border-radius: 4px; }
@@ -81,8 +87,7 @@
             <div class="sticky-header">
                 <div class="header-container">
                     <div id="team-name-display">読み込み中...</div>
-                    <div id="update-date-display">日付取得中...</div>
-                </div>
+                    </div>
                 <div class="filter-area">
                     <input type="text" id="player-search" placeholder="選手名を検索..." oninput="applyFilters()">
                     <select id="filter-pos" class="filter-select" onchange="applyFilters()">
@@ -152,6 +157,10 @@
             localStorage.setItem('favTeam', key);
             const t = TEAMS[key];
             closeNav();
+
+            document.getElementById('player-search').value = '';
+            document.getElementById('filter-pos').value = '';
+
             document.getElementById('team-name-display').innerText = t.title;
             document.documentElement.style.setProperty('--team-accent', t.accent);
             document.getElementById('container').innerHTML = '<p style="text-align:center; width:100%; margin-top:50px;">読み込み中...</p>';
@@ -161,27 +170,21 @@
                 const text = await res.text();
                 const rows = text.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
                 
-                // データを配列に変換
                 let parsedPlayers = rows.map(r => r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, '')));
                 
-                // 【重要修正】ポジションに関係なく、背番号を純粋に数値として比較して1から順に並び替えます（「00」などは一番前に来ます）
+                // 背番号順（数値での昇順）にソート
                 parsedPlayers.sort((a, b) => {
                     const numA = parseInt(a[0], 10);
                     const numB = parseInt(b[0], 10);
-                    
-                    // 両方とも正しい数字に変換できた場合
                     if (!isNaN(numA) && !isNaN(numB)) {
                         return numA - numB;
                     }
-                    // 片方または両方が数字でない場合の予備処理
                     return String(a[0]).localeCompare(String(b[0]), undefined, { numeric: true, sensitivity: 'base' });
                 });
                 
                 allPlayers = parsedPlayers;
                 
-                if (allPlayers.length > 0) {
-                    document.getElementById('update-date-display').innerText = "データ更新済み 試合終了時点";
-                }
+                // 更新時間表示のテキスト書き換え処理（要素を削除したため）も不要になったので削りました
                 render(allPlayers);
             } catch (e) { console.error(e); }
         }
@@ -190,6 +193,7 @@
             const c = document.getElementById('container'); c.innerHTML = '';
             data.forEach(p => {
                 const pos = p[14]; 
+                const army = p[15] || '----'; 
                 const birth = p[16] ? p[16] : '----/--/--'; 
                 const isP = pos.includes('投手') || pos.includes('先発') || pos.includes('中継') || pos.includes('抑え');
                 
@@ -203,11 +207,18 @@
                     l2 = '本塁打'; s2 = p[5]; 
                     l3 = '打点';   s3 = p[6];
                 }
+
+                let armyClass = 'army-2f';
+                if (army.includes('一軍')) {
+                    armyClass = 'army-1f';
+                }
+
                 const card = document.createElement('div');
                 card.className = 'player-card';
                 card.onclick = () => showDetail(p);
                 card.innerHTML = `
                     <div class="number-badge">${p[0]}</div>
+                    <div class="army-badge ${armyClass}">${army}</div>
                     <div class="name">${p[1]}</div>
                     <div class="birth-date">${birth}</div>
                     <div class="stats-grid">
@@ -221,6 +232,7 @@
 
         function showDetail(d) {
             const pos = d[14];
+            const army = d[15] || '----';
             const birth = d[16] ? d[16] : '----/--/--';
             const isP = pos.includes('投手') || pos.includes('先発') || pos.includes('中継') || pos.includes('抑え');
             
@@ -232,7 +244,7 @@
             modal.onclick = () => modal.remove();
             modal.innerHTML = `
                 <div style="background:#fff;padding:20px;border-radius:8px;width:85%;max-width:350px;" onclick="event.stopPropagation()">
-                    <div style="font-size:12px;color:#888;">#${d[0]} | ${d[14]}</div>
+                    <div style="font-size:12px;color:#888;">#${d[0]} | ${d[14]} [${army}]</div>
                     <div style="font-size:22px;font-weight:bold;margin-bottom:2px;border-bottom:2px solid var(--team-accent);">${d[1]}</div>
                     <div style="font-size:12px;color:#666;margin-bottom:15px;">生年月日: ${birth}</div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">${statsHTML}</div>
