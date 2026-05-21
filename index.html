@@ -157,10 +157,12 @@
             document.getElementById('container').innerHTML = '<p style="text-align:center; width:100%; margin-top:50px;">読み込み中...</p>';
             
             try {
-                // 【確定修正】「&sheet=」を排除し、「&gid=0」に固定。これでシート名が何であれ一番左のシートを確実に開きます
-                const res = await fetch(`https://docs.google.com/spreadsheets/d/${t.id}/gviz/tq?tqx=out:csv&gid=0`);
+                // 【全角を徹底排除】エラーの起きないクリーンな半角URLに統一しました
+                const res = await fetch('https://docs.google.com/spreadsheets/d/' + t.id + '/gviz/tq?tqx=out:csv&gid=0');
                 const text = await res.text();
                 const rows = text.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
+                
+                // 【全角引用符エラー修正】全角文字を完全に排除したクリーンな記述です
                 allPlayers = rows.map(r => r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, '')));
                 
                 let dateDisplayStr = "更新済み";
@@ -168,17 +170,17 @@
                     const rawVal = String(allPlayers[0][0]); 
                     if (rawVal.includes("Date(")) {
                         const nums = rawVal.match(/\d+/g);
-                        if (nums && nums.length >= 3) dateDisplayStr = `${parseInt(nums[1]) + 1}/${nums[2]}`;
+                        if (nums && nums.length >= 3) dateDisplayStr = (parseInt(nums[1]) + 1) + '/' + nums[2];
                     } else if (rawVal.includes("/") && rawVal.length > 5 && isNaN(rawVal)) {
                         const parts = rawVal.split(" ")[0].split("/");
-                        if (parts.length >= 3) dateDisplayStr = `${parseInt(parts[1])}/${parseInt(parts[2])}`;
+                        if (parts.length >= 3) dateDisplayStr = parseInt(parts[1]) + '/' + parseInt(parts[2]);
                     }
                 }
                 document.getElementById('update-date-display').innerText = dateDisplayStr + " 試合終了時点";
                 render(allPlayers);
             } catch (e) { 
                 console.error(e); 
-                document.getElementById('container').innerHTML = '<p style="text-align:center; width:100%; margin-top:50px; color: red;">データの読み込みに失敗しました。</p>';
+                document.getElementById('container').innerHTML = '<p style="text-align:center; width:100%; margin-top:50px; color: red;">データの取得に失敗しました。ファイル設定を確認してください。</p>';
             }
         }
 
