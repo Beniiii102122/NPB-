@@ -161,20 +161,25 @@
                 const text = await res.text();
                 const rows = text.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
                 
-                // ソート処理を入れず、スプレッドシートの上からの順のまま配列に格納します
-                allPlayers = rows.map(r => r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, '')));
+                // データを配列に変換
+                let parsedPlayers = rows.map(r => r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, '')));
+                
+                // 【重要修正】ポジションに関係なく、背番号を純粋に数値として比較して1から順に並び替えます（「00」などは一番前に来ます）
+                parsedPlayers.sort((a, b) => {
+                    const numA = parseInt(a[0], 10);
+                    const numB = parseInt(b[0], 10);
+                    
+                    // 両方とも正しい数字に変換できた場合
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return numA - numB;
+                    }
+                    // 片方または両方が数字でない場合の予備処理
+                    return String(a[0]).localeCompare(String(b[0]), undefined, { numeric: true, sensitivity: 'base' });
+                });
+                
+                allPlayers = parsedPlayers;
                 
                 if (allPlayers.length > 0) {
-                    const rawVal = String(allPlayers[0][0]); 
-                    let dateStr = "";
-                    if (rawVal.includes("Date(")) {
-                        const nums = rawVal.match(/\d+/g);
-                        if (nums && nums.length >= 3) dateStr = `${parseInt(nums[1]) + 1}/${nums[2]}`;
-                    } else if (rawVal.includes("/")) {
-                        const parts = rawVal.split(" ")[0].split("/");
-                        if (parts.length >= 3) dateStr = `${parseInt(parts[1])}/${parseInt(parts[2])}`;
-                        else dateStr = rawVal.split(" ")[0];
-                    }
                     document.getElementById('update-date-display').innerText = "データ更新済み 試合終了時点";
                 }
                 render(allPlayers);
