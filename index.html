@@ -120,7 +120,7 @@
             LIONS: { id: '1rU0KqHiGXvS3hAMp0snepykftW4gnoEcqNAFcK9ZJw', name: '西武', title: '埼玉西武ライオンズ', accent: '#03192e', league: 'pa' },
             HANSHIN: { id: '1hZwkTDSa4AOUSlvFvgYB74hU78Uk6Tb3Wxdr6wKuPhs', name: '阪神', title: '阪神タイガース', accent: '#ffcc00', league: 'ce' },
             BAYSTARS: { id: '1EGfKQS7CPBxnqk7MN6MVoFc1naTvplPwMMlvO6ucXrs', name: 'DeNA', title: '横浜DeNAベイスターズ', accent: '#005596', league: 'ce' },
-            GIANTS: { id: '11fiRAjQKNG2widh8Hs9X5izk76CsBhkxC5GucEu3Gio', name: '巨人', title: '読売ジャイアンツ', accent: '#ff6600', league: 'ce' },
+            GIANTS: { id: '11fiRAjQKNG2widh8Hs9X5izk76CsBhkxC5GucEu3Gio', name: '巨人', title: '読売ジャイアンザ', accent: '#ff6600', league: 'ce' },
             DRAGONS: { id: '1jgeiLHIvsXpg-Lb-NS9EwQtsciqqusxMYqUZNDVt5MA', name: '中日', title: '中日ドラゴンズ', accent: '#004a9e', league: 'ce' },
             CARP: { id: '1xp_n78P5IMw63fD9dtDF9tQhK9zgF5otK9fwLNPOW2s', name: '広島', title: '広島東洋カープ', accent: '#ff0000', league: 'ce' },
             SWALLOWS: { id: '1BYL-hAJNaSshpWfDYnYsk9GdUIT9nEEIGejLuFV4BxY', name: 'ヤクルト', title: '東京ヤクルトスワローズ', accent: '#97c24a', league: 'ce' }
@@ -145,7 +145,6 @@
                 if(t.league === 'pa') pa.appendChild(d); else ce.appendChild(d);
             });
             
-            // 初回起動時は西武を表示
             switchTeam(localStorage.getItem('favTeam') || 'LIONS');
         }
 
@@ -158,8 +157,8 @@
             document.getElementById('container').innerHTML = '<p style="text-align:center; width:100%; margin-top:50px;">読み込み中...</p>';
             
             try {
-                // 最も強力かつ確実な「ウェブに公開(pub?output=csv)」のURL形式に修正
-                const res = await fetch(`https://docs.google.com/spreadsheets/d/${t.id}/pub?output=csv`);
+                // 【超重要修正】タブ名「シート1」をエンコードした形式で明示的に指定することで、並び順に関係なく名鑑データを狙い撃ちします
+                const res = await fetch(`https://docs.google.com/spreadsheets/d/${t.id}/gviz/tq?tqx=out:csv&sheet=%E3%82%B7%E3%83%BC%E3%83%881`);
                 const text = await res.text();
                 const rows = text.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
                 allPlayers = rows.map(r => r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(c => c.replace(/^"|"$/g, '')));
